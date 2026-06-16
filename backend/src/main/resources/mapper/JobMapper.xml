@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.recruit.mapper.JobMapper">
+
+    <!-- 根据企业ID查询岗位 -->
+    <select id="selectByCompanyId" resultType="com.recruit.entity.Job">
+        SELECT * FROM job 
+        WHERE company_id = #{companyId} 
+        AND deleted = 0
+    </select>
+
+    <!-- 根据发布者ID查询岗位 -->
+    <select id="selectByCreatedBy" resultType="com.recruit.entity.Job">
+        SELECT * FROM job 
+        WHERE created_by = #{createdBy} 
+        AND deleted = 0
+    </select>
+
+    <!-- 查询有效岗位（已发布 + 未截止） -->
+    <select id="selectActiveJobs" resultType="com.recruit.entity.Job">
+        SELECT * FROM job 
+        WHERE status = 1 
+        AND end_date >= #{today}
+        AND deleted = 0
+    </select>
+
+    <!-- 根据状态查询岗位 -->
+    <select id="selectByStatus" resultType="com.recruit.entity.Job">
+        SELECT * FROM job 
+        WHERE status = #{status} 
+        AND deleted = 0
+    </select>
+
+    <!-- 增加浏览次数 -->
+    <update id="incrementViewCount">
+        UPDATE job 
+        SET view_count = view_count + 1 
+        WHERE id = #{jobId}
+    </update>
+
+    <!-- 根据岗位ID查询投递数量 -->
+    <select id="countByJobId" resultType="int">
+        SELECT COUNT(*) FROM delivery 
+        WHERE job_id = #{jobId}
+        AND deleted = 0
+    </select>
+
+</mapper>

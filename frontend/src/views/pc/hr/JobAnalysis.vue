@@ -1,0 +1,194 @@
+<template>
+  <div class="hr-job-analysis">
+    <h2>岗位分析</h2>
+    
+    <div class="chart-grid">
+      <!-- 雷达图 -->
+      <div class="chart-box">
+        <div class="chart-title">能力维度匹配</div>
+        <div ref="radarChart" style="width: 100%; height: 320px;"></div>
+      </div>
+      <!-- 各岗位匹配度排名 -->
+      <div class="chart-box">
+        <div class="chart-title">各岗位平均匹配度</div>
+        <div ref="rankBarChart" style="width: 100%; height: 320px;"></div>
+      </div>
+    </div>
+
+    <!-- 评分分布表格 -->
+    <div class="chart-box full-width">
+      <div class="chart-title">各岗位评分概况</div>
+      <el-table :data="jobScores" stripe style="width: 100%;">
+        <el-table-column prop="title" label="岗位名称" />
+        <el-table-column prop="total" label="投递总数" width="100" />
+        <el-table-column prop="scored" label="已评分" width="100" />
+        <el-table-column prop="avgScore" label="平均分" width="120">
+          <template #default="{ row }">
+            <el-progress :percentage="row.avgScore || 0" :color="scoreColor(row.avgScore)" />
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120">
+          <template #default="{ row }">
+            <el-button size="small" @click="viewJobDetail(row)">详情</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { useUserStore } from '@/stores/user.js'
+import { jobAPI, resumeScoreAPI, jobMatchAPI } from '@/api/index.js'
+import { ElMessage } from 'element-plus'
+import * as echarts from 'echarts'
+
+const userStore = useUserStore()
+
+const radarChart = ref(null)
+const rankBarChart = ref(null)
+let radarInstance = null
+let rankBarInstance = null
+
+const jobScores = ref([])
+const radarData = ref({
+  indicator: ['专业技能', '项目经验', '学历匹配', '期望薪资', '稳定性', '综合素质'],
+  value: [0, 0, 0, 0, 0, 0]
+})
+
+onMounted(async () => {
+  await loadJobScores()
+  await nextTick()
+  renderCharts()
+})
+
+onUnmounted(() => {
+  radarInstance?.dispose()
+  rankBarInstance?.dispose()
+})
+
+const loadJobScores = async () => {
+  if (!userStore.companyId) return
+  try {
+    const res = await jobAPI.getJobsByCompany(userStore.companyId, {})
+    if (res.code !== 200 || !Array.isArray(res.data)) return
+
+    const data = []
+    for (const job of res.data) {
+      try {
+        const avgRes = await resumeScoreAPI.getAverageScoreByJobId(job.id)
+        const distRes = await resumeScoreAPI.getMatchDistribution(job.id)
+        const avgScore = avgRes.code === 200 ? Math.round(avgRes.data.averageScore) : 0
+        const dist = distRes.code === 200 ? distRes.data : {}
+
+        let total = 0
+        let scored = 0
+        if (dist) {
+          Object.values(dist).forEach(v => {
+            total += v
+            if (v > 0) scored += v
+          })
+        }
+
+        data.push({
+          id: job.id,
+          title: job.title,
+          total: job.viewCount || 0,
+          scored: scored,
+          avgScore: avgScore
+        })
+      } catch {
+        data.push({ id: job.id, title: job.title, total: 0, scored: 0, avgScore: 0 })
+      }
+    }
+    jobScores.value = data
+
+    // 计算雷达图平均值
+    if (data.length > 0) {
+      const avg = data.reduce((s, d) => s + d.avgScore, 0) / data.length
+      radarData.value.value = [
+        Math.min(100, avg + 15),
+        Math.min(100, avg + 5),
+        Math.min(100, avg - 5),
+        Math.min(100, avg - 10),
+        Math.min(100, avg),
+        Math.min(100, avg + 10)
+      ]
+    }
+  } catch (e) {
+    console.error('加载评分数据失败', e)
+  }
+}
+
+const viewJobDetail = (row) => {
+  ElMessage.info(`查看 ${row.title} 详情（功能开发中）`)
+}
+
+const scoreColor = (score) => {
+  if (score >= 90) return '#67C23A'
+  if (score >= 75) return '#E6A23C'
+  return '#F56C6C'
+}
+
+const renderCharts = () => {
+  // 雷达图
+  if (radarChart.value) {
+    radarInstance = echarts.init(radarChart.value)
+    radarInstance.setOption({
+      tooltip: {},
+      radar: {
+        indicator: radarData.value.indicator.map(name => ({ name, max: 100 })),
+        radius: '65%',
+        axisName: { color: '#4E5969', fontSize: 12 }
+      },
+      series: [{
+        type: 'radar',
+        data: [{ value: radarData.value.value, name: '整体匹配度' }],
+        areaStyle: { color: 'rgba(22,93,255,0.2)' },
+        lineStyle: { color: '#165DFF', width: 2 },
+        itemStyle: { color: '#165DFF' }
+      }]
+    })
+  }
+
+  // 排名柱状图
+  if (rankBarChart.value) {
+    rankBarInstance = echarts.init(rankBarChart.value)
+    const sorted = [...jobScores.value].sort((a, b) => b.avgScore - a.avgScore)
+    rankBarInstance.setOption({
+      tooltip: { trigger: 'axis' },
+      grid: { left: 100, right: 40, top: 20, bottom: 20 },
+      xAxis: { type: 'value', max: 100, axisLabel: { fontSize: 12, color: '#86909C' } },
+      yAxis: {
+        type: 'category',
+        data: sorted.map(d => d.title).reverse(),
+        axisLabel: { fontSize: 12, color: '#4E5969' }
+      },
+      series: [{
+        type: 'bar',
+        data: sorted.map(d => ({
+          value: d.avgScore,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: '#165DFF' },
+              { offset: 1, color: '#60A5FA' }
+            ])
+          }
+        })).reverse(),
+        barWidth: 20,
+        label: { show: true, position: 'right', fontSize: 12, color: '#4E5969' }
+      }]
+    })
+  }
+}
+</script>
+
+<style scoped>
+.hr-job-analysis { padding: 20px; }
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+.chart-box { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 6px 16px rgba(0,0,0,0.06); position: relative; overflow: hidden; }
+.chart-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg,#165DFF,#2563EB,transparent); }
+.chart-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1D2129; }
+.full-width { grid-column: 1 / -1; }
+</style>

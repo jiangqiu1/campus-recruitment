@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.recruit.mapper.ResumeScoreLogMapper">
+
+    <!-- 根据岗位ID查询评分记录（按分数降序） -->
+    <select id="selectByJobIdOrderByScore" resultType="com.recruit.entity.ResumeScoreLog">
+        SELECT * FROM resume_score_log 
+        WHERE job_id = #{jobId} 
+        ORDER BY score DESC
+    </select>
+
+    <!-- 根据投递记录ID查询评分记录 -->
+    <select id="selectByDeliveryId" resultType="com.recruit.entity.ResumeScoreLog">
+        SELECT * FROM resume_score_log 
+        WHERE delivery_id = #{deliveryId} 
+        LIMIT 1
+    </select>
+
+    <!-- 根据分数范围查询评分记录 -->
+    <select id="selectByScoreRange" resultType="com.recruit.entity.ResumeScoreLog">
+        SELECT * FROM resume_score_log 
+        WHERE score BETWEEN #{minScore} AND #{maxScore}
+        ORDER BY score DESC
+    </select>
+
+    <!-- 统计岗位的平均分 -->
+    <select id="calculateAverageScoreByJobId" resultType="java.lang.Double">
+        SELECT AVG(score) FROM resume_score_log 
+        WHERE job_id = #{jobId}
+    </select>
+
+    <!-- 根据岗位ID删除评分记录 -->
+    <delete id="deleteByJobId">
+        DELETE FROM resume_score_log 
+        WHERE job_id = #{jobId}
+    </delete>
+
+    <!-- 根据投递记录ID删除评分记录 -->
+    <delete id="deleteByDeliveryId">
+        DELETE FROM resume_score_log 
+        WHERE delivery_id = #{deliveryId}
+    </delete>
+
+</mapper>

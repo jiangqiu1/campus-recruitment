@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.recruit.mapper.AiParseLogMapper">
+
+    <!-- 根据教师ID查询AI解析日志 -->
+    <select id="selectByTeacherId" resultType="com.recruit.entity.AiParseLog">
+        SELECT * FROM ai_parse_log 
+        WHERE teacher_id = #{teacherId} 
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询未人工修正的AI解析日志 -->
+    <select id="selectUncorrected" resultType="com.recruit.entity.AiParseLog">
+        SELECT * FROM ai_parse_log 
+        WHERE is_manual_corrected = 0 
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据置信度范围查询AI解析日志 -->
+    <select id="selectByConfidenceRange" resultType="com.recruit.entity.AiParseLog">
+        SELECT * FROM ai_parse_log 
+        WHERE confidence_score BETWEEN #{minScore} AND #{maxScore}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据时间范围查询AI解析日志 -->
+    <select id="selectByTimeRange" resultType="com.recruit.entity.AiParseLog">
+        SELECT * FROM ai_parse_log 
+        WHERE create_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 统计教师AI解析次数 -->
+    <select id="countByTeacherId" resultType="int">
+        SELECT COUNT(*) FROM ai_parse_log 
+        WHERE teacher_id = #{teacherId}
+    </select>
+
+    <!-- 统计需要人工修正的日志数量 -->
+    <select id="countUncorrected" resultType="int">
+        SELECT COUNT(*) FROM ai_parse_log 
+        WHERE is_manual_corrected = 0
+    </select>
+
+</mapper>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.recruit.mapper.JobMatchRecordMapper">
+
+    <!-- 根据岗位ID查询匹配记录（按匹配度降序） -->
+    <select id="selectByJobIdOrderByScore" resultType="com.recruit.entity.JobMatchRecord">
+        SELECT * FROM job_match_record 
+        WHERE job_id = #{jobId} 
+        ORDER BY match_score DESC
+    </select>
+
+    <!-- 根据学生ID查询匹配记录 -->
+    <select id="selectByStudentId" resultType="com.recruit.entity.JobMatchRecord">
+        SELECT * FROM job_match_record 
+        WHERE student_id = #{studentId} 
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 查询已推送的匹配记录 -->
+    <select id="selectPushedByJobId" resultType="com.recruit.entity.JobMatchRecord">
+        SELECT * FROM job_match_record 
+        WHERE job_id = #{jobId} 
+        AND is_pushed = 1
+        ORDER BY match_score DESC
+    </select>
+
+    <!-- 查询已点击的匹配记录 -->
+    <select id="selectClickedByJobId" resultType="com.recruit.entity.JobMatchRecord">
+        SELECT * FROM job_match_record 
+        WHERE job_id = #{jobId} 
+        AND is_clicked = 1
+        ORDER BY match_score DESC
+    </select>
+
+    <!-- 根据匹配度范围查询匹配记录 -->
+    <select id="selectByScoreRange" resultType="com.recruit.entity.JobMatchRecord">
+        SELECT * FROM job_match_record 
+        WHERE match_score BETWEEN #{minScore} AND #{maxScore}
+        ORDER BY match_score DESC
+    </select>
+
+    <!-- 更新推送状态 -->
+    <update id="updatePushedStatus">
+        UPDATE job_match_record 
+        SET is_pushed = 1, push_time = #{pushTime}
+        WHERE id = #{recordId}
+    </update>
+
+    <!-- 更新点击状态 -->
+    <update id="updateClickedStatus">
+        UPDATE job_match_record 
+        SET is_clicked = 1, click_time = NOW()
+        WHERE id = #{recordId}
+    </update>
+
+    <!-- 根据岗位ID删除匹配记录 -->
+    <delete id="deleteByJobId">
+        DELETE FROM job_match_record 
+        WHERE job_id = #{jobId}
+    </delete>
+
+    <!-- 根据学生ID删除匹配记录 -->
+    <delete id="deleteByStudentId">
+        DELETE FROM job_match_record 
+        WHERE student_id = #{studentId}
+    </delete>
+
+</mapper>

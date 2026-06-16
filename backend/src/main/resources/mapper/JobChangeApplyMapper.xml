@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.recruit.mapper.JobChangeApplyMapper">
+
+    <!-- 根据岗位ID查询申请记录 -->
+    <select id="selectByJobId" resultType="com.recruit.entity.JobChangeApply">
+        SELECT * FROM job_change_apply 
+        WHERE job_id = #{jobId} 
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据HR ID查询申请记录 -->
+    <select id="selectByHrId" resultType="com.recruit.entity.JobChangeApply">
+        SELECT * FROM job_change_apply 
+        WHERE hr_id = #{hrId} 
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据审核教师ID查询申请记录 -->
+    <select id="selectByReviewTeacherId" resultType="com.recruit.entity.JobChangeApply">
+        SELECT * FROM job_change_apply 
+        WHERE review_teacher_id = #{reviewTeacherId} 
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据状态查询申请记录 -->
+    <select id="selectByStatus" resultType="com.recruit.entity.JobChangeApply">
+        SELECT * FROM job_change_apply 
+        WHERE status = #{status} 
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据HR ID和状态查询申请记录 -->
+    <select id="selectByHrIdAndStatus" resultType="com.recruit.entity.JobChangeApply">
+        SELECT * FROM job_change_apply 
+        WHERE hr_id = #{hrId} 
+        AND status = #{status} 
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 统计岗位的变更申请数量 -->
+    <select id="countByJobId" resultType="int">
+        SELECT COUNT(*) FROM job_change_apply 
+        WHERE job_id = #{jobId}
+    </select>
+
+    <!-- 统计HR的变更申请数量 -->
+    <select id="countByHrId" resultType="int">
+        SELECT COUNT(*) FROM job_change_apply 
+        WHERE hr_id = #{hrId}
+    </select>
+
+</mapper>

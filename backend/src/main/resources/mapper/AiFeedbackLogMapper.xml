@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.recruit.mapper.AiFeedbackLogMapper">
+
+    <!-- 根据教师ID查询AI反馈日志 -->
+    <select id="selectByTeacherId" resultType="com.recruit.entity.AiFeedbackLog">
+        SELECT * FROM ai_feedback_log 
+        WHERE teacher_id = #{teacherId} 
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据反馈类型查询AI反馈日志 -->
+    <select id="selectByFeedbackType" resultType="com.recruit.entity.AiFeedbackLog">
+        SELECT * FROM ai_feedback_log 
+        WHERE feedback_type = #{feedbackType} 
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据评分范围查询AI反馈日志 -->
+    <select id="selectByRatingRange" resultType="com.recruit.entity.AiFeedbackLog">
+        SELECT * FROM ai_feedback_log 
+        WHERE rating BETWEEN #{minRating} AND #{maxRating}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据时间范围查询AI反馈日志 -->
+    <select id="selectByTimeRange" resultType="com.recruit.entity.AiFeedbackLog">
+        SELECT * FROM ai_feedback_log 
+        WHERE create_time BETWEEN #{startTime} AND #{endTime}
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 统计教师AI反馈数量 -->
+    <select id="countByTeacherId" resultType="int">
+        SELECT COUNT(*) FROM ai_feedback_log 
+        WHERE teacher_id = #{teacherId}
+    </select>
+
+    <!-- 统计平均评分 -->
+    <select id="calculateAverageRating" resultType="java.lang.Double">
+        SELECT AVG(rating) FROM ai_feedback_log
+    </select>
+
+    <!-- 根据教师ID和反馈类型查询 -->
+    <select id="selectByTeacherIdAndFeedbackType" resultType="com.recruit.entity.AiFeedbackLog">
+        SELECT * FROM ai_feedback_log 
+        WHERE teacher_id = #{teacherId} 
+        AND feedback_type = #{feedbackType}
+        ORDER BY create_time DESC
+    </select>
+
+</mapper>

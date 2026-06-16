@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.recruit.mapper.StudentClassMapper">
+
+    <!-- 根据学生ID查询关联记录 -->
+    <select id="selectByStudentId" resultType="com.recruit.entity.StudentClass">
+        SELECT * FROM student_class 
+        WHERE student_id = #{studentId}
+    </select>
+
+    <!-- 根据班级ID查询关联记录 -->
+    <select id="selectByClassId" resultType="com.recruit.entity.StudentClass">
+        SELECT * FROM student_class 
+        WHERE class_id = #{classId}
+    </select>
+
+    <!-- 根据学生ID和班级ID删除关联记录 -->
+    <delete id="deleteByStudentIdAndClassId">
+        DELETE FROM student_class 
+        WHERE student_id = #{studentId}
+        AND class_id = #{classId}
+    </delete>
+
+    <!-- 批量插入学生-班级关联 -->
+    <insert id="batchInsert">
+        INSERT INTO student_class (student_id, class_id) VALUES
+        <foreach collection="list" item="sc" separator=",">
+            (#{sc.studentId}, #{sc.classId})
+        </foreach>
+    </insert>
+
+    <!-- 根据班级ID批量删除关联 -->
+    <delete id="deleteByClassId">
+        DELETE FROM student_class 
+        WHERE class_id = #{classId}
+    </delete>
+
+    <!-- 根据学生ID批量删除关联 -->
+    <delete id="deleteByStudentId">
+        DELETE FROM student_class 
+        WHERE student_id = #{studentId}
+    </delete>
+
+</mapper>

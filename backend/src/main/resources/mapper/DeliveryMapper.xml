@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.recruit.mapper.DeliveryMapper">
+
+    <!-- 根据学生ID查询投递记录 -->
+    <select id="selectByStudentId" resultType="com.recruit.entity.Delivery">
+        SELECT * FROM delivery 
+        WHERE student_id = #{studentId} 
+        AND deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据岗位ID查询投递记录 -->
+    <select id="selectByJobId" resultType="com.recruit.entity.Delivery">
+        SELECT * FROM delivery 
+        WHERE job_id = #{jobId} 
+        AND deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据状态查询投递记录 -->
+    <select id="selectByStatus" resultType="com.recruit.entity.Delivery">
+        SELECT * FROM delivery 
+        WHERE status = #{status} 
+        AND deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据学生ID和状态查询投递记录 -->
+    <select id="selectByStudentIdAndStatus" resultType="com.recruit.entity.Delivery">
+        SELECT * FROM delivery 
+        WHERE student_id = #{studentId} 
+        AND status = #{status} 
+        AND deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据岗位ID和状态查询投递记录 -->
+    <select id="selectByJobIdAndStatus" resultType="com.recruit.entity.Delivery">
+        SELECT * FROM delivery 
+        WHERE job_id = #{jobId} 
+        AND status = #{status} 
+        AND deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 根据企业ID查询投递记录（关联job表） -->
+    <select id="selectByCompanyId" resultType="com.recruit.entity.Delivery">
+        SELECT d.* FROM delivery d
+        INNER JOIN job j ON d.job_id = j.id
+        WHERE j.company_id = #{companyId} 
+        AND d.deleted = 0
+        ORDER BY d.create_time DESC
+    </select>
+
+    <!-- 根据时间范围查询投递记录 -->
+    <select id="selectByTimeRange" resultType="com.recruit.entity.Delivery">
+        SELECT * FROM delivery 
+        WHERE create_time BETWEEN #{startTime} AND #{endTime}
+        AND deleted = 0
+        ORDER BY create_time DESC
+    </select>
+
+    <!-- 统计岗位的投递数量 -->
+    <select id="countByJobId" resultType="int">
+        SELECT COUNT(*) FROM delivery 
+        WHERE job_id = #{jobId}
+        AND deleted = 0
+    </select>
+
+    <!-- 统计学生的投递数量 -->
+    <select id="countByStudentId" resultType="int">
+        SELECT COUNT(*) FROM delivery 
+        WHERE student_id = #{studentId}
+        AND deleted = 0
+    </select>
+
+</mapper>

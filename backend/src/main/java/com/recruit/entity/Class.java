@@ -1,0 +1,54 @@
+package com.recruit.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+/**
+ * 班级表实体类
+ */
+@Data
+@TableName("class")
+public class Class {
+    
+    /**
+     * 主键自增 - 班级ID
+     */
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    
+    /**
+     * 班级名称
+     */
+    private String name;
+    
+    /**
+     * 班主任/教师ID - 外键(sys_user.id)
+     */
+    private Long teacherId;
+    
+    /**
+     * 专业名称
+     */
+    private String major;
+    
+    /**
+     * 年级（如2023级）
+     */
+    private String grade;
+    
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
+    
+    /**
+     * 逻辑删除标志
+     */
+    @TableLogic
+    private Integer deleted;
+}

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.recruit.mapper.ClassMapper">
+
+    <!-- 根据教师ID查询班级 -->
+    <select id="selectByTeacherId" resultType="com.recruit.entity.Class">
+        SELECT * FROM class 
+        WHERE teacher_id = #{teacherId} 
+        AND deleted = 0
+    </select>
+
+    <!-- 根据专业名称查询班级 -->
+    <select id="selectByMajor" resultType="com.recruit.entity.Class">
+        SELECT * FROM class 
+        WHERE major = #{major} 
+        AND deleted = 0
+    </select>
+
+    <!-- 根据年级查询班级 -->
+    <select id="selectByGrade" resultType="com.recruit.entity.Class">
+        SELECT * FROM class 
+        WHERE grade = #{grade} 
+        AND deleted = 0
+    </select>
+
+    <!-- 根据班级名称模糊查询 -->
+    <select id="selectByNameLike" resultType="com.recruit.entity.Class">
+        SELECT * FROM class 
+        WHERE name LIKE CONCAT('%', #{name}, '%') 
+        AND deleted = 0
+    </select>
+
+    <!-- 更新班级学生数量 -->
+    <update id="updateStudentCount">
+        UPDATE class 
+        SET student_count = #{count} 
+        WHERE id = #{id}
+    </update>
+
+</mapper>

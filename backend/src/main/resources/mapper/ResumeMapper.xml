@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.recruit.mapper.ResumeMapper">
+
+    <!-- 根据学生ID查询简历 -->
+    <select id="selectByStudentId" resultType="com.recruit.entity.Resume">
+        SELECT * FROM resume 
+        WHERE student_id = #{studentId} 
+        AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <!-- 根据学生ID查询默认简历 -->
+    <select id="selectDefaultByStudentId" resultType="com.recruit.entity.Resume">
+        SELECT * FROM resume 
+        WHERE student_id = #{studentId} 
+        AND is_default = 1 
+        AND deleted = 0
+        LIMIT 1
+    </select>
+
+    <!-- 重置默认标志（排除指定简历ID） -->
+    <update id="resetDefaultFlag">
+        UPDATE resume 
+        SET is_default = 0 
+        WHERE student_id = #{studentId}
+        AND id != #{resumeId}
+    </update>
+
+    <!-- 根据技能标签查询简历 -->
+    <select id="selectBySkillTagsLike" resultType="com.recruit.entity.Resume">
+        SELECT * FROM resume 
+        WHERE skill_tags LIKE CONCAT('%', #{keyword}, '%') 
+        AND deleted = 0
+    </select>
+
+    <!-- 根据求职意向查询简历 -->
+    <select id="selectByJobTarget" resultType="com.recruit.entity.Resume">
+        SELECT * FROM resume 
+        WHERE job_target = #{jobTarget} 
+        AND deleted = 0
+    </select>
+
+</mapper>

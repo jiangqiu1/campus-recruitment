@@ -1,0 +1,40 @@
+# Java
+target/
+*.jar
+*.war
+*.class
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# 小程序编译产物
+job-miniprogram/unpackage/
+
+# 个人配置（每个人不同）
+project.private.config.json
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# API 密钥 / 敏感配置
+
+# 日志文件
+*.log
+*/**/*.log
+*/**/logs/
+
+# zip 压缩包
+*.zip
+
+# 项目内部记忆 / 工作日志
+memory/

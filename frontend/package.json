@@ -1,0 +1,28 @@
+{
+  "name": "campus-recruitment-frontend",
+  "version": "1.0.0",
+  "description": "职业院校校企招聘与就业管理平台前端",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.0",
+    "axios": "^1.6.0",
+    "dayjs": "^1.11.10",
+    "echarts": "^5.6.0",
+    "element-plus": "^2.4.0",
+    "file-saver": "^2.0.5",
+    "js-cookie": "^3.0.5",
+    "pinia": "^2.1.0",
+    "vue": "^3.3.0",
+    "vue-router": "^4.2.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.5.0",
+    "sass": "^1.69.0",
+    "vite": "^5.0.0"
+  }
+}

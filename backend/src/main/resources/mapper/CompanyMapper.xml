@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.recruit.mapper.CompanyMapper">
+
+    <!-- 根据合作等级查询企业 -->
+    <select id="selectByCooperationLevel" resultType="com.recruit.entity.Company">
+        SELECT * FROM company 
+        WHERE cooperation_level = #{cooperationLevel} 
+        AND deleted = 0
+    </select>
+
+    <!-- 根据行业查询企业 -->
+    <select id="selectByIndustry" resultType="com.recruit.entity.Company">
+        SELECT * FROM company 
+        WHERE industry = #{industry} 
+        AND deleted = 0
+    </select>
+
+    <!-- 根据名称模糊查询企业 -->
+    <select id="selectByNameLike" resultType="com.recruit.entity.Company">
+        SELECT * FROM company 
+        WHERE name LIKE CONCAT('%', #{name}, '%') 
+        AND deleted = 0
+    </select>
+
+    <!-- 更新合作等级 -->
+    <update id="updateCooperationLevel">
+        UPDATE company 
+        SET cooperation_level = #{cooperationLevel} 
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新企业状态（启用/禁用） -->
+    <update id="updateStatus">
+        UPDATE company 
+        SET status = #{status} 
+        WHERE id = #{id}
+    </update>
+
+</mapper>
