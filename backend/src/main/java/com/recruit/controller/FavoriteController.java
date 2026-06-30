@@ -1,6 +1,7 @@
 package com.recruit.controller;
 
 import com.recruit.entity.Favorite;
+import com.recruit.mapper.FavoriteMapper;
 import com.recruit.service.FavoriteService;
 import com.recruit.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,9 @@ public class FavoriteController {
 
     @Autowired
     private FavoriteService favoriteService;
+
+    @Autowired
+    private FavoriteMapper favoriteMapper;
 
     /**
      * 获取学生收藏的岗位列表
@@ -44,7 +48,12 @@ public class FavoriteController {
         if (studentId == null || jobId == null) {
             return Result.error("studentId和jobId不能为空");
         }
-        // 检查是否已收藏
+        // 优先恢复逻辑删除的记录（绕过 MyBatis-Plus 的 deleted=0 过滤）
+        int restored = favoriteMapper.restoreFavorite(studentId, jobId);
+        if (restored > 0) {
+            return Result.success("收藏成功");
+        }
+        // 检查是否已活跃收藏
         var exists = favoriteService.lambdaQuery()
                 .eq(Favorite::getStudentId, studentId)
                 .eq(Favorite::getJobId, jobId)

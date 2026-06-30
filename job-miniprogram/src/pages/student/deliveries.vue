@@ -16,7 +16,11 @@
 						<text>{{ item.dotIcon }}</text>
 					</view>
 					<view class="timeline-content">
-						<text class="timeline-title">{{ item.jobTitle }}</text>
+						<view class="timeline-header">
+							<text class="timeline-title">{{ item.jobTitle }}</text>
+							<text v-if="item.score !== null" class="score-badge" :class="item.scoreClass">{{ item.score }}分</text>
+							<text v-else class="score-badge score-pending">待评分</text>
+						</view>
 						<text class="timeline-desc">{{ item.companyName }}</text>
 						<view class="timeline-meta">
 							<text class="tag-blue card-tag">{{ item.statusText }}</text>
@@ -25,6 +29,7 @@
 						<view v-if="item.status === 'pending'" class="timeline-actions">
 							<button class="btn-sm btn-outline" @click="cancelDelivery(item.id)">取消投递</button>
 						</view>
+						<text v-if="item.scoreDetail" class="score-detail" @click="showScoreDetail(item)">查看评分详情 →</text>
 					</view>
 				</view>
 				<view v-if="!filteredList.length" class="empty-state">
@@ -40,7 +45,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { deliveryAPI } from '@/utils/request'
+import { deliveryAPI, scoreAPI } from '@/utils/request'
 import TabBar from '@/components/TabBar.vue'
 
 const tabs = [
@@ -51,21 +56,63 @@ const tabs = [
 	{ label: '已通过', value: 'accepted' },
 	{ label: '未通过', value: 'rejected' }
 ]
+const refreshing = ref(false)
 const currentTab = ref('all')
 const deliveries = ref([])
 
-const mockDeliveries = [
-	{ id: 1, jobTitle: '前端开发实习生', companyName: '广州科技有限公司', status: 'pending', statusText: '待查看', createTime: '2026-06-15', dotClass: 'orange', dotIcon: '📬' },
-	{ id: 2, jobTitle: 'Java开发助理', companyName: '深圳信息技术公司', status: 'viewed', statusText: '已查看', createTime: '2026-06-14', dotClass: '', dotIcon: '👀' },
-	{ id: 3, jobTitle: 'UI设计实习生', companyName: '广州创意设计工作室', status: 'interview', statusText: '面试', createTime: '2026-06-13', dotClass: 'green', dotIcon: '📞' },
-	{ id: 4, jobTitle: '运维实习生', companyName: '广州网络科技', status: 'rejected', statusText: '未通过', createTime: '2026-06-12', dotClass: 'gray', dotIcon: '❌' },
-	{ id: 5, jobTitle: '测试工程师', companyName: '珠海软件股份', status: 'accepted', statusText: '已通过', createTime: '2026-06-11', dotClass: 'green', dotIcon: '✅' }
-]
+const loadData = async () => {
+	const sid = getStudentId()
+	if (!sid) { uni.showToast({ title: '请先登录', icon: 'none' }); return }
+	try {
+		const res = await deliveryAPI.getDeliveriesByStudentId({ studentId: sid })
+		deliveries.value = (res.data || []).map(mapDelivery)
+		loadScores(deliveries.value)
+	} catch (e) {
+		console.error('加载投递记录失败', e)
+		uni.showToast({ title: '加载失败', icon: 'none' })
+	}
+}
+
+const onRefresh = async () => {
+	refreshing.value = true
+	await loadData()
+	refreshing.value = false
+}
+
+// 后端 Integer(0-4) → 前端
+const DELIVERY_STATUS = ['pending', 'viewed', 'interview', 'accepted', 'rejected']
+const DELIVERY_STATUS_TEXT = ['待查看', '已查看', '面试', '已通过', '未通过']
+const DOT_CONFIG = ['orange', '', 'green', 'green', 'gray']
+const DOT_ICONS = ['📬', '👀', '📞', '✅', '❌']
+
+const mapDelivery = (d) => ({
+	id: d.id,
+	jobId: d.jobId,
+	jobTitle: d.jobTitle || '',
+	companyName: d.companyName || '',
+	status: DELIVERY_STATUS[d.status] || 'pending',
+	statusText: DELIVERY_STATUS_TEXT[d.status] || '待查看',
+	dotClass: DOT_CONFIG[d.status] || '',
+	dotIcon: DOT_ICONS[d.status] || '📬',
+	createTime: d.createTime ? d.createTime.substring(0, 10) : '',
+	score: null,
+	scoreDetail: '',
+	scoreClass: ''
+})
 
 const filteredList = computed(() => {
 	if (currentTab.value === 'all') return deliveries.value
 	return deliveries.value.filter(d => d.status === currentTab.value)
 })
+
+/** 点击评分详情弹窗 */
+const showScoreDetail = (item) => {
+	uni.showModal({
+		title: '简历评分 ' + item.score + '分',
+		content: item.scoreDetail || '暂无详细评分数据',
+		showCancel: false
+	})
+}
 
 const getStudentId = () => {
 	try {
@@ -77,15 +124,31 @@ const getStudentId = () => {
 	} catch (e) { return null }
 }
 
-onMounted(async () => {
-	try {
-		const sid = getStudentId()
-		const res = await deliveryAPI.getDeliveriesByStudentId({ studentId: sid })
-		deliveries.value = res.data || []
-	} catch (e) {
-		deliveries.value = mockDeliveries
-	}
-})
+/** 获取评分颜色类名 */
+const getScoreClass = (score) => {
+	if (score >= 80) return 'score-green'
+	if (score >= 60) return 'score-blue'
+	if (score >= 40) return 'score-yellow'
+	return 'score-red'
+}
+
+/** 批量加载简历评分 */
+const loadScores = async (deliveries) => {
+	if (!deliveries || deliveries.length === 0) return
+	const results = await Promise.allSettled(
+		deliveries.map(d => scoreAPI.getByDelivery(d.id).catch(() => null))
+	)
+	results.forEach((r, i) => {
+		if (r.status === 'fulfilled' && r.value && r.value.data) {
+			const s = r.value.data
+			deliveries[i].score = s.score
+			deliveries[i].scoreDetail = s.scoreDetail || ''
+			deliveries[i].scoreClass = getScoreClass(s.score)
+		}
+	})
+}
+
+onMounted(loadData)
 
 const cancelDelivery = async (id) => {
 	try {
@@ -165,8 +228,6 @@ const cancelDelivery = async (id) => {
 	font-size: 15px;
 	font-weight: 600;
 	color: #1D2129;
-	display: block;
-	margin-bottom: 4px;
 }
 .timeline-desc {
 	font-size: 13px;
@@ -186,6 +247,39 @@ const cancelDelivery = async (id) => {
 	font-weight: 600;
 }
 .tag-blue { background: rgba(22,93,255,0.1); color: #165DFF; }
+.timeline-header {
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 4px;
+}
+.timeline-title {
+	flex: 1;
+	font-size: 15px;
+	font-weight: 600;
+	color: #1D2129;
+	margin-bottom: 0;
+}
+.score-badge {
+	padding: 2px 10px;
+	border-radius: 12px;
+	font-size: 12px;
+	font-weight: 700;
+	white-space: nowrap;
+	margin-left: 8px;
+	flex-shrink: 0;
+}
+.score-green { background: #ECFDF5; color: #059669; }
+.score-blue { background: #EFF6FF; color: #2563EB; }
+.score-yellow { background: #FFFBEB; color: #D97706; }
+.score-red { background: #FEF2F2; color: #DC2626; }
+.score-pending { background: #F3F4F6; color: #9CA3AF; }
+.score-detail {
+	margin-top: 8px;
+	font-size: 12px;
+	color: #165DFF;
+	text-decoration: underline;
+}
 .timeline-time {
 	font-size: 12px;
 	color: #C9CDD4;

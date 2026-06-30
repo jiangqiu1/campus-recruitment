@@ -1,13 +1,18 @@
 package com.recruit.controller;
 
 import com.recruit.entity.Class;
+import com.recruit.entity.Resume;
 import com.recruit.entity.SysUser;
 import com.recruit.service.ClassService;
+import com.recruit.service.StudentClassService;
+import com.recruit.service.DeliveryService;
+import com.recruit.service.ResumeService;
 import com.recruit.service.UserService;
 import com.recruit.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,12 +30,47 @@ public class ClassController {
     @Autowired
     private UserService userService;
     
+    @Autowired
+    private StudentClassService studentClassService;
+    
+    @Autowired
+    private DeliveryService deliveryService;
+    
+    @Autowired
+    private ResumeService resumeService;
+    
     /**
-     * 获取所有班级列表
+     * 获取所有班级列表（含学生数、就业率、投递数）
      */
     @GetMapping
     public Result<List<Class>> getAllClasses() {
         List<Class> classes = classService.list();
+        // 为每个班级填充统计信息
+        for (Class clazz : classes) {
+            List<Long> studentIds = classService.getStudentIdsByClassId(clazz.getId());
+            int studentCount = studentIds.size();
+            clazz.setStudentCount(studentCount);
+            
+            // 计算投递数：统计班级学生的投递记录
+            int deliveryCount = 0;
+            int employedCount = 0;
+            for (Long sid : studentIds) {
+                int count = Math.toIntExact(deliveryService.lambdaQuery()
+                    .eq(com.recruit.entity.Delivery::getStudentId, sid)
+                    .count());
+                deliveryCount += count;
+                // 检查是否有已接收的投递（status=3 表示已录用）
+                boolean hasOffer = deliveryService.lambdaQuery()
+                    .eq(com.recruit.entity.Delivery::getStudentId, sid)
+                    .eq(com.recruit.entity.Delivery::getStatus, 3)
+                    .count() > 0;
+                if (hasOffer) {
+                    employedCount++;
+                }
+            }
+            clazz.setDeliveryCount(deliveryCount);
+            clazz.setEmploymentRate(studentCount > 0 ? String.format("%.0f%%", employedCount * 100.0 / studentCount) : "0%");
+        }
         return Result.success(classes);
     }
     
@@ -151,11 +191,32 @@ public class ClassController {
      * 获取班级学生列表
      */
     @GetMapping("/{classId}/students")
-    public Result<List<SysUser>> getClassStudents(@PathVariable Long classId) {
+    public Result<List<Map<String, Object>>> getClassStudents(@PathVariable Long classId) {
         List<Long> studentIds = classService.getStudentIdsByClassId(classId);
-        List<SysUser> students = studentIds.stream()
-                .map(studentId -> userService.getById(studentId))
-                .filter(student -> student != null)
+        List<Map<String, Object>> students = studentIds.stream()
+                .map(studentId -> {
+                    SysUser user = userService.getById(studentId);
+                    if (user == null) return null;
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", user.getId());
+                    map.put("username", user.getUsername());
+                    map.put("realName", user.getRealName());
+                    map.put("phone", user.getPhone() != null ? user.getPhone() : "");
+                    // 计算简历完整度
+                    Resume resume = resumeService.selectByStudentId(studentId);
+                    int resumeComplete = 0;
+                    if (resume != null) {
+                        if (resume.getEducation() != null && !resume.getEducation().isEmpty()) resumeComplete += 40;
+                        if (resume.getSkills() != null && !resume.getSkills().isEmpty()) resumeComplete += 30;
+                        if (resume.getSelfEvaluation() != null && !resume.getSelfEvaluation().isEmpty()) resumeComplete += 30;
+                    }
+                    map.put("resumeComplete", resumeComplete);
+                    // 计算投递数
+                    Integer deliveryCount = deliveryService.countByStudentId(studentId);
+                    map.put("deliveryCount", deliveryCount != null ? deliveryCount : 0);
+                    return map;
+                })
+                .filter(map -> map != null)
                 .collect(Collectors.toList());
         return Result.success(students);
     }

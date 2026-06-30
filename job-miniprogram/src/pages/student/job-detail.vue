@@ -64,36 +64,32 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { jobAPI, deliveryAPI, favoriteAPI } from '@/utils/request'
+import { ref, onMounted, computed } from 'vue'
+import { jobAPI, deliveryAPI, favoriteAPI, resumeAPI } from '@/utils/request'
 
 const job = ref({})
 const isFavorited = ref(false)
 const isDelivered = ref(false)
 const matchScore = ref(85)
 
-const mockJob = {
-	id: 1,
-	title: '前端开发实习生',
-	companyName: '广州科技有限公司',
-	companyDesc: '专注于企业级SaaS服务，团队年轻有活力，提供完善培训体系。',
-	location: '广州',
-	experience: '经验不限',
-	education: '大专及以上',
-	salaryText: '4K-6K',
-	jobType: '实习',
-	description: '1. 参与公司产品的前端页面开发和维护\n2. 配合后端工程师完成接口联调\n3. 参与前端组件库的建设和优化\n4. 学习和研究前沿前端技术',
-	requirements: '1. 计算机相关专业，大专及以上学历\n2. 熟悉 HTML5、CSS3、JavaScript 基础\n3. 了解 Vue.js 或 React 框架优先\n4. 有良好的团队协作和沟通能力'
-}
+onMounted(async () => {
+	const pages = getCurrentPages()
+	const currentPage = pages[pages.length - 1]
+	// uni-app 标准参数获取方式：options.id
+	const jobId = (currentPage.$page && currentPage.$page.options && currentPage.$page.options.id)
+		|| (currentPage.options && currentPage.options.id)
+		|| ''
+	if (!jobId) {
+		uni.showToast({ title: '参数错误', icon: 'none' })
+		return
+	}
+	await loadJobDetail(jobId)
+	await loadUserState()
+})
 
 const companyLogo = computed(() => {
 	const name = job.value.companyName || ''
 	return name.charAt(0) || '企'
-})
-
-onLoad((options) => {
-	const jobId = options?.id || ''
-	loadJobDetail(jobId).then(() => loadUserState())
 })
 
 const loadJobDetail = async (id) => {
@@ -101,8 +97,8 @@ const loadJobDetail = async (id) => {
 		const res = await jobAPI.getJobDetail(id)
 		job.value = res.data || {}
 	} catch (e) {
-		console.log('API未就绪，使用模拟数据')
-		job.value = { ...mockJob, id: id || 1 }
+		console.log('加载岗位详情失败', e)
+		uni.showToast({ title: '加载失败', icon: 'none' })
 	}
 }
 
@@ -119,9 +115,9 @@ const getStudentId = () => {
 
 const loadUserState = async () => {
 	const sid = getStudentId()
-	const theId = job.value?.id
+	const theId = job.value && job.value.id
 	if (!sid || !theId) {
-		console.log('跳过：studentId=' + sid + ' jobId=' + JSON.stringify(theId))
+		console.log('跳过：studentId或jobId为空')
 		return
 	}
 	try {
@@ -142,6 +138,25 @@ const handleDeliver = async () => {
 	const theId = job.value && job.value.id
 	if (!sid || !theId) {
 		uni.showToast({ title: '请先登录', icon: 'none' })
+		return
+	}
+	// 检查是否有简历
+	try {
+		const resumeRes = await resumeAPI.getResume()
+		if (!resumeRes || !resumeRes.data) {
+			uni.showModal({
+				title: '无简历',
+				content: '投递前请先创建简历，是否前往创建？',
+				success: (r) => {
+					if (r.confirm) {
+						uni.navigateTo({ url: '/pages/student/resume-edit' })
+					}
+				}
+			})
+			return
+		}
+	} catch (e) {
+		uni.showToast({ title: '检查简历失败', icon: 'none' })
 		return
 	}
 	try {

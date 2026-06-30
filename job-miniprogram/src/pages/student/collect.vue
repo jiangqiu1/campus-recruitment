@@ -4,7 +4,7 @@
 			<text style="font-size:20px;" @click="goBack">‹</text>
 			<text style="font-size:18px;font-weight:700;color:white;">我的收藏</text>
 		</view>
-		<scroll-view class="content-scrollable" scroll-y>
+		<scroll-view class="content-scrollable" scroll-y refresher-enabled="true" :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
 			<view class="card-list">
 				<view v-for="(fav, i) in favorites" :key="i" class="card-item" @click="goToDetail(fav.jobId)">
 					<view class="card-header-row">
@@ -16,7 +16,7 @@
 					</view>
 					<view class="card-info">
 						<text>{{ fav.location || '' }}</text>
-						<text>{{ fav.experience || '' }}</text>
+						<text>{{ fav.education || '' }}</text>
 					</view>
 					<view class="card-actions">
 						<button class="btn-sm" :class="deliveredJobIds.has(fav.jobId) ? 'btn-disabled' : 'btn-primary'" :disabled="deliveredJobIds.has(fav.jobId)" @click.stop="handleDeliver(fav)">{{ deliveredJobIds.has(fav.jobId) ? '已投递' : '投递' }}</button>
@@ -35,14 +35,34 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { favoriteAPI, deliveryAPI, jobAPI } from '@/utils/request'
+import { favoriteAPI, deliveryAPI } from '@/utils/request'
 
+const refreshing = ref(false)
 const favorites = ref([])
 const deliveredJobIds = ref(new Set())
-const mockFavorites = [
-	{ id: 1, title: '前端开发实习生', companyName: '广州科技有限公司', location: '广州', experience: '经验不限', salaryText: '4K-6K' },
-	{ id: 2, title: 'UI设计实习生', companyName: '广州创意设计工作室', location: '广州', experience: '经验不限', salaryText: '3K-5K' }
-]
+
+const onRefresh = async () => {
+	refreshing.value = true
+	const sid = getStudentId()
+	if (sid) {
+		try {
+			const [fRes, dRes] = await Promise.all([
+				favoriteAPI.getFavorites({ studentId: sid }),
+				deliveryAPI.getDeliveriesByStudentId({ studentId: sid })
+			])
+			favorites.value = (fRes.data || []).map(f => ({
+				...f,
+				title: f.title || '岗位 #' + f.jobId,
+				companyName: f.companyName || '',
+				location: f.location || '',
+				salaryText: f.salaryText || ''
+			}))
+			deliveredJobIds.value = new Set((dRes.data || []).map(d => d.jobId))
+		} catch (e) { console.error('刷新失败', e) }
+	}
+	refreshing.value = false
+}
+
 
 const getStudentId = () => {
 	try {
@@ -55,39 +75,24 @@ const getStudentId = () => {
 }
 
 onMounted(async () => {
+	const sid = getStudentId()
+	if (!sid) { uni.showToast({ title: '请先登录', icon: 'none' }); return }
 	try {
-		const sid = getStudentId()
 		const [fRes, dRes] = await Promise.all([
 			favoriteAPI.getFavorites({ studentId: sid }),
 			deliveryAPI.getDeliveriesByStudentId({ studentId: sid })
 		])
-		const rawFavs = fRes.data || []
-		const jobIds = rawFavs.map(f => f.jobId).filter(Boolean)
-		// 获取岗位详情用于显示
-		let jobMap = {}
-		if (jobIds.length > 0) {
-			try {
-				const jobRes = await jobAPI.getActiveJobs()
-				const allJobs = jobRes.data || []
-				jobIds.forEach(jid => {
-					const found = allJobs.find(j => j.id == jid)
-					if (found) jobMap[jid] = found
-				})
-			} catch (e) { /* fallback to default labels */ }
-		}
-		favorites.value = rawFavs.map(f => ({
+		favorites.value = (fRes.data || []).map(f => ({
 			...f,
-			jobId: f.jobId,
-			title: jobMap[f.jobId]?.title || '岗位 #' + f.jobId,
-			companyName: jobMap[f.jobId]?.companyName || '',
-			location: jobMap[f.jobId]?.location || '',
-			experience: jobMap[f.jobId]?.experience || '',
-			salaryText: jobMap[f.jobId]?.salaryText || ''
+			title: f.title || '岗位 #' + f.jobId,
+			companyName: f.companyName || '',
+			location: f.location || '',
+			salaryText: f.salaryText || ''
 		}))
 		deliveredJobIds.value = new Set((dRes.data || []).map(d => d.jobId))
 	} catch (e) {
-		console.log('API未就绪，使用模拟数据', e)
-		favorites.value = mockFavorites
+		console.error('加载收藏数据失败', e)
+		uni.showToast({ title: '加载失败', icon: 'none' })
 	}
 })
 

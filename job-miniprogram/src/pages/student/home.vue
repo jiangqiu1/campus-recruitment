@@ -25,18 +25,7 @@
 				</view>
 			</view>
 
-			<!-- Banner -->
-			<view class="banner">
-				<view class="banner-content">
-					<text class="banner-title">AI 智能匹配</text>
-					<text class="banner-desc">基于你的技能和简历，精准推荐适合岗位</text>
-				</view>
-				<view class="banner-dots">
-					<view class="dot active"></view>
-					<view class="dot"></view>
-					<view class="dot"></view>
-				</view>
-			</view>
+			<!-- 快捷入口（原轮播图位，已移除） -->
 
 			<!-- 快捷入口 -->
 			<view class="quick-menu">
@@ -122,7 +111,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { jobAPI, deliveryAPI, statisticsAPI, favoriteAPI } from '@/utils/request'
+import { request, jobAPI, deliveryAPI, statisticsAPI, favoriteAPI, mapJobData } from '@/utils/request'
 import TabBar from '@/components/TabBar.vue'
 
 const keyword = ref('')
@@ -137,12 +126,12 @@ const deliverBtnDisabled = (job) => deliveredJobIds.value.has(job.id)
 
 // 模拟数据（API不通时使用）
 const mockJobs = [
-	{ id: 1, title: '前端开发实习生', companyName: '广州科技有限公司', location: '广州', experience: '经验不限', education: '大专及以上', salaryText: '4K-6K', colorClass: 'green', matchScore: 92 },
-	{ id: 2, title: 'Java开发助理', companyName: '深圳信息技术公司', location: '深圳', experience: '应届', education: '大专及以上', salaryText: '5K-7K', colorClass: 'orange', matchScore: 88 },
-	{ id: 3, title: 'UI设计实习生', companyName: '广州创意设计工作室', location: '广州', experience: '经验不限', education: '大专及以上', salaryText: '3K-5K', colorClass: 'ai', matchScore: 85 },
-	{ id: 4, title: '测试工程师', companyName: '珠海软件股份', location: '珠海', experience: '1年以下', education: '本科', salaryText: '4K-6K', colorClass: 'red', matchScore: 80 },
-	{ id: 5, title: '运维实习生', companyName: '广州网络科技', location: '广州', experience: '经验不限', education: '大专', salaryText: '3K-5K', colorClass: '', matchScore: 78 }
-]
+	{ id: 1, title: '前端开发实习生', salaryRange: '4K-6K', location: '广州', education: '大专及以上', companyId: 1, colorClass: 'green', matchScore: 92 },
+	{ id: 2, title: 'Java开发助理', salaryRange: '5K-7K', location: '深圳', education: '大专及以上', companyId: 1, colorClass: 'orange', matchScore: 88 },
+	{ id: 3, title: 'UI设计实习生', salaryRange: '3K-5K', location: '广州', education: '大专及以上', companyId: 1, colorClass: 'ai', matchScore: 85 },
+	{ id: 4, title: '测试工程师', salaryRange: '4K-6K', location: '珠海', education: '本科', companyId: 1, colorClass: 'red', matchScore: 80 },
+	{ id: 5, title: '运维实习生', salaryRange: '3K-5K', location: '广州', education: '大专', companyId: 1, colorClass: '', matchScore: 78 }
+].map(mapJobData)
 
 const mockStats = { deliveries: 12, viewed: 8, interviews: 3, offers: 1 }
 
@@ -157,8 +146,20 @@ const loadData = async () => {
 			jobAPI.getRecommendJobs(),
 			statisticsAPI.getStudentOverview()
 		])
-		recommendJobs.value = jobsRes.data || []
-		// 后端返回字段名映射（myDeliveries → deliveries, viewedDeliveries → viewed）
+		// 后端岗位数据字段映射 + 补充公司名
+		const rawJobs = jobsRes.data || []
+		recommendJobs.value = await Promise.all(rawJobs.map(async (j) => {
+			const mapped = mapJobData(j)
+			// 补充公司名
+			if (j.companyId && !mapped.companyName) {
+				try {
+					const cRes = await request({ url: '/companies/' + j.companyId })
+					const c = cRes.data || {}
+					mapped.companyName = c.name || c.shortName || ''
+				} catch (ce) {}
+			}
+			return mapped
+		}))
 		const d = statsRes.data || {}
 		stats.value = { deliveries: d.myDeliveries || 0, viewed: d.viewedDeliveries || 0, interviews: d.interviewCount || 0, offers: d.offersCount || 0 }
 	} catch (e) {
@@ -328,54 +329,13 @@ const goToMessages = () => {
 	font-size: 16px;
 }
 
-/* Banner */
-.banner {
-	margin: 12px 16px;
-	border-radius: 16px;
-	overflow: hidden;
-	height: 130px;
-	background: linear-gradient(135deg, #165DFF, #60A5FA);
-	padding: 24px;
-	color: white;
-	position: relative;
-	justify-content: center;
-}
-.banner-content {
-	gap: 8px;
-}
-.banner-title {
-	font-size: 20px;
-	font-weight: 700;
-}
-.banner-desc {
-	font-size: 14px;
-	opacity: 0.9;
-}
-.banner-dots {
-	flex-direction: row;
-	position: absolute;
-	bottom: 12px;
-	gap: 6px;
-}
-.dot {
-	width: 6px;
-	height: 6px;
-	border-radius: 50%;
-	background: rgba(255,255,255,0.4);
-}
-.dot.active {
-	background: white;
-	width: 18px;
-	border-radius: 3px;
-}
-
 /* Quick Menu */
 .quick-menu {
 	flex-direction: row;
 	justify-content: space-around;
-	padding: 20px 16px;
+	padding: 16px 16px;
 	background: white;
-	margin-bottom: 12px;
+	margin: 12px 0 0;
 }
 .quick-item {
 	align-items: center;
@@ -403,6 +363,7 @@ const goToMessages = () => {
 /* Data Section */
 .data-section {
 	padding: 0 16px;
+	margin-top: 12px;
 	margin-bottom: 12px;
 }
 .section-header {

@@ -1,0 +1,19 @@
+{
+  "name": "job-miniprogram",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:mp-weixin": "uni -p mp-weixin",
+    "build:mp-weixin": "uni build -p mp-weixin"
+  },
+  "dependencies": {
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "@dcloudio/uni-app": "3.0.0-alpha-5010320260611001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-alpha-5010320260611001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-alpha-5010320260611001",
+    "vite": "5.2.8",
+    "@vitejs/plugin-vue": "^5.0.0"
+  }
+}

@@ -58,9 +58,9 @@ public class JobServiceImpl extends ServiceImpl<JobMapper, Job> implements JobSe
             throw new RuntimeException("岗位不存在");
         }
         
-        // 只有草稿状态可以发布
-        if (job.getStatus() != 0) {
-            throw new RuntimeException("只有草稿状态的岗位可以发布");
+        // 草稿→发布（首次发布），已关闭→发布（重新上架）
+        if (job.getStatus() != 0 && job.getStatus() != 2) {
+            throw new RuntimeException("只有草稿或已关闭状态的岗位可以发布");
         }
         
         job.setStatus(1); // 已发布

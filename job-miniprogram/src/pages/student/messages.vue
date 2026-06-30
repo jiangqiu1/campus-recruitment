@@ -37,13 +37,7 @@ import TabBar from '@/components/TabBar.vue'
 
 const messages = ref([])
 
-const mockMessages = [
-	{ id: 1, title: '投递反馈', content: '您的简历已被「广州科技有限公司」查看', time: '2026-06-15 14:30', icon: '👀', iconClass: 'green', isRead: false },
-	{ id: 2, title: '面试邀请', content: '「深圳信息技术」邀请您参加Java开发助理面试', time: '2026-06-14 10:00', icon: '📞', iconClass: 'orange', isRead: false },
-	{ id: 3, title: '系统通知', content: '您有2份简历被企业标记为「有意向」', time: '2026-06-13', icon: '💡', iconClass: 'ai', isRead: true },
-	{ id: 4, title: '录用通知', content: '祝贺您通过「广州创意设计」UI设计岗位面试', time: '2026-06-12', icon: '✅', iconClass: 'green', isRead: true },
-	{ id: 5, title: '系统消息', content: 'AI匹配到3个新岗位，快来看看吧', time: '2026-06-11', icon: '🤖', iconClass: 'ai', isRead: true }
-]
+
 
 const getStudentId = () => {
 	try {
@@ -56,12 +50,14 @@ const getStudentId = () => {
 }
 
 onMounted(async () => {
+	const sid = getStudentId()
+	if (!sid) return
 	try {
-		const sid = getStudentId()
 		const res = await messageAPI.getMessages({ studentId: sid })
 		messages.value = res.data || []
 	} catch (e) {
-		messages.value = mockMessages
+		console.error('加载消息失败', e)
+		uni.showToast({ title: '加载失败', icon: 'none' })
 	}
 })
 

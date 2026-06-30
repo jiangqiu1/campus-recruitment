@@ -5,6 +5,7 @@ import com.recruit.entity.Delivery;
 import com.recruit.entity.Job;
 import com.recruit.entity.Resume;
 import com.recruit.entity.SysUser;
+import com.recruit.service.CompanyService;
 import com.recruit.service.DeliveryService;
 import com.recruit.service.JobService;
 import com.recruit.service.ResumeService;
@@ -37,6 +38,9 @@ public class DeliveryController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private CompanyService companyService;
 
     @GetMapping
     public Result<List<DeliveryVO>> getAllDeliveries() {
@@ -130,10 +134,8 @@ public class DeliveryController {
 
     @DeleteMapping("/{id}")
     public Result<String> deleteDelivery(@PathVariable Long id) {
-        Delivery d = deliveryService.getById(id);
-        if (d == null) return Result.error(404, "投递记录不存在");
-        d.setDeleted(1);
-        deliveryService.updateById(d);
+        boolean ok = deliveryService.removeById(id);
+        if (!ok) return Result.error(404, "投递记录不存在或已取消");
         return Result.success("投递记录删除成功");
     }
 
@@ -153,6 +155,7 @@ public class DeliveryController {
         // 扩展字段
         private String studentName;
         private String jobTitle;
+        private String companyName;
 
         public DeliveryVO(Delivery d) {
             this.id = d.getId();
@@ -188,6 +191,8 @@ public class DeliveryController {
         public void setStudentName(String studentName) { this.studentName = studentName; }
         public String getJobTitle() { return jobTitle; }
         public void setJobTitle(String jobTitle) { this.jobTitle = jobTitle; }
+        public String getCompanyName() { return companyName; }
+        public void setCompanyName(String companyName) { this.companyName = companyName; }
     }
 
     private DeliveryVO enrichDelivery(Delivery d) {
@@ -204,6 +209,13 @@ public class DeliveryController {
             Job job = jobService.getById(d.getJobId());
             if (job != null) {
                 vo.setJobTitle(job.getTitle());
+                // 查询企业名称
+                if (job.getCompanyId() != null) {
+                    com.recruit.entity.Company company = companyService.getById(job.getCompanyId());
+                    if (company != null) {
+                        vo.setCompanyName(company.getName());
+                    }
+                }
             }
         }
         return vo;

@@ -22,6 +22,12 @@ job-miniprogram/unpackage/
 # 个人配置（每个人不同）
 project.private.config.json
 
+# 本地配置覆盖（含Redis密码等敏感信息）
+backend/config/
+
+# 项目备份目录
+job-miniprogram-bak/
+
 # 操作系统
 .DS_Store
 Thumbs.db

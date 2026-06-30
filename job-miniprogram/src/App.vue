@@ -2,14 +2,26 @@
 	export default {
 		onLaunch: function() {
 			console.log('App Launch')
-			// 检查登录状态
 			const token = uni.getStorageSync('token')
-			if (token) {
-				// 已登录，跳转到首页
-				uni.reLaunch({ url: '/pages/student/home' })
+			const userInfoStr = uni.getStorageSync('userInfo')
+			if (token && userInfoStr) {
+				try {
+					const userInfo = JSON.parse(userInfoStr)
+					const role = userInfo.role
+					if (role === 0 || role === '0') {
+						uni.reLaunch({ url: '/pages/student/home' })
+					} else if (role === 1 || role === '1') {
+						uni.reLaunch({ url: '/pages/teacher/home' })
+					} else if (role === 2 || role === '2') {
+						uni.reLaunch({ url: '/pages/hr/home' })
+					} else {
+						uni.reLaunch({ url: '/pages/student/home' })
+					}
+				} catch(e) {
+					uni.reLaunch({ url: '/pages/student/login' })
+				}
 			} else {
-				// 未登录，跳转到登录页
-				uni.reLaunch({ url: '/pages/student/login' })
+				uni.reLaunch({ url: '/pages/index/index' })
 			}
 		}
 	}

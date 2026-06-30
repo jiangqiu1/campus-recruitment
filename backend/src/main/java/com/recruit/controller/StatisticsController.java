@@ -1,6 +1,7 @@
 package com.recruit.controller;
 
 import com.recruit.entity.Delivery;
+import com.recruit.entity.Class;
 import com.recruit.entity.Job;
 import com.recruit.entity.OperationLog;
 import com.recruit.entity.SysUser;
@@ -39,6 +40,9 @@ public class StatisticsController {
 
     @Autowired(required = false)
     private StudentClassService studentClassService;
+
+    @Autowired(required = false)
+    private ClassService classService;
 
     @Autowired(required = false)
     private ResumeService resumeService;
@@ -122,10 +126,21 @@ public class StatisticsController {
         long classCount = 0;
         long studentCount = 0;
         try {
-            if (studentClassService != null) {
-                // 查找教师管理的班级
-                var classes = userService.getBaseMapper().selectList(null); // 暂简化
-                classCount = 3; // placeholder
+            if (classService != null) {
+                // 统计全部班级（与班级管理页一致）
+                List<Class> allClasses = classService.list();
+                classCount = allClasses != null ? allClasses.size() : 0;
+                // 统计所有班级的去重学生数
+                Set<Long> allStudentIds = new HashSet<>();
+                if (allClasses != null) {
+                    for (Class cls : allClasses) {
+                        List<Long> studentIds = classService.getStudentIdsByClassId(cls.getId());
+                        if (studentIds != null) {
+                            allStudentIds.addAll(studentIds);
+                        }
+                    }
+                }
+                studentCount = allStudentIds.size();
             }
         } catch (Exception ignored) {}
 

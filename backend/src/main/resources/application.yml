@@ -4,7 +4,7 @@ server:
     context-path: /api
 
 spring:
-  # 数据库配置
+  # 数据库配�?
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/campus_recruitment?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
@@ -18,10 +18,11 @@ spring:
 
   # Redis 配置
   redis:
-    host: localhost
+    host: 127.0.0.1
     port: 6379
     database: 0
     timeout: 6000ms
+    password: pass4Redis
     lettuce:
       pool:
         max-active: 8
@@ -59,7 +60,7 @@ mybatis-plus:
 # JWT 配置
 jwt:
   secret: recruitment-platform-secret-key-2025
-  expiration: 604800000  # 7天（毫秒）
+  expiration: 604800000  # 7天（毫秒�?
   header: Authorization
   prefix: "Bearer "
 
@@ -76,3 +77,4 @@ logging:
     com.recruit.mapper: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
