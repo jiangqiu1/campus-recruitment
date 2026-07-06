@@ -3,14 +3,19 @@ package com.recruit.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.recruit.entity.Class;
 import com.recruit.entity.Resume;
+import com.recruit.entity.SysUser;
+import com.recruit.service.ClassService;
 import com.recruit.service.ResumeService;
+import com.recruit.service.UserService;
+import com.recruit.utils.AiService;
 import com.recruit.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Map;
+import java.util.*;
 
 /**
  * 简历管理控制器
@@ -18,10 +23,19 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/resumes")
-public class ResumeController {
+public class ResumeController extends BaseController {
     
     @Autowired
     private ResumeService resumeService;
+
+    @Autowired(required = false)
+    private ClassService classService;
+
+    @Autowired
+    private AiService aiService;
+
+    @Autowired
+    private UserService userService;
     
     /**
      * 获取简历列表（教师/管理员）
@@ -48,7 +62,8 @@ public class ResumeController {
      * @return 简历实体
      */
     @GetMapping("/my")
-    public Result<Resume> getMyResume(@RequestParam Long studentId) {
+    public Result<Resume> getMyResume(@RequestParam(required = false) Long studentId) {
+        if (studentId == null) studentId = getCurrentUserId();
         Resume resume = resumeService.selectByStudentId(studentId);
         if (resume == null) {
             return Result.error(404, "简历不存在");
@@ -81,18 +96,46 @@ public class ResumeController {
      * @return 创建/更新结果
      */
     @PostMapping
-    public Result<String> createOrUpdateResume(@RequestParam Long studentId, @RequestBody Resume resume) {
-        resume.setStudentId(studentId);
-        
-        if (resume.getId() == null) {
-            // 创建简历
-            resumeService.save(resume);
-            return Result.success("简历创建成功");
-        } else {
-            // 更新简历
-            resumeService.updateById(resume);
-            return Result.success("简历更新成功");
+    public Result<String> createOrUpdateResume(
+            @RequestParam Long studentId,
+            @RequestBody Map<String, Object> body) {
+
+        // 同步更新用户基本信息（姓名、性别、手机号、邮箱）
+        Object name = body.get("name");
+        Object gender = body.get("gender");
+        Object phone = body.get("phone");
+        Object email = body.get("email");
+        if (name != null || phone != null || email != null || gender != null) {
+            SysUser user = userService.getById(studentId);
+            if (user != null) {
+                if (name != null) user.setRealName(name.toString());
+                if (phone != null) user.setPhone(phone.toString());
+                if (email != null) user.setEmail(email.toString());
+                if (gender != null) {
+                    try { user.setGender(Integer.valueOf(gender.toString())); } catch (Exception ignored) {}
+                }
+                userService.updateById(user);
+            }
         }
+
+        // 保存简历数据
+        Resume resume = new Resume();
+        resume.setStudentId(studentId);
+        if (body.get("id") != null) {
+            resume.setId(Long.valueOf(body.get("id").toString()));
+        }
+        if (body.get("education") != null) resume.setEducation(body.get("education").toString());
+        if (body.get("internship") != null) resume.setInternship(body.get("internship").toString());
+        if (body.get("skills") != null) resume.setSkills(body.get("skills").toString());
+        if (body.get("selfEvaluation") != null) resume.setSelfEvaluation(body.get("selfEvaluation").toString());
+        if (body.get("jobTarget") != null) resume.setJobTarget(body.get("jobTarget").toString());
+
+        if (resume.getId() == null) {
+            resumeService.save(resume);
+        } else {
+            resumeService.updateById(resume);
+        }
+        return Result.success("保存成功");
     }
     
     /**
@@ -128,7 +171,57 @@ public class ResumeController {
         
         return Result.success("PDF简历上传成功", result);
     }
-    
+
+    /**
+     * 上传PDF简历并自动 AI 解析
+     *
+     * @param studentId 学生ID
+     * @param file PDF文件
+     * @return 解析结果（含结构化数据和PDF路径）
+     */
+    @PostMapping("/upload-and-parse")
+    public Result<Map<String, Object>> uploadAndParse(
+            @RequestParam Long studentId,
+            @RequestParam("file") MultipartFile file) {
+
+        // 1. 提取PDF文本
+        String rawText;
+        try {
+            rawText = aiService.extractTextFromPdf(file);
+            if (rawText == null || rawText.trim().isEmpty()) {
+                return Result.error("无法提取文本，请确认PDF为文字版而非扫描件");
+            }
+        } catch (Exception e) {
+            return Result.error("PDF读取失败: " + e.getMessage());
+        }
+
+        // 2. AI解析
+        Map<String, Object> parsed = aiService.parseResume(rawText);
+        if (parsed == null || parsed.isEmpty()) {
+            return Result.error("AI解析失败，请稍后重试或手动填写");
+        }
+
+        // 3. 保存PDF路径
+        String pdfUrl = "/uploads/resume/resume_" + studentId + ".pdf";
+        Resume resume = resumeService.selectByStudentId(studentId);
+        if (resume == null) {
+            resume = new Resume();
+            resume.setStudentId(studentId);
+            resume.setPdfUrl(pdfUrl);
+            resumeService.save(resume);
+        } else {
+            resume.setPdfUrl(pdfUrl);
+            resumeService.updateById(resume);
+        }
+
+        // 4. 返回解析结果
+        Map<String, Object> result = new HashMap<>();
+        result.put("parsedData", parsed);
+        result.put("pdfUrl", pdfUrl);
+
+        return Result.success("解析成功", result);
+    }
+
     /**
      * 设置默认简历
      * 
@@ -214,6 +307,18 @@ public class ResumeController {
      */
     @GetMapping("/student/{studentId}")
     public Result<Resume> getStudentResume(@PathVariable Long studentId) {
+        Integer role = getCurrentRole();
+        if (Objects.equals(role, 1)) {
+            boolean inMyClass = false;
+            try {
+                List<Class> myClasses = classService.selectByTeacherId(getCurrentUserId());
+                for (Class cls : myClasses) {
+                    List<Long> ids = classService.getStudentIdsByClassId(cls.getId());
+                    if (ids != null && ids.contains(studentId)) { inMyClass = true; break; }
+                }
+            } catch (Exception ignored) {}
+            if (!inMyClass) return Result.error(403, "无权查看该学生简历");
+        }
         Resume resume = resumeService.selectByStudentId(studentId);
         if (resume == null) {
             return Result.error(404, "该学生简历不存在");

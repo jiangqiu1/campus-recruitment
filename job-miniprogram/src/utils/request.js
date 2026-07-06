@@ -74,6 +74,14 @@ export const request = (options) => {
           return
         }
 
+        // HTTP 403 — 无权限，统一提示
+        if (res.statusCode === 403) {
+          console.warn('[无权限]', options.url, res.data)
+          uni.showToast({ title: '无权限访问', icon: 'none' })
+          reject(res.data || { code: 403, message: '无权限访问' })
+          return
+        }
+
         if (res.data.code === 200) {
           resolve(res.data)
         } else {
@@ -109,15 +117,15 @@ export const jobAPI = {
 /* ======================== 投递模块 ======================== */
 export const deliveryAPI = {
   createDelivery: (data) => {
-    const { studentId, ...body } = data
-    const qs = studentId ? '?studentId=' + studentId : ''
-    return request({ url: '/deliveries/deliver' + qs, method: 'POST', data: { ...body, resumeVersion: 'latest' } })
+    // studentId 由后端从JWT解析，前端不再手动传参
+    return request({ url: '/deliveries/deliver', method: 'POST', data: { ...data, resumeVersion: 'latest' } })
   },
   getDeliveriesByStudentId: (params) => {
     if (params && params.studentId) {
       return request({ url: '/deliveries/by-student/' + params.studentId })
     }
-    return request({ url: '/deliveries', data: params })
+    // 不传 studentId 时，后端从 JWT 自动取
+    return request({ url: '/deliveries' })
   },
   cancelDelivery: (id) => request({ url: '/deliveries/' + id, method: 'DELETE' }),
   getDeliveryDetail: (id) => request({ url: '/deliveries/' + id })
@@ -126,8 +134,8 @@ export const deliveryAPI = {
 /* ======================== 简历模块 ======================== */
 export const resumeAPI = {
   getResume: () => {
-    const sid = getStudentId() || 0
-    return request({ url: '/resumes/my', data: { studentId: sid } })
+    // studentId 由后端从JWT解析
+    return request({ url: '/resumes/my' })
   },
   createOrUpdateResume: (studentId, data) => request({ url: '/resumes?studentId=' + studentId, method: 'POST', data }),
   setDefault: (resumeId, studentId) => request({ url: '/resumes/' + resumeId + '/set-default', method: 'PUT', data: { studentId } }),
@@ -140,7 +148,7 @@ export const resumeAPI = {
         url: BASE_URL + '/resumes/upload-pdf',
         filePath: filePath,
         name: 'file',
-        formData: { studentId: uni.getStorageSync('userInfo') ? JSON.parse(uni.getStorageSync('userInfo')).id || 0 : 0 },
+        formData: {},  // studentId由后端从JWT解析
         header: { 'Authorization': token },
         success: (res) => {
           try {
@@ -187,13 +195,15 @@ export const teacherAPI = {
   getStudentResume: (studentId) => request({ url: '/resumes/student/' + studentId }),
   getStudentInfo: (studentId) => request({ url: '/resumes/student/' + studentId + '/info' }),
   getStudentDeliveries: (studentId) => request({ url: '/deliveries/by-student/' + studentId }),
-  getTeacherJobs: (createdBy) => request({ url: '/jobs/by-creator/' + createdBy }),
+  updateDeliveryStatus: (id, data) => request({ url: '/deliveries/' + id + '/status', method: 'PUT', data }),
+  getTeacherJobs: () => request({ url: '/jobs/teacher' }),
   createJob: (data) => request({ url: '/jobs', method: 'POST', data }),
   updateJob: (id, data) => request({ url: '/jobs/' + id, method: 'PUT', data }),
   publishJob: (id) => request({ url: '/jobs/' + id + '/publish', method: 'PUT' }),
   closeJob: (id) => request({ url: '/jobs/' + id + '/close', method: 'PUT' }),
   getCompanyName: (id) => request({ url: '/companies/' + id }),
   getCompanies: (params) => request({ url: '/companies', data: params }),
+  createCompany: (data) => request({ url: '/companies', method: 'POST', data }),
   getAllDeliveries: (jobId) => request({ url: '/deliveries/by-job/' + jobId }),
   getApprovals: (status) => request({ url: '/job-changes', data: { status } }),
   approveJobChange: (id) => request({ url: '/job-changes/' + id + '/approve', method: 'PUT' }),
@@ -202,7 +212,7 @@ export const teacherAPI = {
 
 /* ======================== 企业端（HR）模块 ======================== */
 export const hrAPI = {
-  getDashboard: (companyId) => request({ url: '/statistics/hr/dashboard' }),
+  getDashboard: (companyId) => request({ url: '/statistics/hr/dashboard', data: { companyId } }),
   getDeliveryTrend: (userId) => request({ url: '/statistics/delivery-trend', data: { userId } }),
   getHrJobs: (companyId) => request({ url: '/jobs/by-company/' + companyId }),
   createJob: (data) => request({ url: '/jobs', method: 'POST', data }),
@@ -223,7 +233,7 @@ export const matchAPI = {
   getByStudent: (studentId) => request({ url: '/job-matches/by-student/' + studentId }),
   getByJob: (jobId) => request({ url: '/job-matches/by-job/' + jobId }),
   generate: (jobId, studentId) => request({ url: '/job-matches/generate', method: 'POST', data: { jobId, studentId } }),
-  batchGenerate: (jobId) => request({ url: '/job-matches/batch-generate/' + jobId, method: 'POST' }),
+  batchGenerate: (jobId, classId) => request({ url: '/job-matches/batch-generate/' + jobId + (classId ? '?classId=' + classId : ''), method: 'POST' }),
   getPushed: (jobId) => request({ url: '/job-matches/pushed/by-job/' + jobId }),
   push: (id) => request({ url: '/job-matches/' + id + '/push', method: 'PUT' }),
   click: (id) => request({ url: '/job-matches/' + id + '/click', method: 'PUT' }),
@@ -254,18 +264,73 @@ export const aiParseAPI = {
   getUncorrected: () => request({ url: '/ai-parse/logs/uncorrected' }),
   correct: (id, correctedResult) => request({ url: '/ai-parse/logs/' + id + '/correct', method: 'PUT', data: { correctedResult } }),
   countByTeacher: (teacherId) => request({ url: '/ai-parse/statistics/count-by-teacher/' + teacherId }),
+  parseJob: (rawMessage) => request({ url: '/ai-parse/parse-job', method: 'POST', data: { rawMessage } }),
+  analyzeResume: (studentId) => request({ url: '/ai-parse/analyze-resume', method: 'POST', data: { studentId } }),
 }
 
 /* ======================== 字段映射工具 ======================== */
 export const mapJobData = (raw) => {
-  if (!raw) return {}
-  return {
-    ...raw,
-    salaryText: raw.salaryText || raw.salaryRange || '',
-    requirements: raw.requirements || raw.requirement || '',
-    companyName: raw.companyName || '',
-    companyDesc: raw.companyDesc || '',
-    experience: raw.experience || '',
-    jobType: raw.jobType || ''
-  }
+	if (!raw) return {}
+	return {
+		...raw,
+		salaryText: raw.salaryText || raw.salaryRange || '',
+		requirements: raw.requirements || raw.requirement || '',
+		companyName: raw.companyName || '',
+		companyDesc: raw.companyDesc || '',
+		experience: raw.experience || '',
+		jobType: raw.jobType || ''
+	}
+}
+
+/* ======================== 教师端通用数据映射 ======================== */
+// 投递状态映射
+export const DELIVERY_STATUS = {
+	PENDING: { value: 0, label: '待查看', color: '#F59E0B', class: 'pending' },
+	VIEWED: { value: 1, label: '已查看', color: '#165DFF', class: 'viewed' },
+	INTERVIEW: { value: 2, label: '面试中', color: '#165DFF', class: 'interview' },
+	ACCEPTED: { value: 3, label: '已录用', color: '#8B5CF6', class: 'accepted' },
+	REJECTED: { value: 4, label: '不合适', color: '#EF4444', class: 'rejected' }
+}
+
+// 岗位状态映射
+export const JOB_STATUS = {
+	DRAFT: { value: 0, label: '草稿', color: '#F59E0B', class: 'draft' },
+	ACTIVE: { value: 1, label: '招聘中', color: '#165DFF', class: 'active' },
+	CLOSED: { value: 2, label: '已关闭', color: '#86909C', class: 'closed' },
+	PAUSED: { value: 3, label: '已暂停', color: '#86909C', class: 'paused' }
+}
+
+// 投递数据统一格式化
+export function mapDeliveryItem(d) {
+	const statusKey = Object.keys(DELIVERY_STATUS).find(k => DELIVERY_STATUS[k].value === d.status) || 'PENDING'
+	const status = DELIVERY_STATUS[statusKey]
+	return {
+		id: d.id,
+		studentId: d.studentId,
+		studentName: d.studentName || '未知学生',
+		className: d.className || '',
+		jobId: d.jobId,
+		jobTitle: d.jobTitle || '未知岗位',
+		status: status.class,
+		statusText: status.label,
+		statusColor: status.color,
+		createTime: d.createTime ? d.createTime.substring(0, 10) : ''
+	}
+}
+
+// 教师端岗位数据统一格式化
+export function mapTeacherJob(job) {
+	const statusKey = Object.keys(JOB_STATUS).find(k => JOB_STATUS[k].value === job.status) || 'DRAFT'
+	const status = JOB_STATUS[statusKey]
+	return {
+		id: job.id,
+		title: job.title,
+		companyId: job.companyId,
+		companyName: job.companyName || '待设置',
+		location: job.location || '未设置',
+		salaryText: job.salaryRange || '薪资面议',
+		status: status.class,
+		statusText: status.label,
+		deliveryCount: job.deliveryCount || 0
+	}
 }

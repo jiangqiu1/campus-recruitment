@@ -1,13 +1,18 @@
 package com.recruit.controller;
 
 import com.recruit.entity.Company;
+import com.recruit.entity.SysUser;
 import com.recruit.service.CompanyService;
+import com.recruit.service.UserService;
 import com.recruit.utils.AESUtil;
 import com.recruit.utils.Result;
+import com.recruit.annotation.LogOperation;
+import com.recruit.exception.BusinessException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 企业管理控制器
@@ -15,13 +20,16 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/companies")
-public class CompanyController {
+public class CompanyController extends BaseController {
     
     @Autowired
     private CompanyService companyService;
     
     @Autowired
     private AESUtil aesUtil;
+
+    @Autowired
+    private UserService userService;
     
     /**
      * 获取企业列表（可选按状态筛选）
@@ -58,8 +66,10 @@ public class CompanyController {
      * @param id 企业ID
      * @return 操作结果
      */
+    @LogOperation("审核通过企业")
     @PutMapping("/{id}/approve")
     public Result<String> approveCompany(@PathVariable Long id) {
+        requireAdmin();
         Company company = companyService.getById(id);
         if (company == null) {
             return Result.error(404, "企业不存在");
@@ -75,8 +85,10 @@ public class CompanyController {
      * @param id 企业ID
      * @return 操作结果
      */
+    @LogOperation("审核拒绝企业")
     @PutMapping("/{id}/reject")
     public Result<String> rejectCompany(@PathVariable Long id) {
+        requireAdmin();
         Company company = companyService.getById(id);
         if (company == null) {
             return Result.error(404, "企业不存在");
@@ -149,15 +161,22 @@ public class CompanyController {
     
     /**
      * 创建企业
-     * 
-     * @param company 企业实体
-     * @return 创建结果
+     * 教师和HR也可以创建（合作企业入驻）
      */
     @PostMapping
     public Result<String> createCompany(@RequestBody Company company) {
+        Integer role = getCurrentRole();
+        if (!Objects.equals(role, 3) && !Objects.equals(role, 1) && !Objects.equals(role, 2)) {
+            return Result.error(403, "无权限创建企业");
+        }
         // AES加密敏感字段（联系电话）
         if (company.getContactPhone() != null && !company.getContactPhone().isEmpty()) {
             company.setContactPhone(aesUtil.encrypt(company.getContactPhone()));
+        }
+        
+        // 教师和HR创建的企业默认合作等级为1
+        if (!Objects.equals(role, 3)) {
+            company.setCooperationLevel(1);
         }
         
         companyService.save(company);
@@ -173,6 +192,15 @@ public class CompanyController {
      */
     @PutMapping("/{id}")
     public Result<String> updateCompany(@PathVariable Long id, @RequestBody Company company) {
+        // HR 可以修改自己公司的信息，管理员可以修改所有公司
+        Integer role = getCurrentRole();
+        Long userId = getCurrentUserId();
+        if (!Objects.equals(role, 3)) {
+            SysUser currentUser = userService.getById(userId);
+            if (currentUser == null || !Objects.equals(currentUser.getCompanyId(), id)) {
+                throw new BusinessException(403, "无权限修改此企业信息");
+            }
+        }
         Company existCompany = companyService.getById(id);
         if (existCompany == null) {
             return Result.error(404, "企业不存在");
@@ -197,6 +225,7 @@ public class CompanyController {
      */
     @DeleteMapping("/{id}")
     public Result<String> deleteCompany(@PathVariable Long id) {
+        requireAdmin();
         Company company = companyService.getById(id);
         if (company == null) {
             return Result.error(404, "企业不存在");
@@ -218,6 +247,7 @@ public class CompanyController {
      */
     @PutMapping("/{id}/cooperation-level")
     public Result<String> updateCooperationLevel(@PathVariable Long id, @RequestBody java.util.Map<String, Integer> params) {
+        requireAdmin();
         Integer cooperationLevel = params.get("cooperationLevel");
         if (cooperationLevel == null || cooperationLevel < 0 || cooperationLevel > 3) {
             return Result.error("cooperationLevel参数错误（应为0-3）");

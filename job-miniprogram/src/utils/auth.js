@@ -58,3 +58,15 @@ export function getCurrentUser() {
     return null
   }
 }
+
+/**
+ * 判断当前用户是否拥有指定角色
+ * 用于视图层按钮级权限控制
+ * @param {number} targetRole - 目标角色 (0=学生, 1=教师, 2=HR, 3=管理员)
+ * @returns {boolean}
+ */
+export function hasRole(targetRole) {
+  const user = getCurrentUser()
+  if (!user) return false
+  return Number(user.role) === Number(targetRole)
+}

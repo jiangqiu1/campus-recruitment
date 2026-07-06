@@ -11,6 +11,7 @@ import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.Objects;
 
 /**
  * 数据导出控制器
@@ -18,7 +19,7 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/export")
-public class DataExportController {
+public class DataExportController extends BaseController {
 
     @Autowired
     private UserService userService;
@@ -37,6 +38,13 @@ public class DataExportController {
 
     @PostMapping
     public void export(@RequestBody ExportRequest request, HttpServletResponse response) throws Exception {
+        Integer role = getCurrentRole();
+        if (!Objects.equals(role, 1) && !Objects.equals(role, 3)) {
+            response.setStatus(403);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\":403,\"message\":\"无导出权限\",\"data\":null}");
+            return;
+        }
         String type = request.getType();
         String format = request.getFormat() != null ? request.getFormat() : "xlsx";
 

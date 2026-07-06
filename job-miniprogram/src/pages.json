@@ -1,11 +1,13 @@
-﻿{
+{
 	"pages": [
+		// 引导页（保留自定义，沉浸式）
 		{
 			"path": "pages/index/index",
 			"style": {
 				"navigationStyle": "custom"
 			}
 		},
+		// ========== 学生端 ==========
 		{
 			"path": "pages/student/home",
 			"style": {
@@ -20,9 +22,19 @@
 			}
 		},
 		{
+			"path": "pages/student/search-result",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
+			}
+		},
+		// 以下列表/设置页改用原生导航，自动适配微信胶囊，稳定可靠
+		{
 			"path": "pages/student/deliveries",
 			"style": {
-				"navigationStyle": "custom"
+				"navigationBarTitleText": "我的投递",
+				"navigationBarTextStyle": "black",
+				"enablePullDownRefresh": true
 			}
 		},
 		{
@@ -50,6 +62,13 @@
 			}
 		},
 		{
+			"path": "pages/student/company-detail",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
+			}
+		},
+		{
 			"path": "pages/student/security",
 			"style": {
 				"navigationStyle": "custom"
@@ -73,66 +92,121 @@
 				"navigationStyle": "custom"
 			}
 		},
+		// 通用页面（登录、协议等）
+		{
+			"path": "pages/common/agreement",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
+			}
+		},
+		{
+			"path": "pages/common/privacy",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
+			}
+		},
+		{
+			"path": "pages/common/forget-pwd",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
+			}
+		},
+		{
+			"path": "pages/student/footprint",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
+			}
+		},
+		{
+			"path": "pages/student/hot-jobs",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
+			}
+		},
+		// ========== HR端 ==========
 		{
 			"path": "pages/hr/home",
 			"style": {
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
 			}
 		},
 		{
 			"path": "pages/hr/jobs",
 			"style": {
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
 			}
 		},
 		{
 			"path": "pages/hr/job-edit",
 			"style": {
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
 			}
 		},
 		{
 			"path": "pages/hr/deliveries",
 			"style": {
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
+			}
+		},
+		{
+			"path": "pages/hr/interviews",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
 			}
 		},
 		{
 			"path": "pages/hr/delivery-detail",
 			"style": {
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
 			}
 		},
 		{
 			"path": "pages/hr/company",
 			"style": {
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
 			}
 		},
 		{
 			"path": "pages/hr/profile",
 			"style": {
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
 			}
 		},
 		{
 			"path": "pages/hr/security",
 			"style": {
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
 			}
 		},
 		{
 			"path": "pages/hr/stats",
 			"style": {
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
 			}
 		},
 		{
 			"path": "pages/hr/messages",
 			"style": {
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
 			}
 		},
+		// ========== 教师端（全 custom，避免双导航栏） ==========
 		{
 			"path": "pages/teacher/home",
 			"style": {
@@ -176,6 +250,12 @@
 			}
 		},
 		{
+			"path": "pages/teacher/company-detail",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/teacher/profile",
 			"style": {
 				"navigationStyle": "custom"
@@ -214,14 +294,24 @@
 		{
 			"path": "pages/teacher/approvals",
 			"style": {
-				"navigationStyle": "custom"
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
 			}
 		}
 	],
 	"globalStyle": {
-		"navigationStyle": "custom",
-		"backgroundColor": "#F5F7FA",
-		"backgroundColorContent": "#F5F7FA"
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "校企招聘平台",
+		"navigationBarBackgroundColor": "#FFFFFF",
+		"backgroundColor": "#F8F9FE",
+		"backgroundColorContent": "#F8F9FE",
+		"enablePullDownRefresh": false
+	},
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			"^uni-(.*)": "@dcloudio/uni-ui/lib/uni-$1/uni-$1.vue"
+		}
 	},
 	"uniIdRouter": {}
 }

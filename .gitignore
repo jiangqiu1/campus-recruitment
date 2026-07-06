@@ -32,6 +32,13 @@ job-miniprogram-bak/
 .DS_Store
 Thumbs.db
 
+# ⚠️ 敏感配置（含数据库密码、JWT密钥、AI API Key）
+# 部署时请参考 application-example.yml 创建自己的配置
+backend/src/main/resources/application.yml
+
+# ⚠️ 工作记忆 / 项目内部笔记
+.workbuddy/
+
 # API 密钥 / 敏感配置
 
 # 日志文件
@@ -44,3 +51,10 @@ Thumbs.db
 
 # 项目内部记忆 / 工作日志
 memory/
+
+# 前端开发测试文件
+job-miniprogram/scripts/
+frontend/
+
+# SQL 备份（防止误提交敏感数据）
+full_database.sql

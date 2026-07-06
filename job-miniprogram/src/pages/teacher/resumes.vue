@@ -1,21 +1,41 @@
 <template>
 	<view class="page-wrapper">
-		<view class="header-simple" style="padding:12px 16px;">
-			<view class="header-top" style="flex-direction:row;align-items:center;gap:12px;margin-bottom:12px;">
-				<text style="font-size:20px;font-weight:700;" @click="goBack">‹</text>
-				<text style="font-size:18px;font-weight:700;color:white;flex:1;">简历管理</text>
-				<text class="export-btn" @click="exportCSV">📥 导出</text>
-			</view>
-			<view class="search-box" style="position:relative;flex-direction:row;align-items:center;gap:8px;">
-				<text style="position:absolute;left:14px;z-index:1;font-size:16px;">🔍</text>
-				<input style="flex:1;height:44px;border-radius:12px;border:none;padding:0 16px 0 42px;font-size:14px;background:rgba(255,255,255,0.95);color:#1D2129;" v-model="keyword" placeholder="搜索学生姓名..." @confirm="handleSearch" />
-			</view>
-			<!-- 班级筛选 -->
-			<view class="class-filter" style="flex-direction:row;gap:8px;margin-top:10px;">
-				<text v-for="(cls, i) in classFilterOptions" :key="i" class="filter-tab" :class="{ active: currentClass === cls.value }" @click="currentClass = cls.value">{{ cls.label }}</text>
-			</view>
+		<NavBar title="简历管理" show-back />
+
+		<!-- 搜索框：复用学生端首页胶囊样式 -->
+		<view class="search-box">
+			<uni-icons type="search" size="16" color="#86909C" />
+			<input v-model="keyword" placeholder="搜索学生姓名..." @confirm="handleSearch" />
+			<text v-if="keyword" class="clear-btn" @click="clearKeyword">
+				<uni-icons type="clear" size="16" color="#C9CDD4" />
+			</text>
 		</view>
-		<scroll-view class="content-scrollable" scroll-y>
+
+		<!-- 筛选条件：简历完成度 + 近期活跃 -->
+		<view class="filter-row">
+			<picker @change="onCompleteChange" :value="completeIndex" :range="completeOptions">
+				<view class="filter-picker">
+					<text>{{ completeOptions[completeIndex] }}</text>
+					<uni-icons type="arrowdown" size="12" color="#C9CDD4" />
+				</view>
+			</picker>
+			<picker @change="onActiveChange" :value="activeIndex" :range="activeOptions">
+				<view class="filter-picker">
+					<text>{{ activeOptions[activeIndex] }}</text>
+					<uni-icons type="arrowdown" size="12" color="#C9CDD4" />
+				</view>
+			</picker>
+		</view>
+
+		<!-- 筛选 Tab：复用首页 list-tab 统一规范 -->
+		<view class="list-tabs">
+			<text v-for="(cls, i) in classFilterOptions" :key="i" class="list-tab"
+				:class="{ active: currentClass === cls.value }" @click="currentClass = cls.value">
+				{{ cls.label }}
+			</text>
+		</view>
+
+		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
 			<view class="resume-list">
 				<view v-for="(stu, i) in filteredStudents" :key="i" class="resume-card" @click="goToResume(stu)">
 					<view class="resume-top">
@@ -24,45 +44,60 @@
 						</view>
 						<view class="resume-info">
 							<text class="resume-name">{{ stu.realName || '未知' }}</text>
-							<text class="resume-class">{{ stu.className || '未分配班级' }}</text>
+							<text class="resume-class">{{ stu.className || '未分配班级' }} · 学号{{ stu.username || '' }}</text>
+							<view class="resume-tags">
+								<text class="tag">完成度 {{ stu.resumeComplete || 0 }}%</text>
+								<text class="tag">投递{{ stu.deliveryCount || 0 }}次</text>
+								<text class="tag">{{ stu.lastActive || '—' }}</text>
+							</view>
 						</view>
-						<view class="resume-status-tag">
-							<text style="font-size:12px;color:#10B981;">● 正常</text>
-						</view>
-					</view>
-					<view class="resume-meta">
-						<text>🆔 {{ stu.username || '—' }}</text>
-						<text>📱 {{ stu.phone || '未绑定' }}</text>
+						<uni-icons type="arrowright" size="16" color="#C9CDD4" />
 					</view>
 				</view>
-				<view v-if="loading && !students.length" class="empty-state">
-					<text style="font-size:48px;margin-bottom:12px;">⏳</text>
-					<text class="empty-text">加载中...</text>
-				</view>
-				<view v-if="!loading && !filteredStudents.length" class="empty-state">
-					<text style="font-size:48px;margin-bottom:12px;">📄</text>
-					<text class="empty-text">暂无简历数据</text>
-				</view>
+				<EmptyState v-if="!loading && !filteredStudents.length" icon="file" title="暂无简历" desc="请添加学生或检查筛选条件" />
 			</view>
 		</scroll-view>
 	</view>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { onShow } from '@/utils/page-lifecycle'
 import { teacherAPI } from '@/utils/request'
+import NavBar from '@/components/NavBar.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import { checkRole } from '@/utils/auth'
+
+checkRole(1)
 
 const keyword = ref('')
 const currentClass = ref('all')
+const unreadFilter = ref(false) // 首页待办「未读简历」筛选
 const students = ref([])
 const loading = ref(true)
+const refreshing = ref(false)
 
-const classFilterOptions = ref([
-	{ label: '全部', value: 'all' },
-])
+const completeOptions = ['简历完成度', '<40%', '40-70%', '>70%']
+const completeIndex = ref(0)
+const activeOptions = ['近期活跃', '近7天', '近30天']
+const activeIndex = ref(0)
+const onCompleteChange = (e) => {
+	completeIndex.value = e.detail.value
+	uni.setStorageSync('teacher_resumes_complete', e.detail.value)
+}
+const onActiveChange = (e) => {
+	activeIndex.value = e.detail.value
+	uni.setStorageSync('teacher_resumes_active', e.detail.value)
+}
+
+const classFilterOptions = ref([{ label: '全部', value: 'all' }])
 
 const filteredStudents = computed(() => {
 	let list = students.value
+	// 首页待办「未读简历」筛选 — 筛选有投递记录的学生
+	if (unreadFilter.value) {
+		list = list.filter(s => (s.deliveryCount || 0) > 0)
+	}
 	if (currentClass.value !== 'all') {
 		list = list.filter(s => s.className === currentClass.value)
 	}
@@ -70,23 +105,68 @@ const filteredStudents = computed(() => {
 		const kw = keyword.value.toLowerCase()
 		list = list.filter(s => (s.realName || '').toLowerCase().includes(kw))
 	}
+	// 简历完成度筛选
+	if (completeIndex.value === 1) {
+		list = list.filter(s => (s.resumeComplete || 0) < 40)
+	} else if (completeIndex.value === 2) {
+		list = list.filter(s => (s.resumeComplete || 0) >= 40 && (s.resumeComplete || 0) <= 70)
+	} else if (completeIndex.value === 3) {
+		list = list.filter(s => (s.resumeComplete || 0) > 70)
+	}
+	// 近期活跃筛选
+	if (activeIndex.value === 1 || activeIndex.value === 2) {
+		const now = new Date()
+		const days = activeIndex.value === 1 ? 7 : 30
+		list = list.filter(s => {
+			if (!s.lastActive) return false
+			const t = new Date(s.lastActive)
+			return (now - t) / (1000 * 60 * 60 * 24) <= days
+		})
+	}
 	return list
 })
 
-onMounted(async () => {
+// 初始化：URL参数解析 + 筛选记忆恢复（onShow 之前执行一次）
+{
+	const pages = getCurrentPages()
+	const cp = pages[pages.length - 1]
+	if (cp.options?.filter === 'unread') {
+		unreadFilter.value = true
+		if (cp.options.className) currentClass.value = cp.options.className
+	}
+	const savedClass = uni.getStorageSync('teacher_resumes_class')
+	if (savedClass && currentClass.value === 'all') currentClass.value = savedClass
+	const savedComplete = uni.getStorageSync('teacher_resumes_complete')
+	if (savedComplete !== undefined) completeIndex.value = Number(savedComplete)
+	const savedActive = uni.getStorageSync('teacher_resumes_active')
+	if (savedActive !== undefined) activeIndex.value = Number(savedActive)
+}
+
+// 页面显示时刷新数据（含首次加载 + 返回刷新）
+onShow(async () => {
 	await loadStudents()
 	loading.value = false
 })
+
+watch(currentClass, (val) => {
+	uni.setStorageSync('teacher_resumes_class', val)
+})
+
+const onRefresh = async () => {
+	refreshing.value = true
+	await loadStudents()
+	refreshing.value = false
+}
+
+const clearKeyword = () => {
+	keyword.value = ''
+}
 
 const loadStudents = async () => {
 	try {
 		const classesRes = await teacherAPI.getClasses()
 		const classes = classesRes.data || []
-		if (!classes.length) {
-			loading.value = false
-			return
-		}
-		// Build class filter options
+		if (!classes.length) { loading.value = false; return }
 		const classSet = new Set()
 		classSet.add('all')
 		classes.forEach(c => classSet.add(c.name))
@@ -94,7 +174,6 @@ const loadStudents = async () => {
 			label: v === 'all' ? '全部' : v,
 			value: v
 		}))
-		// Load students from each class
 		let allStudents = []
 		for (const cls of classes) {
 			try {
@@ -110,100 +189,84 @@ const loadStudents = async () => {
 	}
 }
 
-const handleSearch = () => {
-	// computed handles real-time filtering
-}
-
-const goBack = () => {
-	uni.navigateBack()
-}
-
-const exportCSV = () => {
-	if (!students.value.length) {
-		uni.showToast({ title: '暂无数据可导出', icon: 'none' })
-		return
-	}
-	const BOM = '\uFEFF'
-	const headers = '姓名,班级,学号,手机号\n'
-	const rows = filteredStudents.value.map(s =>
-		`${s.realName},${s.className || ''},${s.username || ''},${s.phone || ''}`
-	).join('\n')
-	const csv = BOM + headers + rows
-	uni.setClipboardData({
-		data: csv,
-		success: () => {
-			uni.showToast({ title: `已导出 ${filteredStudents.value.length} 条，粘贴到 Excel 即可`, icon: 'success', duration: 2500 })
-		}
-	})
-}
-
+const handleSearch = () => {}
 const goToResume = (stu) => {
 	uni.navigateTo({ url: '/pages/teacher/student-resume?studentId=' + stu.id + '&name=' + encodeURIComponent(stu.realName) })
 }
 </script>
 
 <style scoped>
-.header-simple {
-	background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
-	color: white;
-	flex-shrink: 0;
+/* 搜索框和学生端完全一致 */
+.search-box {
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
+	background: #FFFFFF;
+	border-radius: 24px;
+	padding: 0 16px;
+	height: 40px;
+	margin: 12px 16px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.export-btn {
-	font-size:13px;
-	color:rgba(255,255,255,0.9);
-	padding:6px 12px;
-	border-radius:16px;
-	background:rgba(255,255,255,0.2);
-	font-weight:500;
+.search-box input { flex: 1; font-size: 14px; background: transparent; border: none; color: #1D2129; height: 100%; }
+.clear-btn { line-height: 1; }
+
+.filter-row { flex-direction: row; padding: 0 16px; gap: 12px; margin-bottom: 12px; }
+.filter-picker { flex-direction: row; align-items: center; gap: 4px; padding: 6px 12px; background: #F7F8FA; border-radius: 8px; }
+.filter-picker text { font-size: 13px; color: #4E5969; }
+
+/* Tab 复用首页样式规范 */
+.list-tabs {
+	flex-direction: row;
+	padding: 0 16px;
+	gap: 20px;
+	margin-bottom: 12px;
+	overflow-x: auto;
 }
-.export-btn:active {
-	background:rgba(255,255,255,0.35);
-}
-.filter-tab {
-	padding: 6px 14px;
-	border-radius: 20px;
-	font-size: 12px;
+.list-tab {
+	font-size: 15px;
+	color: #86909C;
 	font-weight: 500;
-	color: rgba(255,255,255,0.8);
-	background: rgba(255,255,255,0.15);
+	padding-bottom: 4px;
+	position: relative;
 	white-space: nowrap;
 }
-.filter-tab.active {
-	background: white;
-	color: #10B981;
+.list-tab.active {
+	color: #1D2129;
+	font-weight: 600;
 }
-.resume-list {
-	padding: 16px;
+.list-tab.active::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 20px;
+	height: 3px;
+	background: #165DFF;
+	border-radius: 2px;
 }
+
+.resume-list { padding: 0 16px; }
 .resume-card {
+	flex-direction: row;
 	background: white;
-	border-radius: 16px;
+	border-radius: 12px;
 	padding: 16px;
 	margin-bottom: 12px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-	position: relative;
-	overflow: hidden;
-}
-.resume-card::before {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 3px;
-	background: linear-gradient(90deg, #10B981, transparent);
+	align-items: center;
 }
 .resume-top {
 	flex-direction: row;
 	align-items: center;
 	gap: 12px;
-	margin-bottom: 12px;
+	flex: 1;
 }
 .resume-avatar {
 	width: 44px;
 	height: 44px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #10B981, #34D399);
+	background: linear-gradient(135deg, #165DFF, #2563EB);
 	align-items: center;
 	justify-content: center;
 	font-size: 18px;
@@ -212,34 +275,16 @@ const goToResume = (stu) => {
 	flex-shrink: 0;
 }
 .resume-info { flex: 1; }
-.resume-name {
-	font-size: 15px;
-	font-weight: 700;
-	color: #1D2129;
-	display: block;
-	margin-bottom: 2px;
+.resume-name { font-size: 15px; font-weight: 700; color: #1D2129; display: block; margin-bottom: 2px; }
+.resume-class { font-size: 12px; color: #86909C; display: block; margin-bottom: 6px; }
+.resume-tags { flex-direction: row; gap: 8px; }
+.resume-tags .tag {
+	padding: 2px 8px;
+	border-radius: 6px;
+	font-size: 11px;
+	font-weight: 500;
+	background: rgba(22,93,255,0.08);
+	color: #165DFF;
 }
-.resume-class {
-	font-size: 12px;
-	color: #86909C;
-	display: block;
-}
-.resume-status-tag {
-	margin-left: 8px;
-}
-.resume-meta {
-	flex-direction: row;
-	gap: 18px;
-	font-size: 12px;
-	color: #86909C;
-}
-.empty-state {
-	padding: 60px 20px;
-	align-items: center;
-	justify-content: center;
-}
-.empty-text {
-	font-size: 14px;
-	color: #86909C;
-}
+.resume-card:active { background: #F7F8FA; }
 </style>

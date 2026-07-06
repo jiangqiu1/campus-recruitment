@@ -1,9 +1,6 @@
 <template>
 	<view class="page-wrapper">
-		<view class="header-simple" style="padding:12px 16px;flex-direction:row;align-items:center;gap:12px;">
-			<text style="font-size:20px;" @click="goBack">‹</text>
-			<text style="font-size:18px;font-weight:700;color:white;">{{ isEdit ? '编辑岗位' : '发布岗位' }}</text>
-		</view>
+		<NavBar :title="isEdit ? '编辑岗位' : '发布岗位'" showBack @back="goBack" />
 
 		<scroll-view class="content-scrollable" scroll-y>
 			<view class="form-card">
@@ -61,7 +58,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { hrAPI, jobAPI } from '@/utils/request'
+import { hrAPI, jobAPI, aiParseAPI } from '@/utils/request'
+import NavBar from '@/components/NavBar.vue'
 
 const isEdit = ref(false)
 const jobId = ref(null)
@@ -110,6 +108,17 @@ onMounted(async () => {
 		isEdit.value = true
 		jobId.value = Number(opts.id)
 		await loadJobDetail(jobId.value)
+	}
+	// 从 AI 解析结果填充表单
+	if (opts && opts.aiParsed) {
+		try {
+			const parsed = uni.getStorageSync('ai_parsed_job')
+			if (parsed) {
+				const data = typeof parsed === 'string' ? JSON.parse(parsed) : parsed
+				fillFromAiParse(data)
+			}
+			uni.removeStorageSync('ai_parsed_job')
+		} catch (e) {}
 	}
 })
 
@@ -174,15 +183,47 @@ const getCompanyId = () => {
 const goBack = () => {
 	uni.navigateBack()
 }
+
+// 从 AI 解析结果填充表单
+const fillFromAiParse = (data) => {
+	if (!data) return
+	if (data.title) form.value.title = data.title
+	if (data.salaryRange) form.value.salaryText = data.salaryRange
+	if (data.location) form.value.location = data.location
+	if (data.education) {
+		form.value.education = data.education
+		const edi = eduOptions.indexOf(data.education)
+		if (edi > -1) eduIndex.value = edi
+	}
+	if (data.experience) {
+		form.value.experience = data.experience
+		const ei = expOptions.indexOf(data.experience)
+		if (ei > -1) expIndex.value = ei
+	}
+	if (data.description) form.value.description = data.description
+	if (data.requirements) form.value.requirements = data.requirements
+	uni.showToast({ title: 'AI 填写完成，请核对', icon: 'success' })
+}
 </script>
 
 <style scoped>
+.page-wrapper {
+	min-height: 100vh;
+	background: #F7F8FA;
+	display: flex;
+	flex-direction: column;
+}
+.content-scrollable {
+	flex: 1;
+	height: 0;
+}
 .form-card {
 	background: white;
 	border-radius: 16px;
 	margin: 16px;
 	padding: 20px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	overflow: hidden;
 }
 .form-group {
 	margin-bottom: 20px;
@@ -193,6 +234,8 @@ const goBack = () => {
 	color: #1D2129;
 	margin-bottom: 8px;
 	display: block;
+	padding-left: 10px;
+	border-left: 3px solid #165DFF;
 }
 .required {
 	color: #EF4444;
@@ -206,9 +249,10 @@ const goBack = () => {
 	font-size: 14px;
 	background: #F8F9FC;
 	color: #1D2129;
+	box-sizing: border-box;
 }
 .form-input:focus {
-	border-color: #0EA5E9;
+	border-color: #165DFF;
 	background: #fff;
 }
 .form-row {
@@ -226,6 +270,7 @@ const goBack = () => {
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
+	box-sizing: border-box;
 }
 .picker-text {
 	color: #1D2129;
@@ -245,9 +290,10 @@ const goBack = () => {
 	background: #F8F9FC;
 	color: #1D2129;
 	line-height: 1.6;
+	box-sizing: border-box;
 }
 .form-textarea:focus {
-	border-color: #0EA5E9;
+	border-color: #165DFF;
 	background: #fff;
 }
 .form-actions {
@@ -264,14 +310,15 @@ const goBack = () => {
 	justify-content: center;
 }
 .btn-primary {
-	background: linear-gradient(135deg, #0EA5E9, #38BDF8);
+	background: linear-gradient(135deg, #165DFF, #2563EB);
 	color: white;
 	border: none;
-	box-shadow: 0 4px 14px rgba(14,165,233,0.3);
+	box-shadow: 0 4px 14px rgba(22,93,255,0.3);
 }
 .btn-outline {
-	background: white;
-	border: 2px solid #0EA5E9;
-	color: #0EA5E9;
+	background: #F7F8FA;
+	border: none;
+	color: #86909C;
+	font-weight: 500;
 }
 </style>

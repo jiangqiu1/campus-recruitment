@@ -1,29 +1,25 @@
 <template>
 	<view class="page-wrapper">
-		<view class="header-simple" style="padding:12px 16px;">
-			<text style="font-size:18px;font-weight:700;color:white;">消息通知</text>
-		</view>
-		<scroll-view class="content-scrollable" scroll-y>
+		<NavBar title="消息中心" :showBack="false" />
+		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
+			<view class="msg-tabs">
+				<text v-for="cat in categories" :key="cat.value" class="msg-tab" :class="{ active: currentCat === cat.value }" @click="currentCat = cat.value">{{ cat.label }}</text>
+			</view>
 			<view class="msg-list">
-				<view v-for="(msg, i) in messages" :key="i" class="msg-item" @click="handleRead(msg)">
-					<view class="msg-icon" :class="msg.iconClass">
-						<text>{{ msg.icon }}</text>
+				<view v-for="(msg, i) in filteredList" :key="i" class="msg-item" :class="{ unread: !msg.isRead, 'msg-today': isToday(msg.createTime || msg.time) }" @click="handleRead(msg)">
+					<view class="msg-icon">
+						<uni-icons :type="msgIcon(msg.type)" :size="20" color="#86909C" />
 					</view>
 					<view class="msg-content">
-						<view class="msg-title">
-							<view style="flex-direction:row;align-items:center;gap:6px;">
-								<text>{{ msg.title }}</text>
-								<text v-if="!msg.isRead" class="msg-dot"></text>
-							</view>
+						<view class="msg-top">
+							<text class="msg-title">{{ msg.title }}</text>
 							<text class="msg-time">{{ msg.time }}</text>
 						</view>
 						<text class="msg-text">{{ msg.content }}</text>
 					</view>
+					<view v-if="!msg.isRead" class="msg-red-dot" />
 				</view>
-				<view v-if="!messages.length" class="empty-state">
-					<text style="font-size:48px;margin-bottom:12px;">💬</text>
-					<text class="empty-text">暂无消息</text>
-				</view>
+				<EmptyState v-if="!filteredList.length" icon="chat" title="暂无消息" desc="有新的投递反馈或面试通知会出现在这里" />
 			</view>
 		</scroll-view>
 		<TabBar current="messages" />
@@ -31,91 +27,159 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { messageAPI } from '@/utils/request'
 import TabBar from '@/components/TabBar.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import NavBar from '@/components/NavBar.vue'
 
 const messages = ref([])
+const currentCat = ref('all')
 
+const categories = [
+	{ label: '全部', value: 'all' },
+	{ label: '系统', value: 'system' },
+	{ label: '企业', value: 'company' },
+	{ label: 'AI', value: 'ai' }
+]
 
+const msgIcon = (type) => {
+	const map = { system: 'gear', company: 'shop', ai: 'star' }
+	return map[type] || 'chat'
+}
 
-const getStudentId = () => {
+const filteredList = computed(() => {
+	if (currentCat.value === 'all') return messages.value
+	return messages.value.filter(m => m.type === currentCat.value)
+})
+
+function getStudentId() {
 	try {
 		const raw = uni.getStorageSync('userInfo')
 		if (!raw) return null
 		const obj = JSON.parse(raw)
-		const sid = obj.id || obj.userId
-		return sid ? Number(sid) : null
+		return obj.id || obj.userId ? Number(obj.id || obj.userId) : null
 	} catch (e) { return null }
 }
 
-onMounted(async () => {
+const TYPE_MAP = { 0: 'system', 1: 'company', 2: 'ai' }
+
+loadData()
+async function loadData() {
 	const sid = getStudentId()
 	if (!sid) return
 	try {
 		const res = await messageAPI.getMessages({ studentId: sid })
-		messages.value = res.data || []
-	} catch (e) {
-		console.error('加载消息失败', e)
-		uni.showToast({ title: '加载失败', icon: 'none' })
-	}
-})
+		messages.value = (res.data || []).map(m => ({
+			...m,
+			type: TYPE_MAP[m.type] || 'system',
+			time: m.createTime ? m.createTime.replace('T', ' ').substring(0, 16) : ''
+		}))
+	} catch (e) { console.log('加载消息失败', e) }
+}
+
+const refreshing = ref(false)
+
+const onRefresh = async () => {
+	refreshing.value = true
+	await loadData()
+	refreshing.value = false
+}
 
 const handleRead = async (msg) => {
 	if (!msg.isRead) {
-		try {
-			await messageAPI.readMessage(msg.id)
-			msg.isRead = true
-		} catch (e) {}
+		try { await messageAPI.readMessage(msg.id); msg.isRead = true } catch (e) {}
 	}
+}
+
+const isToday = (t) => {
+	if (!t) return false
+	const today = new Date().toISOString().substring(0, 10)
+	return t.substring(0, 10) === today
 }
 </script>
 
 <style scoped>
+.msg-tabs {
+	flex-direction: row;
+	padding: 0 16px;
+	background: #FFFFFF;
+	gap: 24px;
+	border-bottom: 0.5px solid #F2F3F5;
+	height: 44px;
+	align-items: center;
+}
+.msg-tab {
+	font-size: 14px;
+	color: #86909C;
+	font-weight: 500;
+	position: relative;
+	padding-bottom: 4px;
+}
+.msg-tab.active {
+	color: #1D2129;
+	font-weight: 600;
+}
+.msg-tab.active::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 20px;
+	height: 3px;
+	background: #165DFF;
+	border-radius: 2px;
+}
+.msg-tabs:active { opacity: 0.7; }
 .msg-list {
-	padding: 16px;
+	padding: 8px 16px;
+	gap: 0;
 }
 .msg-item {
-	background: white;
-	border-radius: 16px;
-	padding: 16px;
-	margin-bottom: 12px;
 	flex-direction: row;
+	background: #FFFFFF;
+	padding: 14px 14px 14px 0;
 	gap: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	align-items: flex-start;
+	position: relative;
+	border-bottom: 0.5px solid #F2F3F5;
+}
+.msg-item:last-child {
+	border-bottom: none;
 }
 .msg-icon {
-	width: 48px;
-	height: 48px;
-	border-radius: 12px;
-	background: linear-gradient(135deg, #165DFF, #60A5FA);
+	width: 40px;
+	height: 40px;
+	border-radius: 10px;
+	background: #F7F8FA;
 	align-items: center;
 	justify-content: center;
-	color: white;
-	font-size: 20px;
 	flex-shrink: 0;
 }
-.msg-icon.green { background: linear-gradient(135deg, #10B981, #34D399); }
-.msg-icon.orange { background: linear-gradient(135deg, #F59E0B, #FBBF24); }
-.msg-icon.ai { background: linear-gradient(135deg, #0EA5E9, #38BDF8); }
 .msg-content {
 	flex: 1;
-	min-width: 0;
+	gap: 4px;
 }
-.msg-title {
+.msg-top {
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 4px;
 }
-.msg-title text:first-child {
+.msg-title {
 	font-size: 15px;
-	font-weight: 600;
+	font-weight: 500;
 	color: #1D2129;
+}
+.msg-item.unread .msg-title {
+	font-weight: 700;
+}
+.msg-today .msg-title {
+	font-weight: 700;
 }
 .msg-time {
 	font-size: 12px;
-	color: #86909C;
+	color: #C9CDD4;
 }
 .msg-text {
 	font-size: 13px;
@@ -127,19 +191,15 @@ const handleRead = async (msg) => {
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
 }
-.msg-dot {
+.msg-red-dot {
+	position: absolute;
+	top: 16px;
+	right: 4px;
 	width: 8px;
 	height: 8px;
-	background: #EF4444;
+	background: #F53F3F;
 	border-radius: 50%;
-	flex-shrink: 0;
 }
-.empty-state {
-	padding: 60px 20px;
-	align-items: center;
-}
-.empty-text {
-	font-size: 14px;
-	color: #86909C;
-}
+.msg-tab:active { opacity: 0.7; }
+.msg-item:active { background: #F7F8FA; }
 </style>

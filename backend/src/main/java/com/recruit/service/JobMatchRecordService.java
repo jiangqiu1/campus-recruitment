@@ -67,9 +67,10 @@ public interface JobMatchRecordService extends IService<JobMatchRecord> {
      * 批量生成人岗匹配记录（对某个岗位，匹配所有学生）
      * 
      * @param jobId 岗位ID
+     * @param classId 班级ID（可选，null=全部学生）
      * @return 生成的记录数量
      */
-    int batchGenerateMatchRecords(Long jobId);
+    int batchGenerateMatchRecords(Long jobId, Long classId);
     
     /**
      * 更新推送状态

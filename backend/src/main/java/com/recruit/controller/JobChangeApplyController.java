@@ -3,10 +3,14 @@ package com.recruit.controller;
 import com.recruit.entity.JobChangeApply;
 import com.recruit.entity.Job;
 import com.recruit.entity.Company;
+import com.recruit.annotation.LogOperation;
+import com.recruit.dto.JobChangeSubmitRequest;
 import com.recruit.service.JobChangeApplyService;
 import com.recruit.service.JobService;
 import com.recruit.service.CompanyService;
 import com.recruit.utils.Result;
+
+import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,7 +22,7 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/job-changes")
-public class JobChangeApplyController {
+public class JobChangeApplyController extends BaseController {
 
     @Autowired
     private JobChangeApplyService jobChangeApplyService;
@@ -96,14 +100,16 @@ public class JobChangeApplyController {
     /**
      * 审核通过
      */
+    @LogOperation("审核通过岗位变更申请")
     @PutMapping("/{id}/approve")
     public Result<String> approve(@PathVariable Long id) {
+        requireTeacher();
         JobChangeApply apply = jobChangeApplyService.getById(id);
         if (apply == null) return Result.error(404, "申请不存在");
         if (apply.getStatus() != 0) return Result.error("该申请已审核");
 
         apply.setStatus(1);
-        apply.setReviewTeacherId(0L);
+        apply.setReviewTeacherId(getCurrentUserId());
         jobChangeApplyService.updateById(apply);
         return Result.success("审核通过");
     }
@@ -111,14 +117,16 @@ public class JobChangeApplyController {
     /**
      * 审核拒绝
      */
+    @LogOperation("审核拒绝岗位变更申请")
     @PutMapping("/{id}/reject")
     public Result<String> reject(@PathVariable Long id) {
+        requireTeacher();
         JobChangeApply apply = jobChangeApplyService.getById(id);
         if (apply == null) return Result.error(404, "申请不存在");
         if (apply.getStatus() != 0) return Result.error("该申请已审核");
 
         apply.setStatus(2);
-        apply.setReviewTeacherId(0L);
+        apply.setReviewTeacherId(getCurrentUserId());
         jobChangeApplyService.updateById(apply);
         return Result.success("已拒绝");
     }

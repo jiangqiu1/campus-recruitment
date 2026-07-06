@@ -1,9 +1,6 @@
 <template>
 	<view class="page-wrapper">
-		<view class="header-simple" style="padding:12px 16px;flex-direction:row;align-items:center;gap:12px;">
-			<text style="font-size:20px;" @click="goBack">‹</text>
-			<text style="font-size:18px;font-weight:700;color:white;">账号安全</text>
-		</view>
+		<NavBar title="账号安全" showBack @back="goBack" />
 		<scroll-view class="content-scrollable" scroll-y>
 			<view class="menu-list">
 				<view class="menu-item" @click="handleChangePwd">
@@ -44,6 +41,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { authAPI } from '@/utils/request'
+import NavBar from '@/components/NavBar.vue'
 
 const phoneDisplay = ref('未绑定')
 const emailDisplay = ref('未绑定')

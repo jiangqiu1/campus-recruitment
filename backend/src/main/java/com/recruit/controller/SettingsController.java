@@ -11,23 +11,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 系统设置控制器
- * 提供系统设置的获取和保存功能，数据暂存内存中
+ * 仅返回前端展示所需的非敏感配置，密钥等敏感信息绝不透出
  */
 @RestController
 @RequestMapping("/settings")
-public class SettingsController {
+public class SettingsController extends BaseController {
 
     @Value("${spring.application.name:校园招聘平台}")
     private String systemName;
-
-    @Value("${aes.key:recruitment-aes-key-12}")
-    private String aesKey;
-
-    @Value("${aes.iv:recruitment-iv123}")
-    private String aesIv;
-
-    @Value("${jwt.secret:RecruitmentSecretKey2024!@#$%}")
-    private String jwtSecret;
 
     @Value("${jwt.expiration:604800}")
     private Long jwtExpiration;
@@ -39,10 +30,7 @@ public class SettingsController {
         settings.put("systemName", systemName);
         settings.put("pageSize", 20);
         settings.put("logo", "");
-        settings.put("jwtSecret", jwtSecret);
         settings.put("jwtExpiration", jwtExpiration);
-        settings.put("aesKey", aesKey);
-        settings.put("aesIv", aesIv);
         settings.put("emailEnabled", false);
         settings.put("smtpHost", "smtp.example.com");
         settings.put("smtpPort", 587);
@@ -51,7 +39,7 @@ public class SettingsController {
     }
 
     /**
-     * 获取所有系统设置（返回嵌套结构以匹配前端格式）
+     * 获取系统设置（不含密钥等敏感信息）
      */
     @GetMapping
     public Result<Map<String, Object>> getSettings() {
@@ -61,9 +49,7 @@ public class SettingsController {
         basic.put("logo", settings.get("logo"));
 
         Map<String, Object> security = new HashMap<>();
-        security.put("jwtSecret", settings.get("jwtSecret"));
         security.put("jwtExpiration", settings.get("jwtExpiration"));
-        security.put("aesKey", settings.get("aesKey"));
 
         Map<String, Object> notification = new HashMap<>();
         notification.put("emailEnabled", settings.get("emailEnabled"));
@@ -80,10 +66,11 @@ public class SettingsController {
     }
 
     /**
-     * 保存基础设置
+     * 保存基础设置（仅管理员可操作）
      */
     @PostMapping("/basic")
     public Result<String> saveBasic(@RequestBody Map<String, Object> basicSettings) {
+        requireAdmin();
         if (basicSettings.containsKey("systemName")) {
             settings.put("systemName", basicSettings.get("systemName"));
         }
@@ -97,30 +84,11 @@ public class SettingsController {
     }
 
     /**
-     * 保存安全设置
-     */
-    @PostMapping("/security")
-    public Result<String> saveSecurity(@RequestBody Map<String, Object> securitySettings) {
-        if (securitySettings.containsKey("jwtSecret")) {
-            settings.put("jwtSecret", securitySettings.get("jwtSecret"));
-        }
-        if (securitySettings.containsKey("jwtExpiration")) {
-            settings.put("jwtExpiration", securitySettings.get("jwtExpiration"));
-        }
-        if (securitySettings.containsKey("aesKey")) {
-            settings.put("aesKey", securitySettings.get("aesKey"));
-        }
-        if (securitySettings.containsKey("aesIv")) {
-            settings.put("aesIv", securitySettings.get("aesIv"));
-        }
-        return Result.success("安全设置保存成功");
-    }
-
-    /**
-     * 保存通知设置
+     * 保存通知设置（仅管理员可操作）
      */
     @PostMapping("/notification")
     public Result<String> saveNotification(@RequestBody Map<String, Object> notificationSettings) {
+        requireAdmin();
         if (notificationSettings.containsKey("emailEnabled")) {
             settings.put("emailEnabled", notificationSettings.get("emailEnabled"));
         }

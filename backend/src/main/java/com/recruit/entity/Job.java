@@ -1,6 +1,7 @@
 package com.recruit.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -106,7 +107,13 @@ public class Job {
      * 所需技能标签（JSON）
      */
     private String requiredSkills;
-    
+
+    /**
+     * 投递数量（非数据库字段，查询时动态计算）
+     */
+    @TableField(exist = false)
+    private Integer deliveryCount;
+
     /**
      * 逻辑删除标志
      */

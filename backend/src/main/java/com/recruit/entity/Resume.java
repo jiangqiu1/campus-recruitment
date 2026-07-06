@@ -70,7 +70,12 @@ public class Resume {
      * 求职意向
      */
     private String jobTarget;
-    
+
+    /**
+     * AI简历分析结果（JSON）
+     */
+    private String aiAnalysis;
+
     /**
      * 逻辑删除标志
      */

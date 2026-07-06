@@ -1,108 +1,122 @@
 <template>
 	<view class="page-wrapper">
-		<view class="header-simple" style="padding:12px 16px;flex-direction:row;align-items:center;gap:12px;">
-			<text style="font-size:18px;font-weight:700;color:white;">投递管理</text>
-		</view>
+		<NavBar title="候选人" :showBack="false" />
 
-		<!-- 顶部岗位选择下拉 -->
-		<view class="job-select">
-			<picker class="select-picker" :value="selectedJobIndex" :range="jobOptions" @change="onJobChange">
-				<text class="select-text">{{ jobOptions[selectedJobIndex] }}</text>
-				<text class="select-arrow">▼</text>
-			</picker>
-		</view>
-
-		<scroll-view class="content-scrollable" scroll-y>
-			<view class="candidate-list">
-				<view v-for="(candidate, i) in candidates" :key="i" class="card-item" @click="goToDetail(candidate.id)">
-					<view class="card-header-row">
-						<view class="candidate-info">
-							<view class="candidate-avatar">
-								<text>{{ (candidate.studentName || '?').charAt(0) }}</text>
-							</view>
-							<view>
-								<text class="card-title">{{ candidate.studentName || '候选人' }}</text>
-								<text class="card-sub">{{ candidate.jobTitle || '岗位名称' }}</text>
-							</view>
-							<text v-if="candidate.score != null" class="score-badge" :class="scoreBadgeClass(candidate.score)">{{ candidate.score }}分</text>
-						</view>
-						<text class="status-tag" :class="'tag-' + candidate.status">{{ candidate.statusText || '' }}</text>
-					</view>
-					<view class="card-footer">
-						<text class="card-time">{{ candidate.createTime || '' }}</text>
-						<view class="card-actions">
-							<button class="action-btn btn-ai" @click.stop="showScore(candidate)">🤖 AI评分</button>
-							<button class="action-btn btn-blue" @click.stop="handleStatus(candidate, 'interview')">面试</button>
-							<button class="action-btn btn-green" @click.stop="handleStatus(candidate, 'accepted')">录用</button>
-							<button class="action-btn btn-gray" @click.stop="handleStatus(candidate, 'rejected')">拒绝</button>
-						</view>
-					</view>
-				</view>
-				<view v-if="!candidates.length" class="empty-state">
-					<text style="font-size:48px;margin-bottom:12px;">📭</text>
-					<text>暂无投递记录</text>
-				</view>
+		<!-- 岗位筛选：横向滚动标签 -->
+		<scroll-view class="job-tags-scroll" scroll-x show-scrollbar="false">
+			<view class="job-tags-inner">
+				<text v-for="(job, i) in jobTags" :key="i" class="job-tag" :class="{ active: selectedJobId === job.id }" @click="selectJob(job.id)">
+					{{ job.label }}
+					<text v-if="job.count" class="job-tag-count">{{ job.count }}</text>
+				</text>
 			</view>
 		</scroll-view>
 
-		<HrTabBar current="deliveries" />
+		<!-- 状态筛选标签 -->
+		<view class="status-tabs">
+			<text v-for="(tab, i) in statusTabs" :key="i" class="status-tab" :class="{ active: currentStatus === tab.value }" @click="currentStatus = tab.value">
+				{{ tab.label }}
+			</text>
+		</view>
 
-		<!-- AI评分详情弹窗 -->
-		<view class="modal-overlay" v-if="showScoreModal" @click="closeScoreModal">
+		<!-- 候选人列表 -->
+		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
+			<view class="candidate-list">
+				<view v-for="(c, i) in filteredCandidates" :key="i" class="candidate-card" :class="{ 'pending-card': c.status === 'pending' }" @click="goToDetail(c.id)">
+					<view class="candidate-top">
+						<view class="cand-avatar"><text>{{ (c.studentName || '?').charAt(0) }}</text></view>
+						<view class="cand-info">
+							<view class="cand-name-row">
+								<text class="cand-name">{{ c.studentName || '候选人' }}</text>
+								<text v-if="c.score != null" class="score-tag" :class="'score-' + scoreLevel(c.score)">{{ c.score }}分</text>
+							</view>
+							<text class="cand-job">{{ c.jobTitle || '岗位名称' }}</text>
+						</view>
+						<text class="status-tag" :class="'tag-' + c.status">{{ c.statusText }}</text>
+					</view>
+					<view class="cand-meta">
+						<text class="cand-time">{{ c.createTime || '' }}</text>
+					</view>
+					<view class="cand-actions" v-if="c.status === 'pending' || c.status === 'viewed'">
+						<text class="action-tag primary" @click.stop="handleInterview(c)">安排面试</text>
+						<text class="action-tag danger" @click.stop="handleReject(c)">不合适</text>
+					</view>
+				</view>
+				<EmptyState v-if="!filteredCandidates.length" icon="inbox" title="暂无候选人" desc="有学生投递岗位后会自动出现在这里" />
+			</view>
+			<view style="height: calc(60px + env(safe-area-inset-bottom))" />
+		</scroll-view>
+
+		<!-- 安排面试弹窗 -->
+		<view class="modal-overlay" v-if="showInterviewModal" @click="showInterviewModal = false">
 			<view class="modal-content" @click.stop>
 				<view class="modal-header">
-					<text class="modal-title">AI 简历评分</text>
-					<text class="modal-close" @click="closeScoreModal">✕</text>
+					<text class="modal-title">安排面试</text>
+					<text class="modal-close" @click="showInterviewModal = false">✕</text>
 				</view>
-				<view class="modal-body" v-if="scoreDetail">
-					<view class="score-big-ring" :class="scoreRingClass(scoreTotal)">
-						<text class="score-big-num">{{ scoreTotal }}</text>
-						<text class="score-big-label">分</text>
-					</view>
-					<view class="score-dim-list">
-						<view v-for="(dim, i) in scoreDims" :key="i" class="dim-row">
-							<text class="dim-title">{{ dim.label }}</text>
-							<view class="dim-track-wrap">
-								<view class="dim-track-bg">
-									<view class="dim-fill" :style="{ width: dim.percent + '%', background: dim.color }"></view>
-								</view>
-							</view>
-							<text class="dim-val" :style="{ color: dim.color }">{{ dim.score }}</text>
-						</view>
-					</view>
-					<view class="score-comment" v-if="scoreDetail.comment">
-						<text class="comment-text">{{ scoreDetail.comment }}</text>
-					</view>
-				</view>
-				<view class="modal-body" v-else style="padding:40px 20px;align-items:center;">
-					<text style="font-size:40px;margin-bottom:12px;">🤖</text>
-					<text style="color:#86909C;font-size:14px;">正在生成评分...</text>
+				<view class="modal-body">
+					<text class="form-label">面试时间</text>
+					<input class="form-input" v-model="interviewForm.time" type="text" placeholder="例：2026-07-04 14:00" />
+					<text class="form-label" style="margin-top:12px;">面试地点</text>
+					<input class="form-input" v-model="interviewForm.location" type="text" placeholder="例：线上/公司地址" />
+					<text class="form-label" style="margin-top:12px;">备注（选填）</text>
+					<input class="form-input" v-model="interviewForm.note" type="text" placeholder="备注信息" />
+					<button class="submit-btn" @click="submitInterview">确认安排</button>
 				</view>
 			</view>
 		</view>
+
+		<HrTabBar current="deliveries" />
 	</view>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { hrAPI, scoreAPI } from '@/utils/request'
+import { onShow } from '@/utils/page-lifecycle'
+import { hrAPI } from '@/utils/request'
 import HrTabBar from '@/components/HrTabBar.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import NavBar from '@/components/NavBar.vue'
 
 const jobs = ref([])
 const candidates = ref([])
-const selectedJobIndex = ref(0)
+const selectedJobId = ref('all')
+const currentStatus = ref('all')
+const showInterviewModal = ref(false)
 
-const jobOptions = computed(() => {
-	const opts = ['全部岗位']
-	jobs.value.forEach(j => {
-		opts.push(j.title || '岗位 #' + j.id)
-	})
-	return opts
-})
+const interviewForm = ref({ time: '', location: '', note: '' })
+const interviewCandidate = ref(null)
 
-// 后端 Delivery.status Integer(0-4) → 前端 string
 const DELIVERY_STATUS = ['pending', 'viewed', 'interview', 'accepted', 'rejected']
 const DELIVERY_STATUS_TEXT = ['待查看', '已查看', '面试中', '已录用', '未通过']
+
+const statusTabs = [
+	{ label: '全部', value: 'all' },
+	{ label: '待查看', value: 'pending' },
+	{ label: '面试中', value: 'interview' },
+	{ label: '已录用', value: 'accepted' },
+	{ label: '未通过', value: 'rejected' }
+]
+
+const jobTags = computed(() => {
+	const tags = [{ id: 'all', label: '全部岗位', count: candidates.value.length }]
+	jobs.value.forEach(j => {
+		const count = candidates.value.filter(c => c.jobId === j.id).length
+		tags.push({ id: j.id, label: j.title || '岗位#' + j.id, count })
+	})
+	return tags
+})
+
+const filteredCandidates = computed(() => {
+	let list = candidates.value
+	if (selectedJobId.value !== 'all') {
+		list = list.filter(c => c.jobId === selectedJobId.value)
+	}
+	if (currentStatus.value !== 'all') {
+		list = list.filter(c => c.status === currentStatus.value)
+	}
+	return list
+})
 
 const mapDelivery = (d) => ({
 	id: d.id,
@@ -112,8 +126,15 @@ const mapDelivery = (d) => ({
 	jobId: d.jobId,
 	status: DELIVERY_STATUS[d.status] || 'pending',
 	statusText: DELIVERY_STATUS_TEXT[d.status] || '待查看',
-	createTime: d.createTime ? d.createTime.substring(0, 16).replace('T', ' ') : ''
+	createTime: d.createTime ? d.createTime.substring(5, 16).replace('T', ' ') : '',
+	score: d.score ?? d.matchScore ?? null
 })
+
+const scoreLevel = (s) => {
+	if (s >= 80) return 'high'
+	if (s >= 60) return 'mid'
+	return 'low'
+}
 
 const getCompanyId = () => {
 	try {
@@ -121,35 +142,43 @@ const getCompanyId = () => {
 		if (!raw) return null
 		const obj = JSON.parse(raw)
 		return obj.companyId || obj.id || null
-	} catch (e) { return null }
+	} catch (e) {
+		console.error('获取公司ID失败', e)
+		return null
+	}
 }
 
 onMounted(async () => {
 	const cId = getCompanyId()
-	await loadJobs(cId)
-	await loadAllCandidates()
+	await loadData(cId)
 })
 
-const onJobChange = (e) => {
-	selectedJobIndex.value = e.detail.value
-	const title = jobOptions.value[selectedJobIndex.value]
-	if (title === '全部岗位') {
-		loadAllCandidates()
-	} else {
-		const job = jobs.value.find(j => j.title === title)
-		if (job) {
-			loadCandidatesByJob(job.id)
-		}
-	}
+onShow(() => {
+	if (jobs.value.length) loadAllCandidates()
+})
+
+const refreshing = ref(false)
+const onRefresh = async () => {
+	refreshing.value = true
+	const cId = getCompanyId()
+	if (cId) await loadData(cId)
+	refreshing.value = false
+}
+
+const loadData = async (cId) => {
+	await loadJobs(cId)
+	await loadAllCandidates()
+}
+
+const selectJob = (id) => {
+	selectedJobId.value = id
 }
 
 const loadJobs = async (cId) => {
 	try {
 		const res = await hrAPI.getHrJobs(cId)
 		jobs.value = res.data || []
-	} catch (e) {
-		console.error('加载岗位列表失败', e)
-	}
+	} catch (e) { console.error('加载岗位失败', e) }
 }
 
 const loadAllCandidates = async () => {
@@ -158,232 +187,232 @@ const loadAllCandidates = async () => {
 		for (const job of jobs.value) {
 			try {
 				const res = await hrAPI.getCompanyDeliveries(job.id)
-				all.push(...(res.data || []))
-			} catch (e) { /* skip job */ }
+				;(res.data || []).forEach(d => {
+					all.push(mapDelivery({ ...d, jobTitle: job.title }))
+				})
+			} catch (e) { console.error('加载候选人列表失败', e) }
 		}
-		candidates.value = all.map(mapDelivery)
+		candidates.value = all
 	} catch (e) {
-		console.error('加载投递列表失败', e)
-		uni.showToast({ title: '加载失败', icon: 'none' })
+		console.error('加载候选人失败', e)
 	}
 }
 
-const loadCandidatesByJob = async (jobId) => {
-	try {
-		const res = await hrAPI.getCompanyDeliveries(jobId)
-		candidates.value = (res.data || []).map(mapDelivery)
-	} catch (e) {
-		console.error('加载岗位投递列表失败', e)
-		uni.showToast({ title: '加载失败', icon: 'none' })
-	}
+const handleInterview = (c) => {
+	interviewCandidate.value = c
+	interviewForm.value = { time: '', location: '', note: '' }
+	showInterviewModal.value = true
 }
 
-const handleStatus = async (candidate, status) => {
-	// 字符串 → 后端 Integer 映射
-	const statusToInt = { pending: 0, viewed: 1, interview: 2, accepted: 3, rejected: 4 }
-	const statusInt = statusToInt[status]
-	if (statusInt === undefined) return
-
+const submitInterview = async () => {
+	if (!interviewForm.value.time || !interviewForm.value.location) {
+		uni.showToast({ title: '请填写面试时间和地点', icon: 'none' })
+		return
+	}
 	try {
-		await hrAPI.updateDeliveryStatus(candidate.id, { status: statusInt })
-		candidate.status = status
-		candidate.statusText = DELIVERY_STATUS_TEXT[statusInt]
-		uni.showToast({ title: '状态已更新', icon: 'success' })
+		await hrAPI.updateDeliveryStatus(interviewCandidate.value.id, { status: 2 })
+		uni.showToast({ title: '已安排面试', icon: 'success' })
+		showInterviewModal.value = false
+		// 刷新状态
+		const idx = candidates.value.findIndex(c => c.id === interviewCandidate.value.id)
+		if (idx > -1) {
+			candidates.value[idx].status = 'interview'
+			candidates.value[idx].statusText = '面试中'
+		}
 	} catch (e) {
 		uni.showToast({ title: '操作失败', icon: 'none' })
 	}
 }
 
+const handleReject = async (c) => {
+	uni.showModal({
+		title: '确认标记',
+		content: '确定标记该候选人不合适吗？',
+		success: async (res) => {
+			if (!res.confirm) return
+			try {
+				await hrAPI.updateDeliveryStatus(c.id, { status: 4 })
+				uni.showToast({ title: '已标记', icon: 'success' })
+				const idx = candidates.value.findIndex(item => item.id === c.id)
+				if (idx > -1) {
+					candidates.value[idx].status = 'rejected'
+					candidates.value[idx].statusText = '未通过'
+				}
+			} catch (e) {
+				uni.showToast({ title: '操作失败', icon: 'none' })
+			}
+		}
+	})
+}
+
 const goToDetail = (id) => {
 	uni.navigateTo({ url: '/pages/hr/delivery-detail?id=' + id })
-}
-
-// AI 简历评分
-const showScoreModal = ref(false)
-const scoreDetail = ref(null)
-const scoreTotal = ref(0)
-const scoreDims = ref([])
-
-const scoreBadgeClass = (score) => {
-	if (score >= 80) return 'score-green'
-	if (score >= 60) return 'score-blue'
-	if (score >= 40) return 'score-yellow'
-	return 'score-red'
-}
-
-const scoreRingClass = (score) => {
-	if (score >= 80) return 'ring-green'
-	if (score >= 60) return 'ring-blue'
-	if (score >= 40) return 'ring-yellow'
-	return 'ring-red'
-}
-
-const showScore = async (candidate) => {
-	showScoreModal.value = true
-	scoreDetail.value = null
-	scoreTotal.value = 0
-	scoreDims.value = []
-	try {
-		const res = await hrAPI.getDeliveryScore?.(candidate.id) ?? await scoreAPI.getByStudentAndJob?.(candidate.studentId, candidate.jobId)
-		const data = res.data || res
-		scoreDetail.value = data
-		scoreTotal.value = data.totalScore || data.score || 0
-		scoreDims.value = [
-			{ label: '技能匹配', score: data.skillScore || 0, percent: (data.skillScore || 0) * 100 / 100, color: scoreTotal.value >= 80 ? '#10B981' : scoreTotal.value >= 60 ? '#165DFF' : '#F59E0B' },
-			{ label: '经验匹配', score: data.expScore || 0, percent: (data.expScore || 0) * 100 / 100, color: (data.expScore || 0) >= 80 ? '#10B981' : (data.expScore || 0) >= 60 ? '#165DFF' : '#F59E0B' },
-			{ label: '学历匹配', score: data.eduScore || 0, percent: (data.eduScore || 0) * 100 / 100, color: (data.eduScore || 0) >= 80 ? '#10B981' : (data.eduScore || 0) >= 60 ? '#165DFF' : '#F59E0B' }
-		]
-	} catch (e) {
-		console.error('评分加载失败', e)
-		scoreDetail.value = { comment: '评分加载失败，请稍后重试' }
-		scoreTotal.value = 0
-		scoreDims.value = []
-	}
-}
-
-const closeScoreModal = () => {
-	showScoreModal.value = false
 }
 </script>
 
 <style scoped>
-.job-select {
-	padding: 12px 16px;
-	background: white;
-	flex-shrink: 0;
+/* ===== 岗位标签横向滚动 ===== */
+.job-tags-scroll {
+	white-space: nowrap;
+	padding: 10px 16px;
+	background: #FFFFFF;
 }
-.select-picker {
-	width: 100%;
-	height: 44px;
-	border: 2px solid #E2E8F0;
-	border-radius: 12px;
-	padding: 0 16px;
-	font-size: 14px;
-	background: #F8F9FC;
+.job-tags-inner {
 	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
+	gap: 8px;
 }
-.select-text {
-	color: #1D2129;
+.job-tag {
+	display: inline-block;
+	padding: 6px 14px;
+	border-radius: 20px;
+	font-size: 13px;
+	color: #4E5969;
+	background: #F7F8FA;
 	font-weight: 500;
 }
-.select-arrow {
+.job-tag.active {
+	background: rgba(22,93,255,0.1);
+	color: #165DFF;
+	font-weight: 600;
+	box-shadow: 0 0 0 1px rgba(22,93,255,0.15);
+}
+.job-tag-count {
+	font-size: 10px;
 	color: #86909C;
-	font-size: 12px;
+	margin-left: 4px;
 }
-.candidate-list {
-	padding: 16px;
+
+/* ===== 状态筛选 ===== */
+.status-tabs {
+	flex-direction: row;
+	padding: 0 16px 8px;
+	gap: 16px;
+	background: #FFFFFF;
+	border-bottom: 0.5px solid #F2F3F5;
 }
-.card-item {
-	background: white;
-	border-radius: 16px;
-	padding: 16px;
-	margin-bottom: 12px;
+.status-tab {
+	font-size: 14px;
+	color: #86909C;
+	font-weight: 500;
+	padding-bottom: 6px;
+	position: relative;
+}
+.status-tab.active {
+	color: #1D2129;
+	font-weight: 600;
+}
+.status-tab.active::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 20px;
+	height: 3px;
+	background: #165DFF;
+	border-radius: 2px;
+}
+
+/* ===== 候选人卡片 ===== */
+.candidate-list { padding: 12px 16px; }
+.candidate-card {
+	background: #FFFFFF;
+	border-radius: 12px;
+	padding: 14px 14px 14px 18px;
+	margin-bottom: 10px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 	position: relative;
 	overflow: hidden;
 }
-.card-item::before {
+/* Signature：待查看卡片左侧橙色指示条 */
+.candidate-card.pending-card::before {
 	content: '';
 	position: absolute;
-	top: 0;
+	top: 8px;
 	left: 0;
-	width: 100%;
-	height: 3px;
-	background: linear-gradient(90deg, #0EA5E9, transparent);
+	width: 3px;
+	height: calc(100% - 16px);
+	background: #F59E0B;
+	border-radius: 0 2px 2px 0;
 }
-.card-header-row {
-	flex-direction: row;
-	justify-content: space-between;
-	align-items: flex-start;
-	margin-bottom: 8px;
-}
-.candidate-info {
+.candidate-card:active { background: #F7F8FA; }
+.candidate-top {
 	flex-direction: row;
 	align-items: center;
-	gap: 12px;
+	gap: 10px;
+	margin-bottom: 6px;
 }
-.candidate-avatar {
+.cand-avatar {
 	width: 40px;
 	height: 40px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #0EA5E9, #38BDF8);
+	background: linear-gradient(135deg, #165DFF, #2563EB);
 	align-items: center;
 	justify-content: center;
-	color: white;
+	color: #FFFFFF;
 	font-size: 16px;
-	font-weight: 600;
+	font-weight: 700;
+	flex-shrink: 0;
 }
-.card-title {
-	font-size: 15px;
-	font-weight: 600;
-	color: #1D2129;
-	display: block;
+.cand-info { flex: 1; }
+.cand-name-row {
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
 	margin-bottom: 2px;
 }
-.card-sub {
-	font-size: 13px;
-	color: #86909C;
-	display: block;
+.cand-name { font-size: 16px; font-weight: 700; color: #1D2129; letter-spacing: 0.01em; }
+.score-tag {
+	font-size: 11px;
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-weight: 600;
 }
+.score-high { background: rgba(0,180,42,0.1); color: #00B42A; }
+.score-mid { background: rgba(22,93,255,0.1); color: #165DFF; }
+.score-low { background: rgba(245,158,11,0.1); color: #F59E0B; }
+.cand-job { font-size: 12px; color: #86909C; }
+.cand-meta {
+	margin-left: 50px;
+	margin-bottom: 8px;
+}
+.cand-time { font-size: 11px; color: #C9CDD4; }
+
+/* ===== 状态标签 ===== */
 .status-tag {
 	padding: 4px 10px;
 	border-radius: 6px;
 	font-size: 12px;
 	font-weight: 600;
+	flex-shrink: 0;
 }
 .tag-pending { background: rgba(245,158,11,0.1); color: #F59E0B; }
 .tag-viewed { background: rgba(22,93,255,0.1); color: #165DFF; }
-.tag-interview { background: rgba(14,165,233,0.1); color: #0EA5E9; }
-.tag-accepted { background: rgba(16,185,129,0.1); color: #10B981; }
+.tag-interview { background: rgba(22,93,255,0.1); color: #165DFF; }
+.tag-accepted { background: rgba(0,180,42,0.1); color: #00B42A; }
 .tag-rejected { background: rgba(239,68,68,0.1); color: #EF4444; }
-.card-footer {
+
+/* ===== 操作标签 ===== */
+.cand-actions {
 	flex-direction: row;
-	justify-content: space-between;
-	align-items: center;
+	gap: 10px;
+	margin-left: 50px;
 }
-.card-time {
-	font-size: 12px;
-	color: #C9CDD4;
-}
-.card-actions {
-	flex-direction: row;
-	gap: 6px;
-}
-.action-btn {
-	padding: 6px 14px;
+.action-tag {
+	flex: 1;
+	text-align: center;
+	padding: 7px 0;
 	border-radius: 8px;
 	font-size: 12px;
 	font-weight: 600;
-	align-items: center;
-	justify-content: center;
 }
-.btn-blue { background: rgba(14,165,233,0.1); color: #0EA5E9; border: none; }
-.btn-green { background: rgba(16,185,129,0.1); color: #10B981; border: none; }
-.btn-gray { background: #F2F3F5; color: #86909C; border: none; }
-.btn-ai {
-	background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1));
-	color: #7C3AED;
-	border: none;
-	font-size: 11px;
-	padding: 4px 10px;
+.action-tag.primary { background: #165DFF; color: #FFFFFF; box-shadow: 0 2px 6px rgba(22,93,255,0.25); }
+.action-tag.danger {
+	background: #FFFFFF;
+	border: 1px solid #EF4444;
+	color: #EF4444;
 }
 
-/* 评分徽章 */
-.score-badge {
-	font-size: 11px;
-	font-weight: 700;
-	padding: 2px 8px;
-	border-radius: 10px;
-	margin-left: auto;
-}
-.score-green { background: #ECFDF5; color: #10B981; }
-.score-blue { background: #EFF6FF; color: #165DFF; }
-.score-yellow { background: #FFFBEB; color: #F59E0B; }
-.score-red { background: #FEF2F2; color: #EF4444; }
-
-/* 评分弹窗 */
+/* ===== 面试弹窗 ===== */
 .modal-overlay {
 	position: fixed;
 	top: 0;
@@ -412,48 +441,29 @@ const closeScoreModal = () => {
 .modal-title { font-size: 18px; font-weight: 700; color: #1D2129; }
 .modal-close { font-size: 20px; color: #86909C; padding: 4px; }
 .modal-body { padding: 16px 20px 20px; }
-
-.score-big-ring {
-	width: 100px;
-	height: 100px;
-	border-radius: 50%;
-	border: 5px solid #10B981;
-	align-items: center;
-	justify-content: center;
-	align-self: center;
-	margin-bottom: 16px;
-}
-.score-big-ring.ring-green { border-color: #10B981; }
-.score-big-ring.ring-blue { border-color: #165DFF; }
-.score-big-ring.ring-yellow { border-color: #F59E0B; }
-.score-big-ring.ring-red { border-color: #EF4444; }
-.score-big-num { font-size: 32px; font-weight: 800; color: #1D2129; }
-.score-big-label { font-size: 14px; color: #86909C; }
-
-.score-dim-list { gap: 12px; margin-bottom: 16px; }
-.dim-row { flex-direction: row; align-items: center; gap: 8px; }
-.dim-title { width: 56px; font-size: 13px; color: #4E5969; }
-.dim-track-wrap { flex: 1; }
-.dim-track-bg {
-	height: 10px;
-	background: #F2F3F5;
-	border-radius: 5px;
-	overflow: hidden;
-}
-.dim-fill { height: 100%; border-radius: 5px; transition: width 0.5s; }
-.dim-val { width: 30px; font-size: 13px; font-weight: 700; text-align: right; }
-
-.score-comment {
-	padding: 12px 16px;
-	background: #F8F9FC;
-	border-radius: 10px;
-}
-.comment-text { font-size: 13px; color: #4E5969; line-height: 1.6; }
-
-.empty-state {
-	padding: 60px 20px;
-	align-items: center;
-	color: #86909C;
+.form-label { font-size: 13px; color: #4E5969; font-weight: 500; margin-bottom: 6px; display: block; }
+.form-input {
+	width: 100%;
+	height: 44px;
+	border: 1px solid #E5E6EB;
+	border-radius: 8px;
+	padding: 0 12px;
 	font-size: 14px;
+	color: #1D2129;
+	background: #F7F8FA;
+	box-sizing: border-box;
 }
+.submit-btn {
+	width: 100%;
+	height: 44px;
+	border-radius: 8px;
+	background: #165DFF;
+	color: white;
+	font-size: 15px;
+	font-weight: 600;
+	border: none;
+	margin-top: 20px;
+}
+
+.empty-state { padding: 60px 20px; align-items: center; color: #86909C; font-size: 14px; }
 </style>

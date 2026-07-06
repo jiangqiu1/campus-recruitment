@@ -1,5 +1,6 @@
 package com.recruit.controller;
 
+import com.recruit.annotation.LogOperation;
 import com.recruit.dto.LoginRequest;
 import com.recruit.dto.LoginResponse;
 import com.recruit.entity.SysUser;
@@ -16,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,6 +53,12 @@ public class AuthController {
                 user.getUsername(),
                 user.getRole().toString()
         );
+
+        // 生成 Token 版本号（用于密码修改后失效）
+        String tokenVersion = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        String versionKey = "token:version:" + user.getId();
+        redisUtil.setWithExpire(versionKey, tokenVersion, 7 * 24 * 60 * 60, TimeUnit.SECONDS);
+        token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole().toString(), tokenVersion);
 
         String redisKey = "token:" + user.getId();
         redisUtil.setWithExpire(redisKey, token, 7 * 24 * 60 * 60, TimeUnit.SECONDS);
@@ -112,6 +120,24 @@ public class AuthController {
         return Result.success(user);
     }
 
+    /**
+     * 获取指定用户的基本信息（仅返回 id、realName、role）
+     * 用于 AI 匹配等场景显示学生姓名
+     */
+    @GetMapping("/user-basic/{id}")
+    public Result<java.util.Map<String, Object>> getUserBasic(@PathVariable Long id) {
+        SysUser user = userService.getById(id);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+        java.util.Map<String, Object> basic = new java.util.HashMap<>();
+        basic.put("id", user.getId());
+        basic.put("realName", user.getRealName());
+        basic.put("role", user.getRole());
+        return Result.success(basic);
+    }
+
+    @LogOperation("修改密码")
     @PutMapping("/update-password")
     public Result<String> updatePassword(@RequestBody Map<String, String> params) {
         String token = params.get("token");
@@ -150,6 +176,11 @@ public class AuthController {
         } catch (IllegalArgumentException e) {
             return Result.error(e.getMessage());
         }
+
+        // 密码修改成功后，递增 Token 版本号使所有旧 Token 失效
+        String versionKey = "token:version:" + userId;
+        String newVersion = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        redisUtil.setWithExpire(versionKey, newVersion, 7 * 24 * 60 * 60, TimeUnit.SECONDS);
 
         return Result.success("密码修改成功");
     }

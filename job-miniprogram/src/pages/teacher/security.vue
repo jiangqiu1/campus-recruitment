@@ -1,67 +1,78 @@
 <template>
 	<view class="page-wrapper">
-		<view class="header-simple" style="padding:12px 16px;flex-direction:row;align-items:center;gap:12px;">
-			<text style="font-size:20px;" @click="goBack">‹</text>
-			<text style="font-size:18px;font-weight:700;color:white;">账号安全</text>
-		</view>
+		<NavBar title="账号安全" show-back />
 		<scroll-view class="content-scrollable" scroll-y>
 			<view class="menu-list">
 				<view class="menu-item" @click="handleChangePwd">
-					<view class="menu-icon green"><text>🔑</text></view>
+					<view class="menu-icon blue"><uni-icons type="locked" size="20" color="#165DFF" /></view>
 					<text class="menu-text">修改密码</text>
 					<text class="menu-value">••••••</text>
-					<text class="menu-arrow">›</text>
+					<uni-icons type="arrowright" size="16" color="#C9CDD4" />
 				</view>
 				<view class="menu-item" @click="handleBindPhone">
-					<view class="menu-icon green"><text>📱</text></view>
+					<view class="menu-icon green"><uni-icons type="phone" size="20" color="#00B42A" /></view>
 					<text class="menu-text">绑定手机</text>
-					<text class="menu-value">138****8888</text>
-					<text class="menu-arrow">›</text>
+					<text class="menu-value">{{ userInfo.phone || '未绑定' }}</text>
+					<uni-icons type="arrowright" size="16" color="#C9CDD4" />
 				</view>
 				<view class="menu-item" @click="handleBindEmail">
-					<view class="menu-icon green"><text>📧</text></view>
+					<view class="menu-icon orange"><uni-icons type="email" size="20" color="#FF7D00" /></view>
 					<text class="menu-text">绑定邮箱</text>
-					<text class="menu-value">未绑定</text>
-					<text class="menu-arrow">›</text>
+					<text class="menu-value">{{ userInfo.email || '未绑定' }}</text>
+					<uni-icons type="arrowright" size="16" color="#C9CDD4" />
 				</view>
 				<view class="menu-item" style="border:none;" @click="handleDeleteAccount">
-					<view class="menu-icon red"><text>🚫</text></view>
+					<view class="menu-icon red"><uni-icons type="trash" size="20" color="#F53F3F" /></view>
 					<text class="menu-text">账号注销</text>
-					<text class="menu-arrow">›</text>
+					<uni-icons type="arrowright" size="16" color="#C9CDD4" />
 				</view>
 			</view>
 
 			<view class="info-card">
 				<text class="info-title">安全建议</text>
-				<text class="info-text">• 定期修改密码，避免使用简单密码</text>
-				<text class="info-text">• 绑定手机号和邮箱，方便找回密码</text>
-				<text class="info-text">• 不要在公共场所保存登录状态</text>
+				<text class="info-text">· 定期修改密码，避免使用简单密码</text>
+				<text class="info-text">· 绑定手机号和邮箱，方便找回密码</text>
+				<text class="info-text">· 不要在公共场所保存登录状态</text>
 			</view>
 		</scroll-view>
 	</view>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { authAPI } from '@/utils/request'
+import NavBar from '@/components/NavBar.vue'
+import { checkRole } from '@/utils/auth'
+
+checkRole(1)
+
+const userInfo = ref({})
+
+onMounted(() => {
+	try {
+		const stored = uni.getStorageSync('userInfo')
+		if (stored) userInfo.value = JSON.parse(stored)
+	} catch (e) {}
+})
 
 const handleChangePwd = () => {
 	uni.showModal({
 		title: '修改密码',
-		content: '请输入旧密码和新密码',
+		content: '请输入当前密码',
 		editable: true,
-		placeholderText: '旧密码',
+		placeholderText: '当前密码',
 		success: (res) => {
 			if (!res.confirm) return
 			uni.showModal({
-				title: '新密码',
+				title: '设置新密码',
 				content: '请输入新密码（至少6位）',
 				editable: true,
 				placeholderText: '新密码',
 				success: async (res2) => {
 					if (!res2.confirm) return
 					try {
-						await authAPI.updatePassword({ oldPassword: res.content, newPassword: res2.content })
+						const token = uni.getStorageSync('token')
+						await authAPI.updatePassword({ oldPassword: res.content, newPassword: res2.content, token: token })
 						uni.showToast({ title: '密码修改成功', icon: 'success' })
 					} catch (e) {
 						uni.showToast({ title: '修改失败，请检查旧密码', icon: 'none' })
@@ -71,41 +82,27 @@ const handleChangePwd = () => {
 		}
 	})
 }
-
-const handleBindPhone = () => {
-	uni.showToast({ title: '功能开发中', icon: 'none' })
-}
-
-const handleBindEmail = () => {
-	uni.showToast({ title: '功能开发中', icon: 'none' })
-}
-
+const handleBindPhone = () => uni.showToast({ title: '功能开发中', icon: 'none' })
+const handleBindEmail = () => uni.showToast({ title: '功能开发中', icon: 'none' })
 const handleDeleteAccount = () => {
 	uni.showModal({
 		title: '警告',
 		content: '确定要注销账号吗？此操作不可恢复！',
 		success: (res) => {
-			if (res.confirm) {
-				uni.showToast({ title: '请联系管理员注销', icon: 'none' })
-			}
+			if (res.confirm) uni.showToast({ title: '请联系管理员注销', icon: 'none' })
 		}
 	})
-}
-
-const goBack = () => {
-	uni.navigateBack()
 }
 </script>
 
 <style scoped>
-.header-simple {
-	background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
-	color: white;
-	flex-shrink: 0;
+.page-wrapper {
+	min-height: 100vh;
+	background: #F7F8FA;
 }
 .menu-list {
 	background: white;
-	border-radius: 16px;
+	border-radius: 12px;
 	margin: 16px;
 	overflow: hidden;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
@@ -113,50 +110,44 @@ const goBack = () => {
 .menu-item {
 	flex-direction: row;
 	align-items: center;
-	padding: 16px;
-	border-bottom: 1px solid #F2F3F5;
+	padding: 16px 16px 16px 60px;
+	position: relative;
+	min-height: 56px;
 }
+.menu-item::after {
+	content: '';
+	position: absolute;
+	left: 60px;
+	right: 0;
+	bottom: 0;
+	height: 0.5px;
+	background: #F2F3F5;
+}
+.menu-item:last-child::after { display: none; }
 .menu-icon {
+	position: absolute;
+	left: 12px;
 	width: 36px;
 	height: 36px;
-	border-radius: 10px;
+	border-radius: 8px;
 	align-items: center;
 	justify-content: center;
-	margin-right: 12px;
-	font-size: 18px;
 }
-.menu-icon.green { background: rgba(16,185,129,0.1); }
-.menu-icon.red { background: rgba(239,68,68,0.1); }
-.menu-text {
-	flex: 1;
-	font-size: 15px;
-	color: #1D2129;
-	font-weight: 500;
-}
-.menu-value {
-	font-size: 14px;
-	color: #86909C;
-	margin-right: 8px;
-}
-.menu-arrow { color: #C9CDD4; font-size: 18px; }
+.menu-icon.blue { background: rgba(22,93,255,0.08); }
+.menu-icon.green { background: rgba(0,180,42,0.08); }
+.menu-icon.orange { background: rgba(255,125,0,0.08); }
+.menu-icon.red { background: rgba(245,63,63,0.08); }
+.menu-text { flex: 1; font-size: 15px; color: #1D2129; font-weight: 500; }
+.menu-value { font-size: 14px; color: #86909C; margin-right: 8px; }
+.menu-item:active { background: #F7F8FA; }
+
 .info-card {
 	background: white;
-	border-radius: 16px;
+	border-radius: 12px;
 	margin: 0 16px 16px;
 	padding: 16px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.info-title {
-	font-size: 16px;
-	font-weight: 700;
-	color: #1D2129;
-	margin-bottom: 12px;
-	display: block;
-}
-.info-text {
-	font-size: 13px;
-	color: #86909C;
-	line-height: 1.8;
-	display: block;
-}
+.info-title { font-size: 15px; font-weight: 600; color: #1D2129; margin-bottom: 12px; display: block; }
+.info-text { font-size: 13px; color: #86909C; line-height: 1.8; display: block; }
 </style>

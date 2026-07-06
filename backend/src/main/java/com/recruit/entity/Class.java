@@ -60,10 +60,10 @@ public class Class {
     private Integer studentCount;
     
     /**
-     * 就业率（非数据库字段）
+     * 就业率（非数据库字段）- 返回纯数字，如 88 表示 88%
      */
     @TableField(exist = false)
-    private String employmentRate;
+    private Integer employmentRate;
     
     /**
      * 投递数（非数据库字段）

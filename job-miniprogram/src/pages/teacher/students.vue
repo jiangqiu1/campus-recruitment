@@ -1,11 +1,7 @@
 <template>
 	<view class="page-wrapper">
-		<view class="header-simple" style="padding:12px 16px;flex-direction:row;align-items:center;gap:12px;">
-			<text style="font-size:20px;" @click="goBack">‹</text>
-			<text style="font-size:18px;font-weight:700;color:white;flex:1;">{{ className }}</text>
-			<text class="export-btn" @click="exportCSV">📥 导出</text>
-		</view>
-		<scroll-view class="content-scrollable" scroll-y refresher-enabled="true" :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
+		<NavBar :title="className" show-back />
+		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
 			<view class="student-list">
 				<view v-for="(stu, i) in students" :key="i" class="student-card" @click="goToResume(stu.id, stu.realName)">
 					<view class="student-avatar">
@@ -18,13 +14,14 @@
 							<text class="tag-green" v-if="stu.resumeComplete">简历: {{ stu.resumeComplete }}%</text>
 							<text class="tag-blue">投递: {{ stu.deliveryCount || 0 }}</text>
 						</view>
+						<view class="tags-row">
+							<text class="tag">完成度 {{ stu.resumeComplete || '—' }}%</text>
+							<text class="tag">最后活跃: {{ stu.lastActive || '—' }}</text>
+						</view>
 					</view>
-					<text class="student-arrow">›</text>
+					<uni-icons type="arrowright" size="16" color="#C9CDD4" />
 				</view>
-				<view v-if="!students.length" class="empty-state">
-					<text style="font-size:48px;margin-bottom:12px;">👨‍🎓</text>
-					<text class="empty-text">暂无学生数据</text>
-				</view>
+				<EmptyState v-if="!students.length" icon="person" title="暂无学生" desc="该班级暂无学生数据" />
 			</view>
 		</scroll-view>
 	</view>
@@ -33,6 +30,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { teacherAPI } from '@/utils/request'
+import NavBar from '@/components/NavBar.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import { checkRole } from '@/utils/auth'
+
+checkRole(1)
 
 const refreshing = ref(false)
 const className = ref('')
@@ -45,14 +47,14 @@ const onRefresh = async () => {
 	refreshing.value = false
 }
 
-// 后端SysUser → 前排展示映射
 const mapStudent = (stu) => ({
 	id: stu.id,
 	realName: stu.realName || '未知',
 	username: stu.username || '',
 	phone: stu.phone || '',
 	resumeComplete: stu.resumeComplete || 0,
-	deliveryCount: stu.deliveryCount || 0
+	deliveryCount: stu.deliveryCount || 0,
+	lastActive: stu.lastActive || ''
 })
 
 onMounted(() => {
@@ -68,8 +70,7 @@ onMounted(() => {
 const loadStudents = async () => {
 	try {
 		const res = await teacherAPI.getStudentsByClass(classId.value)
-		const rawList = res.data || []
-		students.value = rawList.map(mapStudent)
+		students.value = (res.data || []).map(mapStudent)
 	} catch (e) {
 		console.error('加载学生列表失败', e)
 		uni.showToast({ title: '加载失败', icon: 'none' })
@@ -79,76 +80,24 @@ const loadStudents = async () => {
 const goToResume = (studentId, realName) => {
 	uni.navigateTo({ url: '/pages/teacher/student-resume?studentId=' + studentId + '&name=' + encodeURIComponent(realName) })
 }
-
-const goBack = () => {
-	uni.navigateBack()
-}
-
-const exportCSV = () => {
-	if (!students.value.length) {
-		uni.showToast({ title: '暂无数据可导出', icon: 'none' })
-		return
-	}
-	const BOM = '\uFEFF'
-	const headers = '姓名,学号,手机号,简历完整度,投递数\n'
-	const rows = students.value.map(s =>
-		`${s.realName},${s.username || ''},${s.phone || ''},${s.resumeComplete || 0},${s.deliveryCount || 0}`
-	).join('\n')
-	const csv = BOM + headers + rows
-	uni.setClipboardData({
-		data: csv,
-		success: () => {
-			uni.showToast({ title: `已导出 ${students.value.length} 条，粘贴到 Excel 即可`, icon: 'success', duration: 2500 })
-		}
-	})
-}
 </script>
 
 <style scoped>
-.header-simple {
-	background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
-	color: white;
-	flex-shrink: 0;
-}
-.export-btn {
-	font-size:13px;
-	color:rgba(255,255,255,0.9);
-	padding:6px 12px;
-	border-radius:16px;
-	background:rgba(255,255,255,0.2);
-	font-weight:500;
-}
-.export-btn:active {
-	background:rgba(255,255,255,0.35);
-}
-.student-list {
-	padding: 16px;
-}
+.student-list { padding: 16px; }
 .student-card {
 	flex-direction: row;
 	align-items: center;
 	background: white;
-	border-radius: 16px;
+	border-radius: 12px;
 	padding: 16px;
 	margin-bottom: 12px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-	position: relative;
-	overflow: hidden;
-}
-.student-card::before {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 3px;
-	background: linear-gradient(90deg, #10B981, transparent);
 }
 .student-avatar {
 	width: 48px;
 	height: 48px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #10B981, #34D399);
+	background: linear-gradient(135deg, #165DFF, #2563EB);
 	align-items: center;
 	justify-content: center;
 	font-size: 20px;
@@ -158,51 +107,12 @@ const exportCSV = () => {
 	flex-shrink: 0;
 }
 .student-info { flex: 1; }
-.student-name {
-	font-size: 16px;
-	font-weight: 700;
-	color: #1D2129;
-	display: block;
-	margin-bottom: 2px;
-}
-.student-id {
-	font-size: 13px;
-	color: #86909C;
-	display: block;
-	margin-bottom: 6px;
-}
-.student-tags {
-	flex-direction: row;
-	gap: 8px;
-}
-.tag-green {
-	padding: 3px 8px;
-	border-radius: 6px;
-	font-size: 12px;
-	font-weight: 600;
-	background: rgba(16,185,129,0.1);
-	color: #10B981;
-}
-.tag-blue {
-	padding: 3px 8px;
-	border-radius: 6px;
-	font-size: 12px;
-	font-weight: 600;
-	background: rgba(22,93,255,0.1);
-	color: #165DFF;
-}
-.student-arrow {
-	color: #C9CDD4;
-	font-size: 20px;
-	margin-left: 8px;
-}
-.empty-state {
-	padding: 60px 20px;
-	align-items: center;
-	justify-content: center;
-}
-.empty-text {
-	font-size: 14px;
-	color: #86909C;
-}
+.student-name { font-size: 16px; font-weight: 700; color: #1D2129; display: block; margin-bottom: 2px; }
+.student-id { font-size: 13px; color: #86909C; display: block; margin-bottom: 6px; }
+.student-tags { flex-direction: row; gap: 8px; }
+.tag-green { padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; background: rgba(22,93,255,0.08); color: #165DFF; }
+.tag-blue { padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; background: rgba(22,93,255,0.1); color: #165DFF; }
+.student-card:active { background: #F7F8FA; }
+.tags-row { flex-direction: row; gap: 8px; margin-top: 6px; }
+.tag { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; background: rgba(22,93,255,0.08); color: #165DFF; }
 </style>

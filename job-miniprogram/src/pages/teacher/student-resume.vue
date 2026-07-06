@@ -1,31 +1,34 @@
 <template>
 	<view class="page-wrapper">
-		<view class="header-simple" style="padding:12px 16px;flex-direction:row;align-items:center;gap:12px;">
-			<text style="font-size:20px;" @click="goBack">‹</text>
-			<text style="font-size:18px;font-weight:700;color:white;">{{ studentName }} 的简历</text>
-		</view>
+		<NavBar :title="studentName + ' 的简历'" show-back />
 		<scroll-view class="content-scrollable" scroll-y>
-			<!-- 基本信息 -->
-			<view class="info-card">
-				<view class="info-header">
-					<view class="info-avatar">
-						<text>{{ (studentName || '学').charAt(0) }}</text>
-					</view>
-					<view class="info-basic">
-						<text class="info-name">{{ studentName || '未知' }}</text>
-						<text class="info-detail" v-if="resumeData.basic">{{ resumeData.basic.major }} · {{ resumeData.basic.school }}</text>
+			<!-- 头部信息卡：强化视觉层级 -->
+			<view class="info-header-card">
+				<view class="info-avatar">
+					<text>{{ (studentName || '学').charAt(0) }}</text>
+				</view>
+				<view class="basic-info">
+					<text class="name">{{ studentName || '未知' }}</text>
+					<text class="desc" v-if="resumeData.basic">{{ resumeData.basic.major }} · {{ resumeData.basic.school }}</text>
+					<view class="contact-row" v-if="resumeData.basic">
+						<text><uni-icons type="phone" size="12" color="#86909C" /> {{ resumeData.basic.phone || '—' }}</text>
+						<text><uni-icons type="email" size="12" color="#86909C" /> {{ resumeData.basic.email || '—' }}</text>
 					</view>
 				</view>
-				<view class="info-tags" v-if="resumeData.basic">
+			</view>
+
+			<!-- 标签信息 -->
+			<view class="section-card" v-if="resumeData.basic">
+				<view class="tag-row">
 					<text class="tag-tag">{{ resumeData.basic.education || '大专' }}</text>
 					<text class="tag-tag">{{ resumeData.basic.gender || '未知' }}</text>
 					<text class="tag-tag">{{ resumeData.basic.graduationYear || '待毕业' }}</text>
 				</view>
 			</view>
 
-			<!-- 技能 -->
+			<!-- 技能特长 -->
 			<view class="section-card">
-				<text class="section-title">🛠️ 技能</text>
+				<text class="section-title">技能特长</text>
 				<view class="tag-container">
 					<text v-for="(s, i) in resumeData.skills" :key="i" class="skill-tag">{{ s }}</text>
 					<text v-if="!resumeData.skills || !resumeData.skills.length" style="color:#86909C;font-size:13px;">暂无技能</text>
@@ -34,87 +37,139 @@
 
 			<!-- 教育经历 -->
 			<view class="section-card">
-				<text class="section-title">🎓 教育经历</text>
+				<text class="section-title">教育经历</text>
 				<view v-for="(edu, i) in resumeData.education" :key="i" class="exp-item">
-					<text class="exp-title">{{ edu.school }}</text>
+					<view class="exp-head">
+						<text class="exp-school">{{ edu.school }}</text>
+						<text class="exp-time">{{ edu.startDate || edu.start }} - {{ edu.endDate || edu.end || '至今' }}</text>
+					</view>
 					<text class="exp-sub">{{ edu.major }} · {{ edu.degree }}</text>
-					<text class="exp-time">{{ edu.startDate }} - {{ edu.endDate || '至今' }}</text>
 				</view>
 				<text v-if="!resumeData.education || !resumeData.education.length" style="color:#86909C;font-size:13px;">暂无教育经历</text>
 			</view>
 
-			<!-- 项目经验 -->
+			<!-- 实习经历 -->
 			<view class="section-card">
-				<text class="section-title">📂 项目经验</text>
-				<view v-for="(proj, i) in resumeData.projects" :key="i" class="exp-item">
-					<text class="exp-title">{{ proj.name }}</text>
-					<text class="exp-desc">{{ proj.description }}</text>
-					<text class="exp-time">{{ proj.startDate }} - {{ proj.endDate || '至今' }}</text>
+				<text class="section-title">实习经历</text>
+				<view v-for="(job, i) in resumeData.internship" :key="i" class="exp-item">
+					<view class="exp-head">
+						<text class="exp-school">{{ job.company || job.companyName }}</text>
+						<text class="exp-time">{{ job.duration || job.start }} - {{ job.end || '至今' }}</text>
+					</view>
+					<text class="exp-sub">{{ job.position || job.jobTitle }}</text>
+					<text class="exp-desc" v-if="job.description">{{ job.description }}</text>
 				</view>
-				<text v-if="!resumeData.projects || !resumeData.projects.length" style="color:#86909C;font-size:13px;">暂无项目经验</text>
+				<text v-if="!resumeData.internship || !resumeData.internship.length" style="color:#86909C;font-size:13px;">暂无实习经历</text>
 			</view>
 
-			<!-- AI 解析结果 -->
+			<!-- 求职意向 + 自我评价 -->
 			<view class="section-card">
-				<text class="section-title">🤖 AI 简历解析</text>
+				<text class="section-title">求职意向</text>
+				<text style="font-size:14px;color:#1D2129;">{{ resumeData.jobTarget || '未设置' }}</text>
+			</view>
+			<view class="section-card" v-if="resumeData.selfEvaluation">
+				<text class="section-title">自我评价</text>
+				<text style="font-size:14px;color:#4E5969;line-height:1.7;">{{ resumeData.selfEvaluation }}</text>
+			</view>
+
+			<!-- AI 简历分析 -->
+			<view class="section-card">
+				<view class="section-title-row">
+					<text class="section-title">AI 简历分析</text>
+					<text class="ai-analyze-btn" @click="handleAnalyze" v-if="!aiAnalyzing">
+						<uni-icons type="star" size="14" color="#8B5CF6" />
+						<text>分析简历</text>
+					</text>
+				</view>
 				<view class="ai-result" v-if="aiResult">
-					<view class="ai-row">
-						<text class="ai-label">匹配度</text>
-						<text class="ai-value">{{ aiResult.matchScore || '--' }}%</text>
+					<view class="ai-score-row">
+						<text>综合评分</text>
+						<text class="score-num">{{ aiResult.overallScore || '--' }}分</text>
 					</view>
-					<view class="ai-row">
-						<text class="ai-label">推荐岗位方向</text>
-						<text class="ai-value">{{ aiResult.recommendDirection || '--' }}</text>
+					<view class="ai-section" v-if="aiResult.strengths && aiResult.strengths.length">
+						<text class="ai-subtitle">优势</text>
+						<text v-for="(s, i) in aiResult.strengths" :key="i" class="ai-item ai-item--green">{{ s }}</text>
 					</view>
-					<view class="ai-row">
-						<text class="ai-label">技能短板</text>
-						<text class="ai-value">{{ aiResult.weakness || '--' }}</text>
+					<view class="ai-section" v-if="aiResult.weaknesses && aiResult.weaknesses.length">
+						<text class="ai-subtitle">不足</text>
+						<text v-for="(w, i) in aiResult.weaknesses" :key="i" class="ai-item ai-item--red">{{ w }}</text>
 					</view>
-					<view class="ai-suggestion" v-if="aiResult.suggestion">
-						<text>{{ aiResult.suggestion }}</text>
+					<view class="ai-section" v-if="aiResult.suggestions && aiResult.suggestions.length">
+						<text class="ai-subtitle">改进建议</text>
+						<text v-for="(sg, i) in aiResult.suggestions" :key="i" class="ai-item ai-item--blue">{{ sg }}</text>
+					</view>
+					<view class="ai-section" v-if="aiResult.missingFields && aiResult.missingFields.length">
+						<text class="ai-subtitle">缺失字段</text>
+						<text class="ai-item ai-item--amber">{{ aiResult.missingFields.join('、') }}</text>
+					</view>
+					<view class="ai-section" v-if="aiResult.recommendedSkills && aiResult.recommendedSkills.length">
+						<text class="ai-subtitle">推荐补充技能</text>
+						<view class="tag-container">
+							<text v-for="(sk, i) in aiResult.recommendedSkills" :key="i" class="skill-tag" style="background:rgba(139,92,246,0.1);color:#7C3AED;">{{ sk }}</text>
+						</view>
 					</view>
 				</view>
-				<text v-else style="color:#86909C;font-size:13px;">暂无 AI 解析数据</text>
+				<view v-else-if="aiAnalyzing" class="ai-loading">
+					<text>AI 正在分析简历...</text>
+				</view>
+				<text v-else style="color:#86909C;font-size:13px;">点击「分析简历」获取优化建议</text>
 			</view>
 
 			<!-- 投递记录 -->
 			<view class="section-card">
-				<text class="section-title">📮 投递记录</text>
+				<text class="section-title">投递记录</text>
 				<view v-for="(d, i) in deliveries" :key="i" class="delivery-item">
 					<view class="delivery-top">
-						<text class="delivery-job">{{ d.jobTitle }}</text>
-						<text class="delivery-status" :class="'status-' + d.status">{{ d.statusText }}</text>
+						<view class="delivery-info">
+							<text class="delivery-job">{{ d.jobTitle }}</text>
+							<text class="delivery-company">{{ d.companyName }}</text>
+						</view>
+						<text class="status-tag" :class="'status-' + d.status">{{ d.statusText }}</text>
 					</view>
-					<text class="delivery-company">{{ d.companyName }}</text>
 					<text class="delivery-time">{{ d.createTime }}</text>
 				</view>
 				<text v-if="!deliveries.length" style="color:#86909C;font-size:13px;display:block;padding:16px 0;">暂无投递记录</text>
 			</view>
+
+			<view style="height: 80px"></view>
 		</scroll-view>
+
+		<!-- 底部操作栏 -->
+		<view class="bottom-bar">
+			<block v-if="deliveryId">
+				<button class="btn-outline" @click="sendInterview">发送面试邀请</button>
+				<button class="btn-primary" @click="markEmployed">标记录用</button>
+			</block>
+			<block v-else>
+				<button class="btn-primary" style="flex:1;" @click="viewDeliveries">查看投递记录</button>
+			</block>
+		</view>
 	</view>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { teacherAPI, jobAPI, resumeAPI } from '@/utils/request'
+import { teacherAPI, jobAPI, aiParseAPI } from '@/utils/request'
+import NavBar from '@/components/NavBar.vue'
+import { checkRole } from '@/utils/auth'
+
+checkRole(1)
 
 const studentId = ref('')
 const studentName = ref('')
+const deliveryId = ref('')
 const resumeData = ref({})
 const aiResult = ref(null)
+const aiAnalyzing = ref(false)
 const deliveries = ref([])
 
-// 后端Delivery.status Integer → 前端展示状态
 const STATUS_MAP = { 0: 'pending', 1: 'viewed', 2: 'interview', 3: 'accepted', 4: 'rejected' }
 const STATUS_TEXT_MAP = { 0: '待查看', 1: '已查看', 2: '面试', 3: '已录用', 4: '不合适' }
 
-// 后端Resume扁平字段 → 前端展示结构
 const mapResume = (resume) => {
 	if (!resume) return {}
-	// 解析JSON字段（education为JSON字符串）
 	let eduArray = []
-	try { eduArray = JSON.parse(resume.education || '[]') } catch (e) { }
-	// 解析skills（可能是JSON数组或逗号分隔）
+	try { eduArray = JSON.parse(resume.education || '[]') } catch (e) {}
 	let skillsArray = []
 	if (resume.skills) {
 		try { skillsArray = JSON.parse(resume.skills) } catch (e) {
@@ -124,19 +179,25 @@ const mapResume = (resume) => {
 	return {
 		basic: {
 			realName: resume.realName || '',
+			phone: resume.phone || '',
+			email: resume.email || '',
 			major: eduArray[0]?.major || '',
 			school: eduArray[0]?.school || '',
 			education: eduArray[0]?.degree || '大专',
-			gender: eduArray[0]?.gender || '未知',
+			gender: resume.gender || eduArray[0]?.gender || '未知',
 			graduationYear: eduArray[0]?.endDate ? eduArray[0].endDate.substring(0, 4) + '届' : '待毕业'
 		},
 		skills: skillsArray,
 		education: eduArray,
-		projects: [] // 后端暂无project字段
+		internship: (() => {
+			try { return JSON.parse(resume.internship || '[]') } catch (e) { return [] }
+		})(),
+		selfEvaluation: resume.selfEvaluation || '',
+		jobTarget: resume.jobTarget || '',
+		pdfUrl: resume.pdfUrl || ''
 	}
 }
 
-// 后端DeliveryVO → 前端展示映射
 const mapDelivery = (d) => ({
 	id: d.id,
 	jobTitle: d.jobTitle || '未知岗位',
@@ -146,7 +207,6 @@ const mapDelivery = (d) => ({
 	createTime: d.createTime ? d.createTime.substring(0, 10) : ''
 })
 
-// 异步加载各投递记录的公司名
 const loadDeliveryCompanyNames = async (rawDeliveries) => {
 	const jobIds = [...new Set(rawDeliveries.filter(d => d.jobId).map(d => d.jobId))]
 	if (!jobIds.length) return
@@ -167,7 +227,7 @@ const loadDeliveryCompanyNames = async (rawDeliveries) => {
 					}
 					jobCache[jid] = { companyName, jobTitle: job.title }
 				}
-			} catch (e) { }
+			} catch (e) {}
 		}))
 		deliveries.value = deliveries.value.map(d => {
 			const cached = jobCache[rawDeliveries.find(r => r.jobTitle === d.jobTitle)?.jobId]
@@ -177,7 +237,7 @@ const loadDeliveryCompanyNames = async (rawDeliveries) => {
 			}
 			return d
 		})
-	} catch (e) { }
+	} catch (e) {}
 }
 
 onMounted(() => {
@@ -186,6 +246,7 @@ onMounted(() => {
 	if (currentPage.options) {
 		studentId.value = currentPage.options.studentId || ''
 		studentName.value = decodeURIComponent(currentPage.options.name || '学生')
+		deliveryId.value = currentPage.options.deliveryId || ''
 	}
 	loadData()
 })
@@ -196,23 +257,33 @@ const loadData = async () => {
 			teacherAPI.getStudentResume(studentId.value),
 			teacherAPI.getStudentDeliveries(studentId.value)
 		]
-		// 如果URL没传name，从后端兜底获取
 		if (!studentName.value || studentName.value === '学生') {
-			calls.push(
-				teacherAPI.getStudentInfo(studentId.value).catch(() => ({ data: { realName: '' } }))
-			)
+			calls.push(teacherAPI.getStudentInfo(studentId.value).catch(() => ({ data: { realName: '' } })))
 		}
 		const [resumeRes, deliveryRes, infoRes] = await Promise.all(calls)
 
 		const rawResume = resumeRes.data
 		resumeData.value = mapResume(rawResume)
 
-		// 用后端返回的真实姓名覆盖URL参数
 		if (infoRes?.data?.realName) {
 			studentName.value = infoRes.data.realName
 		}
 
-		aiResult.value = rawResume ? (rawResume.aiAnalysis || rawResume.aiResult || null) : null
+		// 尝试从简历中加载已保存的 AI 分析结果
+		if (rawResume) {
+			const savedAnalysis = rawResume.aiAnalysis || null
+			if (savedAnalysis) {
+				try {
+					aiResult.value = typeof savedAnalysis === 'string' ? JSON.parse(savedAnalysis) : savedAnalysis
+				} catch (e) {
+					aiResult.value = null
+				}
+			} else {
+				aiResult.value = null
+			}
+		} else {
+			aiResult.value = null
+		}
 		const rawDeliveries = deliveryRes.data || []
 		deliveries.value = rawDeliveries.map(mapDelivery)
 		if (rawDeliveries.length > 0) loadDeliveryCompanyNames(rawDeliveries)
@@ -222,199 +293,177 @@ const loadData = async () => {
 	}
 }
 
-const goBack = () => {
-	uni.navigateBack()
+const sendInterview = async () => {
+	if (!deliveryId.value) return
+	try {
+		await teacherAPI.updateDeliveryStatus(deliveryId.value, { status: 2, feedback: '邀请参加面试' })
+		uni.showToast({ title: '已发送面试邀请', icon: 'success' })
+	} catch (e) {
+		uni.showToast({ title: '操作失败', icon: 'none' })
+	}
+}
+
+const markEmployed = async () => {
+	if (!deliveryId.value) return
+	try {
+		await teacherAPI.updateDeliveryStatus(deliveryId.value, { status: 3, feedback: '已录用' })
+		uni.showToast({ title: '已标记录用', icon: 'success' })
+	} catch (e) {
+		uni.showToast({ title: '操作失败', icon: 'none' })
+	}
+}
+
+const viewDeliveries = () => {
+	uni.navigateTo({ url: '/pages/teacher/deliveries' })
+}
+
+// AI 简历分析
+const handleAnalyze = async () => {
+	if (!studentId.value) return
+	aiAnalyzing.value = true
+	aiResult.value = null
+	try {
+		const res = await aiParseAPI.analyzeResume(studentId.value)
+		aiResult.value = res.data || {}
+	} catch (e) {
+		console.error('简历分析失败', e)
+		uni.showToast({ title: '分析失败', icon: 'none' })
+	} finally {
+		aiAnalyzing.value = false
+	}
 }
 </script>
 
 <style scoped>
-.header-simple {
-	background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
-	color: white;
-	flex-shrink: 0;
-}
-.info-card {
-	margin: 16px;
+/* 头部信息卡 */
+.info-header-card {
+	margin: 16px 16px 0;
 	background: white;
-	border-radius: 16px;
+	border-radius: 12px;
 	padding: 20px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-	position: relative;
-	overflow: hidden;
-}
-.info-card::before {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 3px;
-	background: linear-gradient(90deg, #10B981, transparent);
-}
-.info-header {
 	flex-direction: row;
 	align-items: center;
 	gap: 12px;
-	margin-bottom: 12px;
 }
 .info-avatar {
 	width: 56px;
 	height: 56px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #10B981, #34D399);
+	background: linear-gradient(135deg, #165DFF, #2563EB);
 	align-items: center;
 	justify-content: center;
 	font-size: 24px;
 	color: white;
 	font-weight: 700;
+	flex-shrink: 0;
 }
-.info-basic { flex: 1; }
-.info-name {
-	font-size: 18px;
-	font-weight: 700;
-	color: #1D2129;
-	display: block;
-	margin-bottom: 4px;
-}
-.info-detail {
-	font-size: 13px;
-	color: #86909C;
-	display: block;
-}
-.info-tags {
-	flex-direction: row;
-	gap: 8px;
-}
-.tag-tag {
-	padding: 4px 10px;
-	border-radius: 8px;
-	font-size: 12px;
-	font-weight: 600;
-	background: #F2F3F5;
-	color: #4E5969;
-}
+.basic-info { flex: 1; }
+.basic-info .name { font-size: 18px; font-weight: 700; color: #1D2129; display: block; margin-bottom: 4px; }
+.basic-info .desc { font-size: 13px; color: #86909C; display: block; margin-bottom: 6px; }
+.contact-row { flex-direction: row; flex-wrap: wrap; gap: 12px; }
+.contact-row text { font-size: 12px; color: #86909C; flex-direction: row; align-items: center; gap: 4px; word-break: break-all; }
+
+/* 模块卡片全局统一样式 */
 .section-card {
 	margin: 0 16px 12px;
 	background: white;
-	border-radius: 16px;
+	border-radius: 12px;
 	padding: 16px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.section-title {
-	font-size: 15px;
-	font-weight: 700;
-	color: #1D2129;
-	margin-bottom: 12px;
-	display: block;
-}
-.tag-container {
-	flex-direction: row;
-	flex-wrap: wrap;
-	gap: 8px;
-}
-.skill-tag {
-	padding: 6px 14px;
-	border-radius: 20px;
-	font-size: 13px;
-	font-weight: 500;
-	background: rgba(16,185,129,0.1);
-	color: #10B981;
-}
-.exp-item {
-	padding: 12px 0;
-	border-bottom: 1px solid #F2F3F5;
-}
+.section-title { font-size: 15px; font-weight: 700; color: #1D2129; margin-bottom: 12px; display: block; }
+
+.tag-row { flex-direction: row; gap: 8px; }
+.tag-tag { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; background: #F2F3F5; color: #4E5969; }
+
+.tag-container { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+.skill-tag { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; background: rgba(22,93,255,0.08); color: #165DFF; }
+
+.exp-item { padding: 12px 0; border-bottom: 0.5px solid #F2F3F5; }
 .exp-item:last-child { border-bottom: none; }
-.exp-title {
-	font-size: 14px;
-	font-weight: 600;
-	color: #1D2129;
-	display: block;
-	margin-bottom: 4px;
-}
-.exp-sub {
-	font-size: 13px;
-	color: #4E5969;
-	display: block;
-	margin-bottom: 2px;
-}
-.exp-desc {
-	font-size: 13px;
-	color: #86909C;
-	display: block;
-	margin-bottom: 2px;
-	line-height: 1.5;
-}
-.exp-time {
-	font-size: 12px;
-	color: #C9CDD4;
-	display: block;
-}
-.ai-result {
-	gap: 8px;
-}
-.ai-row {
-	flex-direction: row;
-	justify-content: space-between;
-	padding: 8px 0;
-	border-bottom: 1px solid #F2F3F5;
-}
-.ai-label {
-	font-size: 13px;
-	color: #86909C;
-}
-.ai-value {
-	font-size: 13px;
-	color: #1D2129;
-	font-weight: 600;
-}
-.ai-suggestion {
-	margin-top: 8px;
-	padding: 12px;
-	background: rgba(16,185,129,0.06);
-	border-radius: 10px;
-}
-.ai-suggestion text {
-	font-size: 13px;
-	color: #4E5969;
-	line-height: 1.6;
-}
-.delivery-item {
-	padding: 12px 0;
-	border-bottom: 1px solid #F2F3F5;
-}
-.delivery-item:last-child { border-bottom: none; }
-.delivery-top {
+.exp-head { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.exp-school { font-size: 14px; font-weight: 600; color: #1D2129; }
+.exp-time { font-size: 12px; color: #C9CDD4; }
+.exp-sub { font-size: 13px; color: #4E5969; display: block; }
+.exp-desc { font-size: 13px; color: #86909C; display: block; margin-top: 4px; line-height: 1.5; }
+
+/* AI分析 */
+.ai-result { gap: 8px; }
+.ai-score-row { flex-direction: row; justify-content: space-between; padding: 8px 0; border-bottom: 0.5px solid #F2F3F5; }
+.ai-score-row text:first-child { font-size: 13px; color: #86909C; }
+.score-num { font-size: 16px; color: #165DFF; font-weight: 700; }
+.score-val { font-size: 13px; color: #1D2129; font-weight: 600; }
+.ai-suggestion { margin-top: 8px; padding: 12px; background: rgba(22,93,255,0.06); border-radius: 10px; }
+.ai-suggestion text { font-size: 13px; color: #4E5969; line-height: 1.6; }
+
+/* AI 分析新样式 */
+.section-title-row {
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 4px;
+	margin-bottom: 12px;
 }
-.delivery-job {
-	font-size: 14px;
-	font-weight: 600;
-	color: #1D2129;
-}
-.delivery-status {
+.ai-analyze-btn {
+	flex-direction: row;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 12px;
+	background: rgba(139,92,246,0.1);
+	border-radius: 14px;
 	font-size: 12px;
-	padding: 2px 8px;
-	border-radius: 6px;
+	color: #7C3AED;
 	font-weight: 600;
 }
+.ai-analyze-btn:active { opacity: 0.7; }
+.ai-loading { padding: 20px 0; align-items: center; }
+.ai-loading text { font-size: 13px; color: #8B5CF6; }
+.ai-section { margin-top: 10px; }
+.ai-subtitle { font-size: 13px; font-weight: 600; color: #4E5969; margin-bottom: 6px; display: block; }
+.ai-item { display: block; font-size: 13px; padding: 6px 10px; border-radius: 6px; margin-bottom: 4px; line-height: 1.5; }
+.ai-item--green { background: rgba(0,180,42,0.06); color: #00B42A; }
+.ai-item--red { background: rgba(239,68,68,0.06); color: #EF4444; }
+.ai-item--blue { background: rgba(22,93,255,0.06); color: #165DFF; }
+.ai-item--amber { background: rgba(245,158,11,0.08); color: #D97706; }
+
+/* 投递记录 */
+.delivery-item { padding: 12px 0; border-bottom: 0.5px solid #F2F3F5; }
+.delivery-item:last-child { border-bottom: none; }
+.delivery-top { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.delivery-info { flex: 1; }
+.delivery-job { font-size: 14px; font-weight: 600; color: #1D2129; display: block; margin-bottom: 2px; }
+.delivery-company { font-size: 12px; color: #86909C; display: block; }
+.delivery-time { font-size: 12px; color: #C9CDD4; display: block; }
+.status-tag { font-size: 12px; padding: 2px 8px; border-radius: 6px; font-weight: 600; flex-shrink: 0; }
 .status-pending { background: rgba(245,158,11,0.1); color: #F59E0B; }
 .status-viewed { background: rgba(22,93,255,0.1); color: #165DFF; }
-.status-interview { background: rgba(16,185,129,0.1); color: #10B981; }
-.status-accepted { background: rgba(16,185,129,0.1); color: #10B981; }
+.status-interview { background: rgba(22,93,255,0.08); color: #165DFF; }
+.status-accepted { background: rgba(0,180,42,0.1); color: #00B42A; }
 .status-rejected { background: rgba(239,68,68,0.1); color: #EF4444; }
-.delivery-company {
-	font-size: 13px;
-	color: #86909C;
-	display: block;
-	margin-bottom: 2px;
+
+/* 底部操作栏 */
+.bottom-bar {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	flex-direction: row;
+	padding: 12px 16px;
+	padding-bottom: calc(12px + env(safe-area-inset-bottom));
+	background: white;
+	border-top: 0.5px solid #F2F3F5;
+	gap: 12px;
 }
-.delivery-time {
-	font-size: 12px;
-	color: #C9CDD4;
-	display: block;
+.btn-outline, .btn-primary {
+	flex: 1;
+	height: 44px;
+	border-radius: 12px;
+	font-size: 15px;
+	font-weight: 600;
+	align-items: center;
+	justify-content: center;
+	border: none;
 }
+.btn-outline { background: white; border: 1px solid #E5E6EB; color: #4E5969; }
+.btn-primary { background: #165DFF; color: white; }
 </style>

@@ -1,71 +1,79 @@
 <template>
 	<view class="page-wrapper">
-		<scroll-view class="content-scrollable" scroll-y>
-			<!-- 顶部蓝色渐变头 -->
-			<view class="header-simple">
-				<view class="header-top-simple">
-					<text class="header-title">企业招聘管理</text>
-					<view class="header-actions">
-						<view class="header-action-btn" @click="goToMessages">
-							<text>🔔</text>
-							<text v-if="unreadCount" class="badge">{{ unreadCount }}</text>
-						</view>
-					</view>
-				</view>
-				<text class="company-name">{{ userInfo.realName || '企业用户' }}</text>
-			</view>
-
-			<!-- 4个统计卡片 -->
-			<view class="stat-row">
-				<view v-for="(s, i) in statCards" :key="i" class="stat-box" :class="s.color">
-					<text class="stat-icon">{{ s.icon }}</text>
-					<view class="stat-info">
-						<text class="stat-num">{{ dashboardData[s.key] || 0 }}</text>
-						<text class="stat-label">{{ s.label }}</text>
+		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="isRefreshing" @refresherrefresh="onRefresh">
+			<!-- 1. 顶部渐变头部（对齐教师端结构，增加角色徽章） -->
+			<view class="header-section" :style="{ paddingTop: (statusBarHeight + 16) + 'px' }">
+				<view class="header-top">
+					<view class="header-greeting">
+						<text class="greeting">{{ greeting }}，{{ userInfo.realName || 'HR用户' }}</text>
+						<text class="role-badge">企业招聘方</text>
 					</view>
 				</view>
 			</view>
 
-			<!-- 近期投递列表 -->
-			<view class="section">
+			<!-- 2. 2×2 待办数据网格（对齐教师端 todo-grid 规范） -->
+			<view class="todo-grid">
+				<view class="todo-card" @click="goToDeliveries('pending')">
+					<view class="todo-top">
+						<text class="todo-num">{{ formatNum(dashboard.pendingResumeCount) }}</text>
+						<view class="todo-icon todo-icon-yellow"><uni-icons type="paperplane" size="18" color="#F59E0B" /></view>
+					</view>
+					<text class="todo-label">待处理简历</text>
+				</view>
+				<view class="todo-card" @click="goToDeliveries('today')">
+					<view class="todo-top">
+						<text class="todo-num">{{ formatNum(dashboard.todayNewCount) }}</text>
+						<view class="todo-icon todo-icon-blue"><uni-icons type="bars" size="18" color="#165DFF" /></view>
+					</view>
+					<text class="todo-label">今日新增</text>
+				</view>
+				<view class="todo-card" @click="goToInterviews">
+					<view class="todo-top">
+						<text class="todo-num">{{ formatNum(dashboard.todayInterviewCount) }}</text>
+						<view class="todo-icon todo-icon-orange"><uni-icons type="calendar" size="18" color="#F59E0B" /></view>
+					</view>
+					<text class="todo-label">今日面试</text>
+				</view>
+				<view class="todo-card" @click="goToJobs">
+					<view class="todo-top">
+						<text class="todo-num">{{ formatNum(dashboard.activeJobCount) }}</text>
+						<view class="todo-icon todo-icon-green"><uni-icons type="list" size="18" color="#00B42A" /></view>
+					</view>
+					<text class="todo-label">在招岗位</text>
+				</view>
+			</view>
+
+			<!-- 3. 快捷工具栏 -->
+			<view class="quick-actions">
+				<view class="quick-action-item" @click="goToJobs">
+					<uni-icons type="list" size="18" color="#165DFF" />
+					<text class="quick-action-label">管理岗位</text>
+				</view>
+				<view class="quick-action-item" @click="goToStats">
+					<uni-icons type="bars" size="18" color="#00B42A" />
+					<text class="quick-action-label">数据统计</text>
+				</view>
+				<view class="quick-action-item" @click="goToMessages">
+					<uni-icons type="chat" size="18" color="#F59E0B" />
+					<text class="quick-action-label">消息通知</text>
+				</view>
+			</view>
+
+			<!-- 4. 近期动态 -->
+			<view class="list-section">
 				<view class="section-header">
-					<text class="section-title">📮 近期投递</text>
-					<text class="section-more" @click="goToDeliveries">查看全部 ›</text>
+					<text class="section-title">近期动态</text>
 				</view>
-				<view v-for="(item, i) in recentDeliveries" :key="i" class="card-item" @click="goToDeliveryDetail(item.id)">
-					<view class="card-header-row">
-						<view>
-							<text class="card-title">{{ item.studentName || '候选人' }}</text>
-							<text class="card-sub">{{ item.jobTitle || '岗位名称' }}</text>
-						</view>
-						<text class="status-tag" :class="'tag-' + item.status">{{ item.statusText || '' }}</text>
-					</view>
-					<text class="card-time">{{ item.createTime || '' }}</text>
+				<view v-for="(item, i) in recentList" :key="i" class="compact-item" @click="goToDetail(item.id)">
+					<text class="compact-name">{{ item.studentName || '候选人' }}</text>
+					<text class="compact-action">投递了</text>
+					<text class="compact-job">{{ item.jobTitle || '' }}</text>
+					<text class="status-tag" :class="'tag-' + item.status">{{ item.statusText || '' }}</text>
 				</view>
-				<view v-if="!recentDeliveries.length" class="empty-state">
-					<text style="font-size:40px;margin-bottom:8px;">📭</text>
-					<text>暂无投递记录</text>
-				</view>
+				<EmptyState v-if="!recentList.length" icon="inbox" title="暂无动态" desc="有新的投递或操作会出现在这里" />
 			</view>
 
-			<!-- 待处理事项 -->
-			<view class="section">
-				<view class="section-header">
-					<text class="section-title">📋 待处理事项</text>
-				</view>
-				<view v-for="(task, i) in pendingTasks" :key="i" class="task-item" @click="handleTask(task)">
-					<view class="task-dot" :class="task.color"></view>
-					<view class="task-content">
-						<text class="task-title">{{ task.title }}</text>
-						<text class="task-desc">{{ task.desc }}</text>
-					</view>
-					<text class="task-count" :class="task.color">{{ task.count }}</text>
-				</view>
-				<view v-if="!pendingTasks.length" class="empty-state">
-					<text style="font-size:40px;margin-bottom:8px;">✅</text>
-					<text>暂无待处理事项</text>
-				</view>
-			</view>
+			<view style="height: calc(60px + env(safe-area-inset-bottom))" />
 		</scroll-view>
 		<HrTabBar current="home" />
 	</view>
@@ -73,27 +81,99 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { onShow } from '@/utils/page-lifecycle'
 import { hrAPI } from '@/utils/request'
 import { checkRole } from '@/utils/auth'
 import HrTabBar from '@/components/HrTabBar.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
-// 角色路由锁 — 仅HR(2)可访问
 checkRole(2)
 
 const userInfo = ref({})
-const unreadCount = ref(0)
-const dashboardData = ref({})
-const recentDeliveries = ref([])
-const pendingTasks = ref([])
+const isRefreshing = ref(false)
+const statusBarHeight = ref(0)
 
-const statCards = [
-	{ key: 'jobCount', label: '岗位数', icon: '📋', color: 'blue' },
-	{ key: 'resumeCount', label: '简历数', icon: '📄', color: 'green' },
-	{ key: 'interviewCount', label: '面试数', icon: '📞', color: 'orange' },
-	{ key: 'offerCount', label: '录用数', icon: '✅', color: 'purple' }
-]
+const dashboard = ref({
+	pendingResumeCount: 0,
+	todayNewCount: 0,
+	todayInterviewCount: 0,
+	activeJobCount: 0
+})
+const recentList = ref([])
 
+const greeting = computed(() => {
+	const h = new Date().getHours()
+	if (h < 9) return '早上好'
+	if (h < 12) return '上午好'
+	if (h < 14) return '中午好'
+	if (h < 18) return '下午好'
+	return '晚上好'
+})
 
+onMounted(() => {
+	try {
+		const sysInfo = uni.getWindowInfo()
+		statusBarHeight.value = sysInfo.statusBarHeight || 0
+	} catch (e) {
+		// 降级：部分旧版环境可能不支持 getWindowInfo
+		try {
+			const sysInfo = uni.getSystemInfoSync()
+			statusBarHeight.value = sysInfo.statusBarHeight || 0
+		} catch (e2) {}
+	}
+	try {
+		const stored = uni.getStorageSync('userInfo')
+		if (stored) userInfo.value = JSON.parse(stored)
+	} catch (e) {}
+})
+
+onShow(() => { loadAllData() })
+
+const onRefresh = async () => {
+	isRefreshing.value = true
+	await loadAllData()
+	isRefreshing.value = false
+}
+
+const loadAllData = async () => {
+	const cId = getCompanyId()
+	if (!cId) return
+
+	try {
+		const dashRes = await hrAPI.getDashboard(cId)
+		dashboard.value = dashRes.data || {}
+		// 加载近期动态（最近的投递记录）
+		const all = await fetchAllDeliveries(cId)
+		all.sort((a, b) => new Date(b.createTime || 0) - new Date(a.createTime || 0))
+		recentList.value = all.slice(0, 5)
+	} catch (e) {
+		console.error('首页数据加载失败', e)
+	}
+}
+
+const fetchAllDeliveries = async (companyId) => {
+	const jobsRes = await hrAPI.getHrJobs(companyId)
+	const jobs = jobsRes.data || []
+	const all = []
+	for (const job of jobs) {
+		try {
+			const dRes = await hrAPI.getCompanyDeliveries(job.id)
+			const list = (dRes.data || []).map(item => ({ ...item, jobTitle: job.title }))
+			all.push(...list)
+		} catch (e) { console.error('获取投递列表失败', e) }
+	}
+	return all
+}
+
+const goToDeliveries = (filter) => {
+	const url = filter ? '/pages/hr/deliveries?filter=' + filter : '/pages/hr/deliveries'
+	uni.navigateTo({ url })
+}
+const goToDetail = (id) => uni.navigateTo({ url: '/pages/hr/delivery-detail?id=' + id })
+const goToInterviews = () => uni.reLaunch({ url: '/pages/hr/interviews' })
+const goToJobs = () => uni.reLaunch({ url: '/pages/hr/jobs' })
+const goToMessages = () => uni.navigateTo({ url: '/pages/hr/messages' })
+const goToStats = () => uni.navigateTo({ url: '/pages/hr/stats' })
 
 const getCompanyId = () => {
 	try {
@@ -101,114 +181,51 @@ const getCompanyId = () => {
 		if (!raw) return null
 		const obj = JSON.parse(raw)
 		return obj.companyId || obj.id || null
-	} catch (e) { return null }
-}
-
-onMounted(async () => {
-	try {
-		const stored = uni.getStorageSync('userInfo')
-		if (stored) userInfo.value = JSON.parse(stored)
-	} catch (e) {}
-	await loadDashboard()
-	await loadDeliveries()
-	loadTasks()
-})
-
-const loadDashboard = async () => {
-	try {
-		const cId = getCompanyId()
-		const res = await hrAPI.getDashboard(cId)
-		dashboardData.value = res.data || {}
 	} catch (e) {
-		console.error('加载dashboard失败', e)
+		console.error('获取公司ID失败', e)
+		return null
 	}
 }
 
-const loadDeliveries = async () => {
-	try {
-		const cId = getCompanyId()
-		// getCompanyDeliveries takes jobId, not companyId — iterate through jobs
-		const jobsRes = await hrAPI.getHrJobs(cId)
-		const jobs = jobsRes.data || []
-		const all = []
-		for (const job of jobs) {
-			try {
-				const dRes = await hrAPI.getCompanyDeliveries(job.id)
-				all.push(...(dRes.data || []))
-			} catch (e) { }
-		}
-		recentDeliveries.value = all.slice(0, 5)
-	} catch (e) {
-		console.error('加载投递列表失败', e)
-	}
+const formatNum = (num) => {
+	if (!num && num !== 0) return 0
+	return num > 99 ? '99+' : num
 }
 
-const loadTasks = () => {
-	// 从后台统计中衍生待办事项
-	const d = dashboardData.value
-	const tasks = []
-	if (d.resumeCount > 0) tasks.push({ title: '待查看简历', desc: '新增简历等待查看处理', count: d.resumeCount, color: 'blue' })
-	if (d.interviewCount > 0) tasks.push({ title: '待安排面试', desc: '需安排面试时间', count: d.interviewCount, color: 'orange' })
-	pendingTasks.value = tasks
-}
-
-const handleTask = (task) => {
-	if (task.title.includes('简历')) {
-		uni.switchTab({ url: '/pages/hr/deliveries' })
-	} else if (task.title.includes('面试')) {
-		uni.switchTab({ url: '/pages/hr/deliveries' })
-	} else {
-		uni.switchTab({ url: '/pages/hr/deliveries' })
-	}
-}
-
-const goToDeliveries = () => {
-	uni.switchTab({ url: '/pages/hr/deliveries' })
-}
-
-const goToDeliveryDetail = (id) => {
-	uni.navigateTo({ url: '/pages/hr/delivery-detail?id=' + id })
-}
-
-const goToMessages = () => {
-	uni.navigateTo({ url: '/pages/hr/messages' })
+const formatTime = (time, type) => {
+	if (!time) return '--'
+	if (type === 'time') return time.substring(11, 16)
+	return time.substring(5, 16)
 }
 </script>
 
 <style scoped>
-.header-simple {
-	background: linear-gradient(135deg, #0EA5E9 0%, #38BDF8 100%);
-	color: white;
-	padding: 20px 16px 24px;
-	position: relative;
-	overflow: hidden;
+/* ===== 头部（完全对齐教师端） ===== */
+.header-section {
+	background: linear-gradient(135deg, #165DFF 0%, #2563EB 100%);
+	padding: 16px 16px 32px;
 	flex-shrink: 0;
 }
-.header-simple::before {
-	content: '';
-	position: absolute;
-	top: -50%;
-	right: -20%;
-	width: 200px;
-	height: 200px;
-	background: rgba(255,255,255,0.08);
-	border-radius: 50%;
-}
-.header-top-simple {
+.header-top {
 	flex-direction: row;
 	justify-content: space-between;
-	align-items: center;
-	position: relative;
-	z-index: 1;
-	margin-bottom: 12px;
+	align-items: flex-start;
 }
-.header-title {
+.header-greeting { flex: 1; }
+.greeting {
 	font-size: 20px;
 	font-weight: 700;
+	color: #FFFFFF;
+	margin-bottom: 8px;
 }
-.header-actions {
-	flex-direction: row;
-	gap: 12px;
+.role-badge {
+	display: inline-block;
+	font-size: 12px;
+	color: rgba(255,255,255,0.9);
+	background: rgba(255,255,255,0.15);
+	padding: 4px 12px;
+	border-radius: 20px;
+	font-weight: 500;
 }
 .header-action-btn {
 	width: 36px;
@@ -217,7 +234,6 @@ const goToMessages = () => {
 	background: rgba(255,255,255,0.15);
 	align-items: center;
 	justify-content: center;
-	font-size: 18px;
 	position: relative;
 }
 .badge {
@@ -231,70 +247,93 @@ const goToMessages = () => {
 	font-size: 10px;
 	align-items: center;
 	justify-content: center;
-	border: 2px solid #0EA5E9;
+	border: 2px solid #165DFF;
 	color: white;
 	font-weight: 600;
 }
-.company-name {
-	font-size: 15px;
-	opacity: 0.9;
-	position: relative;
-	z-index: 1;
-}
 
-/* 统计卡片 */
-.stat-row {
+/* ===== 2×2 待办网格（对齐教师端 todo-grid，卡片上移进入蓝色区域） ===== */
+.todo-grid {
 	flex-direction: row;
 	flex-wrap: wrap;
+	padding: 0 16px;
 	gap: 12px;
-	padding: 12px 16px;
-}
-.stat-box {
-	flex: 1;
-	min-width: calc(50% - 6px);
-	background: white;
-	border-radius: 16px;
-	padding: 16px;
-	flex-direction: row;
-	align-items: center;
-	gap: 12px;
+	margin-top: -16px;
 	position: relative;
-	overflow: hidden;
+	z-index: 10;
+}
+.todo-card {
+	width: calc(50% - 6px);
+	background: #FFFFFF;
+	border-radius: 12px;
+	padding: 16px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.stat-box::before {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 3px;
-	background: linear-gradient(90deg, #0EA5E9, transparent);
+.todo-card:active { background: #F7F8FA; }
+.todo-top {
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 8px;
 }
-.stat-box.green::before { background: linear-gradient(90deg, #10B981, transparent); }
-.stat-box.orange::before { background: linear-gradient(90deg, #F59E0B, transparent); }
-.stat-box.purple::before { background: linear-gradient(90deg, #8B5CF6, transparent); }
-.stat-icon {
-	font-size: 32px;
-}
-.stat-info {
-	flex: 1;
-}
-.stat-num {
+.todo-num {
 	font-size: 24px;
 	font-weight: 800;
 	color: #1D2129;
 }
-.stat-label {
-	font-size: 12px;
-	color: #86909C;
-	margin-top: 2px;
+.todo-icon {
+	width: 36px;
+	height: 36px;
+	border-radius: 10px;
+	align-items: center;
+	justify-content: center;
+}
+.todo-icon-yellow { background: rgba(245,158,11,0.08); }
+.todo-icon-blue { background: rgba(22,93,255,0.08); }
+.todo-icon-orange { background: rgba(245,158,11,0.08); }
+.todo-icon-green { background: rgba(0,180,42,0.08); }
+.todo-label {
+	font-size: 13px;
+	color: #4E5969;
+	font-weight: 500;
 }
 
-/* 通用section */
-.section {
+/* ===== 快捷工具栏 ===== */
+.quick-actions {
+	flex-direction: row;
+	padding: 0 16px;
+	margin-top: 16px;
+	margin-bottom: 12px;
+}
+.quick-action-item {
+	flex: 1;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	height: 44px;
+	background: #FFFFFF;
+	border-radius: 12px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.quick-action-item + .quick-action-item {
+	margin-left: 12px;
+}
+.quick-action-item:active { background: #F7F8FA; }
+.quick-action-label {
+	font-size: 13px;
+	color: #4E5969;
+	font-weight: 500;
+}
+
+/* ===== 模块标题（对齐教师端） ===== */
+.list-section {
 	padding: 0 16px;
 	margin-bottom: 12px;
+}
+.list-section-secondary {
+	padding: 0 16px;
+	margin-bottom: 4px;
 }
 .section-header {
 	flex-direction: row;
@@ -306,100 +345,171 @@ const goToMessages = () => {
 	font-size: 17px;
 	font-weight: 700;
 	color: #1D2129;
+	letter-spacing: 0.02em;
+}
+.section-title-secondary {
+	font-size: 15px;
+	font-weight: 600;
+	color: #4E5969;
 }
 .section-more {
 	font-size: 13px;
-	color: #0EA5E9;
+	color: #165DFF;
 	font-weight: 500;
 }
 
-/* 近期投递卡片 */
-.card-item {
-	background: white;
-	border-radius: 16px;
-	padding: 16px;
+/* ===== 待处理简历卡片（Signature 元素：左侧蓝色指示条） ===== */
+.resume-card {
+	background: #FFFFFF;
+	border-radius: 12px;
+	padding: 14px 14px 14px 18px;
 	margin-bottom: 10px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: 0 2px 12px rgba(22,93,255,0.06);
+	position: relative;
+	overflow: hidden;
 }
-.card-header-row {
+.resume-card::before {
+	content: '';
+	position: absolute;
+	top: 8px;
+	left: 0;
+	width: 3px;
+	height: calc(100% - 16px);
+	background: #165DFF;
+	border-radius: 0 2px 2px 0;
+}
+.resume-card:active { background: #F7F8FA; }
+.card-top {
 	flex-direction: row;
-	justify-content: space-between;
-	align-items: flex-start;
-	margin-bottom: 6px;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 12px;
 }
-.card-title {
-	font-size: 15px;
-	font-weight: 600;
-	color: #1D2129;
-	display: block;
+.avatar {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #165DFF, #2563EB);
+	align-items: center;
+	justify-content: center;
+	color: #FFFFFF;
+	font-size: 16px;
+	font-weight: 700;
+	flex-shrink: 0;
+}
+.card-info { flex: 1; }
+.info-row {
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
 	margin-bottom: 2px;
 }
-.card-sub {
-	font-size: 13px;
-	color: #86909C;
-	display: block;
+.name { font-size: 15px; font-weight: 700; color: #1D2129; letter-spacing: 0.01em; }
+.score-tag {
+	font-size: 11px;
+	padding: 2px 6px;
+	border-radius: 4px;
+	background: rgba(14,165,233,0.1);
+	color: #0EA5E9;
+	font-weight: 600;
 }
-.card-time {
-	font-size: 12px;
-	color: #C9CDD4;
-}
-.status-tag {
-	padding: 4px 10px;
-	border-radius: 6px;
+.sub-info { font-size: 12px; color: #86909C; }
+.time { font-size: 11px; color: #C9CDD4; flex-shrink: 0; }
+
+/* 操作：标签式轻量化按钮 */
+.card-actions { flex-direction: row; gap: 10px; }
+.action-btn {
+	flex: 1;
+	text-align: center;
+	padding: 7px 0;
+	border-radius: 8px;
 	font-size: 12px;
 	font-weight: 600;
 }
-.tag-pending { background: rgba(245,158,11,0.1); color: #F59E0B; }
-.tag-viewed { background: rgba(22,93,255,0.1); color: #165DFF; }
-.tag-interview { background: rgba(14,165,233,0.1); color: #0EA5E9; }
-.tag-accepted { background: rgba(16,185,129,0.1); color: #10B981; }
-.tag-rejected { background: rgba(239,68,68,0.1); color: #EF4444; }
+.action-btn.primary { background: #165DFF; color: #FFFFFF; box-shadow: 0 2px 6px rgba(22,93,255,0.25); }
+.action-btn.danger {
+	background: #FFFFFF;
+	border: 1px solid #EF4444;
+	color: #EF4444;
+}
 
-/* 待处理事项 */
-.task-item {
-	background: white;
-	border-radius: 16px;
-	padding: 16px;
-	margin-bottom: 10px;
+/* ===== 面试卡片 ===== */
+.interview-card {
+	background: #FFFFFF;
+	border-radius: 12px;
+	padding: 14px;
+	margin-bottom: 8px;
 	flex-direction: row;
 	align-items: center;
 	gap: 12px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.task-dot {
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
+.interview-card:active { background: #F7F8FA; }
+.interview-icon {
+	width: 36px;
+	height: 36px;
+	border-radius: 10px;
+	background: rgba(14,165,233,0.1);
+	align-items: center;
+	justify-content: center;
 	flex-shrink: 0;
 }
-.task-dot.blue { background: #0EA5E9; }
-.task-dot.green { background: #10B981; }
-.task-dot.orange { background: #F59E0B; }
-.task-content {
-	flex: 1;
-}
-.task-title {
+.interview-info { flex: 1; }
+.interview-name {
 	font-size: 14px;
 	font-weight: 600;
 	color: #1D2129;
+	display: block;
 	margin-bottom: 2px;
 }
-.task-desc {
-	font-size: 12px;
-	color: #86909C;
-}
-.task-count {
-	font-size: 18px;
-	font-weight: 800;
-}
-.task-count.blue { color: #0EA5E9; }
-.task-count.green { color: #10B981; }
-.task-count.orange { color: #F59E0B; }
-
-.empty-state {
-	padding: 30px;
-	align-items: center;
-	color: #86909C;
+.interview-job { font-size: 12px; color: #86909C; }
+.interview-time {
 	font-size: 14px;
+	font-weight: 600;
+	color: #165DFF;
+	flex-shrink: 0;
 }
+
+/* ===== 近期投递（紧凑降权重） ===== */
+.compact-item {
+	background: #FFFFFF;
+	border-radius: 10px;
+	padding: 12px 14px;
+	margin-bottom: 6px;
+	flex-direction: row;
+	align-items: center;
+	box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+.compact-item:active { background: #F7F8FA; }
+.compact-name {
+	font-size: 14px;
+	font-weight: 500;
+	color: #1D2129;
+	flex-shrink: 0;
+}
+.compact-action {
+	font-size: 12px;
+	color: #4E5969;
+	margin-left: 4px;
+	margin-right: 4px;
+	flex-shrink: 0;
+}
+.compact-job {
+	font-size: 14px;
+	color: #4E5969;
+	flex: 1;
+	margin-right: 8px;
+}
+.status-tag {
+	padding: 3px 8px;
+	border-radius: 6px;
+	font-size: 11px;
+	font-weight: 600;
+	flex-shrink: 0;
+}
+.tag-pending { background: rgba(245,158,11,0.1); color: #F59E0B; }
+.tag-viewed { background: rgba(22,93,255,0.1); color: #165DFF; }
+.tag-interview { background: rgba(22,93,255,0.1); color: #165DFF; }
+.tag-accepted { background: rgba(0,180,42,0.1); color: #00B42A; }
+.tag-rejected { background: rgba(239,68,68,0.1); color: #EF4444; }
 </style>

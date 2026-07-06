@@ -1,68 +1,104 @@
 <template>
-	<view class="bottom-nav">
+	<view class="tab-bar">
 		<view
-			v-for="(item, i) in tabs"
-			:key="i"
-			class="nav-item"
+			v-for="(item, index) in tabList"
+			:key="index"
+			class="tab-item"
 			:class="{ active: current === item.page }"
-			@click="switchTab(item.page)"
+			@click="handleSwitch(item.page)"
 		>
-			<text class="nav-icon">{{ item.icon }}</text>
-			<text class="nav-label">{{ item.label }}</text>
+			<uni-icons 
+				:type="current === item.page ? item.activeIcon : item.icon"
+				:size="24"
+				:color="current === item.page ? '#165DFF' : '#86909C'"
+			/>
+			<text class="tab-label">{{ item.label }}</text>
 		</view>
 	</view>
 </template>
 
 <script setup>
-	const tabs = [
-		{ page: 'home', icon: '🏠', label: '首页' },
-		{ page: 'deliveries', icon: '📋', label: '投递' },
-		{ page: 'messages', icon: '💬', label: '消息' },
-		{ page: 'profile', icon: '👤', label: '我的' }
-	]
+import { ref } from 'vue'
 
-	const props = defineProps({
-		current: { type: String, default: 'home' }
-	})
-
-	const switchTab = (page) => {
-		uni.reLaunch({
-			url: '/pages/student/' + page
-		})
+const props = defineProps({
+	current: {
+		type: String,
+		default: 'home'
+	},
+	pathPrefix: {
+		type: String,
+		default: '/pages/student/'
+	},
+	tabList: {
+		type: Array,
+		default: () => [
+			{ page: 'home', icon: 'home', activeIcon: 'home-filled', label: '首页' },
+			{ page: 'deliveries', icon: 'paperplane', activeIcon: 'paperplane-filled', label: '投递' },
+			{ page: 'messages', icon: 'chat', activeIcon: 'chat-filled', label: '消息' },
+			{ page: 'profile', icon: 'person', activeIcon: 'person-filled', label: '我的' }
+		]
 	}
+})
+
+const emit = defineEmits(['change'])
+
+const handleSwitch = (page) => {
+	if (page === props.current) return
+	emit('change', page)
+	uni.reLaunch({
+		url: props.pathPrefix + page
+	})
+}
 </script>
 
 <style scoped>
-.bottom-nav {
-	height: 64px;
-	background: rgba(255,255,255,0.98);
-	display: flex;
+.tab-bar {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 50px;
 	flex-direction: row;
-	justify-content: space-around;
+	background: rgba(255, 255, 255, 0.92);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
 	align-items: center;
-	box-shadow: 0 -2px 20px rgba(0,0,0,0.06);
-	border-top: 1px solid rgba(0,0,0,0.04);
-	flex-shrink: 0;
+	justify-content: space-around;
+	box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+	border-top: 0.5px solid #F2F3F5;
+	z-index: 999;
+	padding-bottom: constant(safe-area-inset-bottom);
 	padding-bottom: env(safe-area-inset-bottom);
+	box-sizing: content-box;
 }
-.nav-item {
+
+.tab-item {
+	flex: 1;
+	height: 100%;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 2px;
+	justify-content: center;
+	gap: 3px;
 	color: #86909C;
 	font-size: 11px;
 	font-weight: 500;
-	padding: 8px 16px;
-	transition: all 0.2s;
+	transition: all 0.2s ease;
+	cursor: pointer;
 }
-.nav-item.active {
+
+.tab-item:active {
+	transform: scale(0.92);
+}
+
+.tab-item.active {
 	color: #165DFF;
+	font-weight: 600;
+	transform: scale(1.05);
 }
-.nav-icon {
-	font-size: 22px;
-}
-.nav-label {
+
+.tab-label {
 	font-size: 11px;
+	line-height: 1;
 }
 </style>

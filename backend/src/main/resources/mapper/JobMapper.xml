@@ -21,7 +21,7 @@
     <select id="selectActiveJobs" resultType="com.recruit.entity.Job">
         SELECT * FROM job 
         WHERE status = 1 
-        AND end_date >= #{today}
+        AND (deadline IS NULL OR deadline >= #{today})
         AND deleted = 0
     </select>
 

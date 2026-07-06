@@ -2,25 +2,37 @@ package com.recruit.controller;
 
 import com.recruit.entity.AiParseLog;
 import com.recruit.service.AiParseLogService;
+import com.recruit.service.ResumeService;
+import com.recruit.utils.AiService;
 import com.recruit.utils.Result;
+import com.recruit.annotation.LogOperation;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * AI解析日志控制器
  * 只有教师可以访问
  */
+@Slf4j
 @RestController
 @RequestMapping("/ai-parse")
-public class AiParseController {
+public class AiParseController extends BaseController {
 
     @Autowired
     private AiParseLogService aiParseLogService;
+
+    @Autowired
+    private AiService aiService;
+
+    @Autowired
+    private ResumeService resumeService;
 
     /**
      * 获取所有AI解析日志
@@ -102,22 +114,45 @@ public class AiParseController {
     }
 
     /**
-     * AI解析(模拟)
+     * AI解析简历
      *
      * @param params 包含teacherId、rawMessage的参数
      * @return 解析结果(JSON格式)
      */
+    @LogOperation("AI解析简历")
     @PostMapping("/parse")
     public Result<Map<String, String>> parse(
             @RequestBody Map<String, Object> params) {
 
-        Long teacherId = Long.valueOf(params.get("teacherId").toString());
+        requireTeacher();
+        Long teacherId = getCurrentUserId();
         String rawMessage = params.get("rawMessage").toString();
 
-        // TODO:调用AI解析服务(讯飞星火OCR + NLP)
-        // 这里先返回模拟数据
-        String parsedResult = "{\"education\":\"本科\",\"skills\":[\"Java\",\"Spring\",\"MySQL\"],\"experience\":\"2年开发经验\"}";
-        BigDecimal confidenceScore = new BigDecimal("0.85"); // 模拟置信度85%
+        // 调用 AI 解析服务
+        Map<String, Object> aiResult = aiService.parseResume(rawMessage);
+
+        // 转换为 JSON 字符串
+        String parsedResult;
+        try {
+            parsedResult = new ObjectMapper().writeValueAsString(aiResult);
+        } catch (JsonProcessingException e) {
+            parsedResult = "{}";
+        }
+
+        // 计算置信度（简单根据字段填充率估算）
+        int filledFields = 0;
+        int totalFields = 8; // name, phone, email, school, major, education, skills, experience
+        for (String key : new String[]{"name", "phone", "email", "school", "major", "education", "experience"}) {
+            Object val = aiResult.get(key);
+            if (val != null && !val.toString().isEmpty()) filledFields++;
+        }
+        Object skills = aiResult.get("skills");
+        if (skills instanceof Collection && !((Collection) skills).isEmpty()) filledFields++;
+        
+        BigDecimal confidenceScore = new BigDecimal(filledFields)
+                .multiply(new BigDecimal("100"))
+                .divide(new BigDecimal(totalFields), 2, BigDecimal.ROUND_HALF_UP)
+                .divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP);
 
         // 记录AI解析日志
         boolean success = aiParseLogService.logParse(teacherId, rawMessage, parsedResult, confidenceScore);
@@ -125,13 +160,86 @@ public class AiParseController {
             return Result.error("AI解析失败");
         }
 
-        Map<String, String> result = new java.util.HashMap<>();
+        Map<String, String> result = new HashMap<>();
         result.put("parsedResult", parsedResult);
         result.put("confidenceScore", confidenceScore.toString());
 
         return Result.success("AI解析成功", result);
     }
-    
+
+    /**
+     * AI解析岗位描述：从岗位描述文本中提取结构化信息，
+     * 用于自动填写岗位发布表单
+     *
+     * @param params 包含rawMessage（岗位描述文本）
+     * @return 解析结果（title, salaryRange, location, education, experience, description, requirements, skills）
+     */
+    @LogOperation("AI解析岗位描述")
+    @PostMapping("/parse-job")
+    public Result<Map<String, Object>> parseJob(
+            @RequestBody Map<String, Object> params) {
+
+        requireTeacher();
+        String rawMessage = params.get("rawMessage").toString();
+
+        // 调用 AI 解析服务
+        Map<String, Object> aiResult = aiService.parseJobDescription(rawMessage);
+
+        return Result.success("岗位解析成功", aiResult);
+    }
+
+    /**
+     * 简历分析：分析学生简历的不足并给出改进建议
+     * 分析结果会保存到简历表中，供学生和教师随时查看
+     *
+     * @param params 包含 studentId
+     * @return 分析结果（评分、优势、不足、建议等）
+     */
+    @LogOperation("AI分析简历")
+    @PostMapping("/analyze-resume")
+    public Result<Map<String, Object>> analyzeResume(
+            @RequestBody Map<String, Object> params) {
+
+        requireTeacher();
+        Long studentId = Long.valueOf(params.get("studentId").toString());
+
+        // 获取学生简历
+        com.recruit.entity.Resume resume = resumeService.selectByStudentId(studentId);
+        if (resume == null) {
+            return Result.error(404, "该学生暂无简历");
+        }
+
+        // 组装简历数据发给 AI
+        java.util.Map<String, Object> resumeData = new java.util.HashMap<>();
+        resumeData.put("education", resume.getEducation());
+        resumeData.put("internship", resume.getInternship());
+        resumeData.put("skills", resume.getSkills());
+        resumeData.put("selfEvaluation", resume.getSelfEvaluation());
+        resumeData.put("jobTarget", resume.getJobTarget());
+
+        String resumeJson;
+        try {
+            resumeJson = new ObjectMapper().writeValueAsString(resumeData);
+        } catch (Exception e) {
+            resumeJson = "{}";
+        }
+
+        // 调用 AI 分析
+        Map<String, Object> aiResult = aiService.analyzeResume(resumeJson);
+
+        // 将分析结果保存到 resume 表，供学生和教师后续查看
+        try {
+            String aiResultJson = new ObjectMapper().writeValueAsString(aiResult);
+            resume.setAiAnalysis(aiResultJson);
+            resumeService.updateById(resume);
+        } catch (Exception e) {
+            // 保存失败不影响返回结果，仅记录日志
+            log.error("保存AI简历分析结果失败", e);
+        }
+
+        return Result.success("简历分析成功", aiResult);
+    }
+
     /**
      * 人工修正AI解析结果
      *
@@ -139,10 +247,13 @@ public class AiParseController {
      * @param params 包含correctedResult的参数
      * @return 修正结果
      */
+    @LogOperation("人工修正AI解析结果")
     @PutMapping("/logs/{id}/correct")
     public Result<String> correctParseResult(
             @PathVariable Long id,
             @RequestBody Map<String, String> params) {
+
+        requireTeacher();
 
         String correctedResult = params.get("correctedResult");
         if (correctedResult == null || correctedResult.isEmpty()) {

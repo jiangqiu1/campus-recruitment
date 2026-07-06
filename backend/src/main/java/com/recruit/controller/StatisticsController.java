@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.Objects;
 
 /**
  * 统计数据控制器
@@ -21,7 +22,7 @@ import java.util.*;
  */
 @RestController
 @RequestMapping("/statistics")
-public class StatisticsController {
+public class StatisticsController extends BaseController {
 
     @Autowired
     private UserService userService;
@@ -46,6 +47,12 @@ public class StatisticsController {
 
     @Autowired(required = false)
     private ResumeService resumeService;
+
+    @Autowired(required = false)
+    private JobChangeApplyService jobChangeApplyService;
+
+    @Autowired(required = false)
+    private MessageService messageService;
 
     /**
      * 学生端首页概览统计
@@ -125,15 +132,14 @@ public class StatisticsController {
         // 班级数 + 学生数
         long classCount = 0;
         long studentCount = 0;
+        Set<Long> allStudentIds = new HashSet<>();
         try {
             if (classService != null) {
-                // 统计全部班级（与班级管理页一致）
-                List<Class> allClasses = classService.list();
-                classCount = allClasses != null ? allClasses.size() : 0;
-                // 统计所有班级的去重学生数
-                Set<Long> allStudentIds = new HashSet<>();
-                if (allClasses != null) {
-                    for (Class cls : allClasses) {
+                Long curUserId = getCurrentUserId();
+                List<Class> myClasses = classService.selectByTeacherId(curUserId);
+                classCount = myClasses != null ? myClasses.size() : 0;
+                if (myClasses != null) {
+                    for (Class cls : myClasses) {
                         List<Long> studentIds = classService.getStudentIdsByClassId(cls.getId());
                         if (studentIds != null) {
                             allStudentIds.addAll(studentIds);
@@ -149,22 +155,87 @@ public class StatisticsController {
                 .eq(Job::getCreatedBy, userId)
                 .count();
 
+        // 急招岗位（活跃岗位中状态=已发布的）
+        long urgentJobCount = jobService.lambdaQuery()
+                .eq(Job::getCreatedBy, userId)
+                .eq(Job::getStatus, 1)
+                .count();
+
         // 这些岗位收到的投递
         List<Job> teacherJobs = jobService.lambdaQuery()
                 .eq(Job::getCreatedBy, userId)
                 .list();
         List<Long> jobIds = teacherJobs.stream().map(Job::getId).collect(java.util.stream.Collectors.toList());
         long deliveryCount = 0;
+        long todayDeliveryCount = 0;
+        long unreadResumeCount = 0;
         if (!jobIds.isEmpty()) {
             deliveryCount = deliveryService.lambdaQuery()
                     .in(Delivery::getJobId, jobIds)
                     .count();
+            // 今日新增投递
+            LocalDate today = LocalDate.now();
+            todayDeliveryCount = deliveryService.lambdaQuery()
+                    .in(Delivery::getJobId, jobIds)
+                    .apply("DATE(create_time) = {0}", today)
+                    .count();
+            // 未读简历（status=0 已投递但企业未查看）
+            unreadResumeCount = deliveryService.lambdaQuery()
+                    .in(Delivery::getJobId, jobIds)
+                    .eq(Delivery::getStatus, 0)
+                    .count();
         }
+
+        // 待审批数量（job_change_apply 中 status=0 且审核教师=当前教师）
+        long pendingApprovalCount = 0;
+        try {
+            if (jobChangeApplyService != null) {
+                pendingApprovalCount = jobChangeApplyService.lambdaQuery()
+                        .eq(com.recruit.entity.JobChangeApply::getStatus, 0)
+                        .eq(com.recruit.entity.JobChangeApply::getReviewTeacherId, userId)
+                        .count();
+            }
+        } catch (Exception ignored) {}
+
+        // 近期动态（最近5条投递记录，加上学生姓名）
+        List<Map<String, Object>> recentActivities = new ArrayList<>();
+        try {
+            if (!jobIds.isEmpty()) {
+                List<Delivery> recentDeliveries = deliveryService.lambdaQuery()
+                        .in(Delivery::getJobId, jobIds)
+                        .orderByDesc(Delivery::getCreateTime)
+                        .last("LIMIT 5")
+                        .list();
+                for (Delivery d : recentDeliveries) {
+                    Map<String, Object> act = new HashMap<>();
+                    String studentName = "学生";
+                    try {
+                        com.recruit.entity.SysUser stu = userService.getById(d.getStudentId());
+                        if (stu != null) studentName = stu.getRealName() != null ? stu.getRealName() : "学生";
+                    } catch (Exception ignored) {}
+                    // 找岗位名称
+                    String jobTitle = "";
+                    for (Job j : teacherJobs) {
+                        if (j.getId().equals(d.getJobId())) { jobTitle = j.getTitle(); break; }
+                    }
+                    act.put("text", studentName + " 投递了「" + jobTitle + "」");
+                    act.put("time", d.getCreateTime() != null ? d.getCreateTime().toString().replace("T", " ").substring(0, 16) : "");
+                    act.put("type", "delivery");
+                    act.put("id", d.getId());
+                    recentActivities.add(act);
+                }
+            }
+        } catch (Exception ignored) {}
 
         data.put("classCount", classCount);
         data.put("studentCount", studentCount);
         data.put("jobCount", jobCount);
         data.put("deliveryCount", deliveryCount);
+        data.put("pendingApprovalCount", pendingApprovalCount);
+        data.put("todayDeliveryCount", todayDeliveryCount);
+        data.put("unreadResumeCount", unreadResumeCount);
+        data.put("urgentJobCount", urgentJobCount);
+        data.put("recentActivities", recentActivities);
 
         return Result.success(data);
     }
@@ -183,41 +254,62 @@ public class StatisticsController {
 
         Map<String, Object> data = new HashMap<>();
 
-        // 按企业ID查岗位（而非created_by，因为岗位由admin创建）
-        long jobCount = 0;
-        List<Long> jobIds = new ArrayList<>();
-        if (companyId != null) {
-            jobCount = jobService.lambdaQuery()
-                    .eq(Job::getCompanyId, companyId)
-                    .count();
+        // 默认值
+        data.put("activeJobCount", 0);
+        data.put("pendingResumeCount", 0);
+        data.put("todayNewCount", 0);
+        data.put("todayInterviewCount", 0);
+        data.put("resumeCount", 0);
+        data.put("interviewCount", 0);
+        data.put("hiredCount", 0);
 
-            List<Job> hrJobs = jobService.lambdaQuery()
-                    .eq(Job::getCompanyId, companyId)
-                    .list();
-            jobIds = hrJobs.stream().map(Job::getId).collect(java.util.stream.Collectors.toList());
-        }
+        if (companyId == null) return Result.success(data);
 
-        long resumeCount = 0;
-        long interviewCount = 0;
-        long hiredCount = 0;
-        if (!jobIds.isEmpty()) {
-            var deliveries = deliveryService.lambdaQuery()
-                    .in(Delivery::getJobId, jobIds)
-                    .list();
-            resumeCount = deliveries.size();
-            interviewCount = deliveries.stream()
-                    .filter(d -> d.getStatus() != null && (d.getStatus() == 2 || d.getStatus() == 3))
-                    .count();
-            hiredCount = deliveries.stream()
-                    .filter(d -> d.getStatus() != null && d.getStatus() == 3)
-                    .count();
-        }
+        // 查询该企业的所有岗位
+        List<Job> hrJobs = jobService.lambdaQuery()
+                .eq(Job::getCompanyId, companyId)
+                .list();
+        List<Long> jobIds = hrJobs.stream().map(Job::getId).collect(java.util.stream.Collectors.toList());
 
-        data.put("jobCount", jobCount);
-        data.put("resumeCount", resumeCount);
-        data.put("interviewCount", interviewCount);
-        data.put("hiredCount", hiredCount);
-        data.put("pending", interviewCount - hiredCount);
+        // 在招岗位数（状态=1 已发布）
+        long activeJobCount = hrJobs.stream().filter(j -> j.getStatus() != null && j.getStatus() == 1).count();
+        data.put("activeJobCount", activeJobCount);
+
+        if (jobIds.isEmpty()) return Result.success(data);
+
+        // 获取所有投递
+        var deliveries = deliveryService.lambdaQuery()
+                .in(Delivery::getJobId, jobIds)
+                .list();
+
+        // 待处理简历（status=0）
+        long pendingResumeCount = deliveries.stream()
+                .filter(d -> d.getStatus() != null && d.getStatus() == 0)
+                .count();
+        data.put("pendingResumeCount", pendingResumeCount);
+
+        // 今日新增投递
+        java.time.LocalDate today = java.time.LocalDate.now();
+        long todayNewCount = deliveries.stream()
+                .filter(d -> d.getCreateTime() != null && d.getCreateTime().toLocalDate().equals(today))
+                .count();
+        data.put("todayNewCount", todayNewCount);
+
+        // 今日面试
+        long todayInterviewCount = deliveries.stream()
+                .filter(d -> d.getStatus() != null && d.getStatus() == 2
+                        && d.getInterviewTime() != null && d.getInterviewTime().toLocalDate().equals(today))
+                .count();
+        data.put("todayInterviewCount", todayInterviewCount);
+
+        // 保留原字段（兼容旧页面）
+        data.put("resumeCount", (long) deliveries.size());
+        data.put("interviewCount", deliveries.stream()
+                .filter(d -> d.getStatus() != null && (d.getStatus() == 2 || d.getStatus() == 3))
+                .count());
+        data.put("hiredCount", deliveries.stream()
+                .filter(d -> d.getStatus() != null && d.getStatus() == 3)
+                .count());
 
         return Result.success(data);
     }
@@ -229,38 +321,68 @@ public class StatisticsController {
     public Result<List<Map<String, Object>>> getDeliveryTrend(@RequestParam(required = false) Long userId) {
         List<Map<String, Object>> trend = new ArrayList<>();
         LocalDate today = LocalDate.now();
-
-        // 如果没有指定 userId，查全部；否则查该用户所在企业的岗位投递
+        Integer role = getCurrentRole();
+        Long curUserId = getCurrentUserId();
+        Long targetUserId = (userId != null) ? userId : curUserId;
         List<Long> jobIds = null;
-        if (userId != null) {
-            SysUser u = userService.getById(userId);
+        if (Objects.equals(role, 2)) {
+            SysUser u = userService.getById(targetUserId);
             Long cid = u != null ? u.getCompanyId() : null;
             if (cid != null) {
                 jobIds = jobService.lambdaQuery()
                         .eq(Job::getCompanyId, cid)
                         .list().stream().map(Job::getId).collect(java.util.stream.Collectors.toList());
-            } else {
+            }
+        } else if (Objects.equals(role, 1)) {
+            jobIds = jobService.lambdaQuery()
+                    .eq(Job::getCreatedBy, targetUserId)
+                    .list().stream().map(Job::getId).collect(java.util.stream.Collectors.toList());
+        } else if (Objects.equals(role, 3) && userId != null) {
+            SysUser u = userService.getById(targetUserId);
+            Long cid = u != null ? u.getCompanyId() : null;
+            if (cid != null) {
                 jobIds = jobService.lambdaQuery()
-                        .eq(Job::getCreatedBy, userId)
+                        .eq(Job::getCompanyId, cid)
                         .list().stream().map(Job::getId).collect(java.util.stream.Collectors.toList());
             }
         }
 
+        // 单次 GROUP BY 查询替代 7 次 count 查询
         long maxVal = 1;
         long[] counts = new long[7];
+        
+        // 构建基础查询
+        List<Map<String, Object>> dailyCounts;
+        LocalDate sevenDaysAgo = today.minusDays(6);
+        
+        if (jobIds != null && !jobIds.isEmpty()) {
+            dailyCounts = deliveryService.getBaseMapper().selectMaps(
+                    new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                            .select("DATE(create_time) as day, COUNT(*) as cnt")
+                            .in("job_id", jobIds)
+                            .apply("create_time >= {0}", sevenDaysAgo.atStartOfDay())
+                            .groupBy("DATE(create_time)")
+            );
+        } else {
+            dailyCounts = deliveryService.getBaseMapper().selectMaps(
+                    new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                            .select("DATE(create_time) as day, COUNT(*) as cnt")
+                            .apply("create_time >= {0}", sevenDaysAgo.atStartOfDay())
+                            .groupBy("DATE(create_time)")
+            );
+        }
+        
+        // 将数据库返回结果映射到日期->计数
+        java.util.Map<String, Long> dayCountMap = new java.util.HashMap<>();
+        for (Map<String, Object> row : dailyCounts) {
+            String day = row.get("day") != null ? row.get("day").toString() : "";
+            long cnt = row.get("cnt") != null ? Long.parseLong(row.get("cnt").toString()) : 0L;
+            dayCountMap.put(day, cnt);
+        }
+        
         for (int i = 6; i >= 0; i--) {
             LocalDate date = today.minusDays(i);
-            long count;
-            if (jobIds != null && !jobIds.isEmpty()) {
-                count = deliveryService.lambdaQuery()
-                        .in(Delivery::getJobId, jobIds)
-                        .apply("DATE(create_time) = {0}", date)
-                        .count();
-            } else {
-                count = deliveryService.lambdaQuery()
-                        .apply("DATE(create_time) = {0}", date)
-                        .count();
-            }
+            long count = dayCountMap.getOrDefault(date.toString(), 0L);
             counts[6 - i] = count;
             if (count > maxVal) maxVal = count;
         }
@@ -279,6 +401,15 @@ public class StatisticsController {
      */
     @GetMapping("/teacher/employment-distribution")
     public Result<List<Map<String, Object>>> getEmploymentDistribution() {
+        Long teacherId = getCurrentUserId();
+        List<Class> myClasses = classService != null ? classService.selectByTeacherId(teacherId) : new ArrayList<>();
+        Set<Long> myStudentIds = new HashSet<>();
+        if (myClasses != null && classService != null) {
+            for (Class cls : myClasses) {
+                List<Long> ids = classService.getStudentIdsByClassId(cls.getId());
+                if (ids != null) myStudentIds.addAll(ids);
+            }
+        }
         List<Map<String, Object>> distribution = new ArrayList<>();
         Map<String, String> statusMap = new LinkedHashMap<>() {{
             put("已录用", "已录用");
@@ -289,9 +420,15 @@ public class StatisticsController {
         for (Map.Entry<String, String> e : statusMap.entrySet()) {
             Map<String, Object> item = new HashMap<>();
             item.put("name", e.getValue());
-            long count = deliveryService.lambdaQuery()
-                    .eq(Delivery::getStatus, getStatusValue(e.getKey()))
-                    .count();
+            long count;
+            if (!myStudentIds.isEmpty()) {
+                count = deliveryService.lambdaQuery()
+                        .eq(Delivery::getStatus, getStatusValue(e.getKey()))
+                        .in(Delivery::getStudentId, myStudentIds)
+                        .count();
+            } else {
+                count = 0L;
+            }
             item.put("value", count == 0 ? (long) Math.floor(Math.random() * 10) + 1 : count);
             distribution.add(item);
         }

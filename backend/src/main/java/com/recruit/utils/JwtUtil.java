@@ -42,6 +42,14 @@ public class JwtUtil {
      * 生成 JWT Token
      */
     public String generateToken(Long userId, String username, String role) {
+        return generateToken(userId, username, role, null);
+    }
+
+    /**
+     * 生成 JWT Token（含 Token 版本号）
+     * @param tokenVersion 版本号，用于密码修改后使旧 Token 失效。传入 null 则使用 "1"
+     */
+    public String generateToken(Long userId, String username, String role, String tokenVersion) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
         
@@ -49,6 +57,7 @@ public class JwtUtil {
         claims.put("userId", userId);
         claims.put("username", username);
         claims.put("role", role);
+        claims.put("tokenVersion", tokenVersion != null ? tokenVersion : "1");
         
         return Jwts.builder()
                 .setClaims(claims)
@@ -115,6 +124,17 @@ public class JwtUtil {
             return claims.getExpiration().before(new Date());
         }
         return true;
+    }
+    
+    /**
+     * 获取 Token 中指定 Claims 字段
+     */
+    public String getClaimFromToken(String token, String claimKey) {
+        Claims claims = getClaimsFromToken(token);
+        if (claims != null && claims.get(claimKey) != null) {
+            return claims.get(claimKey, String.class);
+        }
+        return null;
     }
     
     /**

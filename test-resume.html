@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>个人简历 - 张明</title>
+<style>
+  @media print {
+    body { margin: 0; padding: 0.5in; }
+    .no-print { display: none; }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    color: #333;
+    background: #f5f5f5;
+    padding: 20px;
+  }
+  .resume {
+    max-width: 210mm;
+    margin: 0 auto;
+    background: #fff;
+    padding: 40px 48px;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+    border-radius: 4px;
+  }
+  /* 头部 */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 20px;
+    border-bottom: 3px solid #165DFF;
+    margin-bottom: 24px;
+  }
+  .header-left h1 {
+    font-size: 28px;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+  }
+  .header-left .tagline {
+    font-size: 14px;
+    color: #666;
+  }
+  .header-right {
+    text-align: right;
+    font-size: 13px;
+    color: #555;
+    line-height: 1.8;
+  }
+  .header-right span { margin-left: 4px; }
+
+  /* 各区块 */
+  .section {
+    margin-bottom: 22px;
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #165DFF;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e8e8e8;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+
+  /* 求职意向 */
+  .target-grid {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .target-item {
+    display: flex;
+    gap: 8px;
+    font-size: 14px;
+  }
+  .target-item .label { color: #888; white-space: nowrap; }
+  .target-item .value { color: #333; font-weight: 500; }
+
+  /* 教育经历 */
+  .edu-item {
+    margin-bottom: 10px;
+  }
+  .edu-item .row1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+  }
+  .edu-item .school { font-size: 15px; font-weight: 600; }
+  .edu-item .degree { font-size: 13px; color: #165DFF; font-weight: 500; }
+  .edu-item .date { font-size: 13px; color: #888; }
+  .edu-item .major { font-size: 13px; color: #555; }
+
+  /* 技能 */
+  .skills-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .skill-tag {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    background: rgba(22,93,255,0.08);
+    color: #165DFF;
+    font-weight: 500;
+  }
+
+  /* 实习经历 */
+  .exp-item {
+    margin-bottom: 14px;
+  }
+  .exp-item .row1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2px;
+  }
+  .exp-item .company { font-size: 15px; font-weight: 600; }
+  .exp-item .position { font-size: 13px; color: #165DFF; font-weight: 500; }
+  .exp-item .date { font-size: 13px; color: #888; }
+  .exp-item .desc {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.7;
+    margin-top: 4px;
+    padding-left: 2px;
+  }
+
+  /* 自我评价 */
+  .eval-text {
+    font-size: 14px;
+    color: #444;
+    line-height: 1.8;
+    padding: 10px 14px;
+    background: #f8f9fe;
+    border-radius: 6px;
+    border-left: 3px solid #165DFF;
+  }
+
+  /* 打印按钮 */
+  .no-print {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .no-print button {
+    padding: 10px 32px;
+    font-size: 15px;
+    background: #165DFF;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .no-print button:hover { opacity: 0.9; }
+
+  .sep { height: 1px; background: #eee; margin: 20px 0; }
+
+  /* 第二份简历分隔 */
+  .page-break { page-break-before: always; margin-top: 40px; }
+  @media print {
+    .page-break { page-break-before: always; margin-top: 0; }
+  }
+  .resume-note {
+    text-align: center;
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="no-print" style="margin-bottom:16px;">
+  <button onclick="window.print()">🖨️ 打印 / 另存为 PDF</button>
+  <p style="margin-top:8px;font-size:13px;color:#888;">浏览器打印 → 目标打印机选「另存为 PDF」</p>
+</div>
+
+<!-- ============================================================ -->
+<!-- 简历1：张明 - Java 后端方向 -->
+<!-- ============================================================ -->
+<div class="resume">
+  <div class="header">
+    <div class="header-left">
+      <h1>张明</h1>
+      <div class="tagline">求职意向：Java 后端开发工程师</div>
+    </div>
+    <div class="header-right">
+      <div>📞 136-0013-6001</div>
+      <div>📧 zhangming@email.com</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">求职意向</div>
+    <div class="target-grid">
+      <div class="target-item"><span class="label">目标岗位</span><span class="value">Java 后端开发工程师</span></div>
+      <div class="target-item"><span class="label">期望薪资</span><span class="value">8K-12K</span></div>
+      <div class="target-item"><span class="label">工作地点</span><span class="value">广州</span></div>
+      <div class="target-item"><span class="label">到岗时间</span><span class="value">随时</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">教育经历</div>
+    <div class="edu-item">
+      <div class="row1">
+        <span class="school">广州职业技术学院</span>
+        <span class="degree">大专</span>
+      </div>
+      <div class="major">计算机应用技术</div>
+      <div class="date">2023.09 — 2026.06</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">专业技能</div>
+    <div class="skills-wrap">
+      <span class="skill-tag">Java</span>
+      <span class="skill-tag">Spring Boot</span>
+      <span class="skill-tag">MyBatis</span>
+      <span class="skill-tag">MySQL</span>
+      <span class="skill-tag">Redis</span>
+      <span class="skill-tag">Git</span>
+      <span class="skill-tag">Linux 基础</span>
+      <span class="skill-tag">RESTful API</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">实习经历</div>
+    <div class="exp-item">
+      <div class="row1">
+        <span class="company">广州创想科技有限公司</span>
+        <span class="date">2025.07 — 2025.12</span>
+      </div>
+      <div class="position">Java 开发实习生</div>
+      <div class="desc">
+        参与公司后台管理系统开发，使用 Spring Boot + MyBatis 框架实现用户管理、权限控制、数据统计等功能模块。负责 RESTful API 的设计与实现，参与了 2 个真实项目的上线部署。使用 Git 进行版本协作，撰写接口文档。实习期间代码提交量在团队中排名前列。
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">项目经验</div>
+    <div class="exp-item">
+      <div class="row1"><span class="company">校园招聘平台（毕业设计）</span><span class="date">2025.10 — 2026.01</span></div>
+      <div class="desc">
+        独立开发基于 Spring Boot + Vue.js 的招聘信息管理系统，实现岗位发布、简历投递、消息通知等功能。数据库使用 MySQL，缓存使用 Redis。项目代码已上传 GitHub。
+      </div>
+    </div>
+    <div class="exp-item">
+      <div class="row1"><span class="company">在线考试系统（课程实训）</span><span class="date">2025.03 — 2025.06</span></div>
+      <div class="desc">
+        使用 Java Servlet + JSP + MySQL 开发在线考试系统，实现题库管理、自动组卷、在线答题、成绩统计等功能，获课程优秀项目奖。
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">自我评价</div>
+    <div class="eval-text">
+      热爱编程，有扎实的 Java 基础和良好的编程习惯。实习期间参与了 2 个真实项目上线，能独立完成模块开发。性格开朗，善于团队协作，乐于学习新技术。目标明确，致力于成为一名优秀的后端开发工程师。
+    </div>
+  </div>
+
+  <div class="resume-note">— 简历结束 —</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 简历2：李婷 - 前端方向 -->
+<!-- ============================================================ -->
+<div class="page-break"></div>
+
+<div class="resume">
+  <div class="header">
+    <div class="header-left">
+      <h1>李婷</h1>
+      <div class="tagline">求职意向：前端开发工程师</div>
+    </div>
+    <div class="header-right">
+      <div>📞 136-0013-6002</div>
+      <div>📧 liting@email.com</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">求职意向</div>
+    <div class="target-grid">
+      <div class="target-item"><span class="label">目标岗位</span><span class="value">前端开发工程师</span></div>
+      <div class="target-item"><span class="label">期望薪资</span><span class="value">8K-13K</span></div>
+      <div class="target-item"><span class="label">工作地点</span><span class="value">广州/深圳</span></div>
+      <div class="target-item"><span class="label">到岗时间</span><span class="value">随时</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">教育经历</div>
+    <div class="edu-item">
+      <div class="row1">
+        <span class="school">广州职业技术学院</span>
+        <span class="degree">大专</span>
+      </div>
+      <div class="major">计算机应用技术</div>
+      <div class="date">2023.09 — 2026.06</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">专业技能</div>
+    <div class="skills-wrap">
+      <span class="skill-tag">Vue.js</span>
+      <span class="skill-tag">JavaScript</span>
+      <span class="skill-tag">TypeScript</span>
+      <span class="skill-tag">HTML5</span>
+      <span class="skill-tag">CSS3</span>
+      <span class="skill-tag">ECharts</span>
+      <span class="skill-tag">微信小程序</span>
+      <span class="skill-tag">Git</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">实习经历</div>
+    <div class="exp-item">
+      <div class="row1">
+        <span class="company">广州创想科技有限公司</span>
+        <span class="date">2025.07 — 2025.12</span>
+      </div>
+      <div class="position">前端开发实习生</div>
+      <div class="desc">
+        使用 Vue 3 + Element Plus 开发企业后台管理界面，负责 3 个核心功能模块的前端实现。独立开发了数据可视化大屏，使用 ECharts 展示实时业务数据。参与组件库建设，编写可复用组件 10+ 个。与 UI 设计师紧密协作，确保设计稿还原度。
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">项目经验</div>
+    <div class="exp-item">
+      <div class="row1"><span class="company">校园二手交易小程序</span><span class="date">2025.06 — 2025.09</span></div>
+      <div class="desc">
+        使用 uni-app 开发微信小程序，实现商品展示、发布、聊天等功能。负责全部前端页面开发，使用 Vuex 管理全局状态，封装了通用请求组件。小程序已上线，日活 200+。
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">自我评价</div>
+    <div class="eval-text">
+      对前端技术充满热情，喜欢将设计稿变成精致的页面。熟悉 Vue 全家桶开发模式，有小程序开发经验。善于与 UI 设计师沟通协作，注重用户体验。持续关注前端新技术，有良好的学习习惯。
+    </div>
+  </div>
+
+  <div class="resume-note">— 简历结束 —</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- 简历3：王浩 - Python/数据方向 -->
+<!-- ============================================================ -->
+<div class="page-break"></div>
+
+<div class="resume">
+  <div class="header">
+    <div class="header-left">
+      <h1>王浩</h1>
+      <div class="tagline">求职意向：Python 数据分析师</div>
+    </div>
+    <div class="header-right">
+      <div>📞 136-0013-6003</div>
+      <div>📧 wanghao@email.com</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">求职意向</div>
+    <div class="target-grid">
+      <div class="target-item"><span class="label">目标岗位</span><span class="value">Python 数据分析师</span></div>
+      <div class="target-item"><span class="label">期望薪资</span><span class="value">8K-12K</span></div>
+      <div class="target-item"><span class="label">工作地点</span><span class="value">广州/深圳</span></div>
+      <div class="target-item"><span class="label">到岗时间</span><span class="value">1周内</span></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">教育经历</div>
+    <div class="edu-item">
+      <div class="row1">
+        <span class="school">广州职业技术学院</span>
+        <span class="degree">大专</span>
+      </div>
+      <div class="major">软件技术</div>
+      <div class="date">2023.09 — 2026.06</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">专业技能</div>
+    <div class="skills-wrap">
+      <span class="skill-tag">Python</span>
+      <span class="skill-tag">Pandas</span>
+      <span class="skill-tag">NumPy</span>
+      <span class="skill-tag">SQL</span>
+      <span class="skill-tag">Excel</span>
+      <span class="skill-tag">ECharts</span>
+      <span class="skill-tag">Flask</span>
+      <span class="skill-tag">Matplotlib</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">实习经历</div>
+    <div class="exp-item">
+      <div class="row1">
+        <span class="company">广州数据科技有限公司</span>
+        <span class="date">2025.07 — 2025.09</span>
+      </div>
+      <div class="position">数据分析实习生</div>
+      <div class="desc">
+        使用 Python 和 Pandas 进行销售数据清洗和分析，日均处理数据量 10 万+。制作日报周报数据看板，使用 ECharts 实现可视化。编写自动化数据报表脚本，将团队报表产出时间从 2 小时缩短至 20 分钟。
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">自我评价</div>
+    <div class="eval-text">
+      数据敏感度高，逻辑思维强。在校期间参加了数据分析竞赛并获得校级三等奖。熟练使用 Python 进行数据处理和可视化，了解基础的机器学习算法。做事认真负责，善于从数据中发现问题和机会。
+    </div>
+  </div>
+
+  <div class="resume-note">— 简历结束 —</div>
+</div>
+
+</body>
+</html>

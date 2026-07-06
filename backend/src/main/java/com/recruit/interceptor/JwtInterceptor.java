@@ -66,7 +66,7 @@ public class JwtInterceptor implements HandlerInterceptor {
             return false;
         }
         
-        // 5. 从 Redis 中检查 Token 是否存在（可选：实现单点登录）
+        // 5. 从 Redis 中检查 Token 是否存在
         Long userId = jwtUtil.getUserIdFromToken(token);
         String redisKey = "token:" + userId;
         String cachedToken = redisUtil.get(redisKey);
@@ -78,7 +78,18 @@ public class JwtInterceptor implements HandlerInterceptor {
             return false;
         }
         
-        // 6. 将用户信息存储到请求属性中，方便后续使用
+        // 6. 检查 Token 版本号（修改密码后旧 Token 失效）
+        String versionKey = "token:version:" + userId;
+        String storedVersion = redisUtil.get(versionKey);
+        String tokenVersion = jwtUtil.getClaimFromToken(token, "tokenVersion");
+        if (Objects.nonNull(storedVersion) && Objects.nonNull(tokenVersion) && !storedVersion.equals(tokenVersion)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\":401,\"message\":\"密码已修改，请重新登录\",\"data\":null}");
+            return false;
+        }
+        
+        // 7. 将用户信息存储到请求属性中，方便后续使用
         request.setAttribute("userId", userId);
         request.setAttribute("username", jwtUtil.getUsernameFromToken(token));
         request.setAttribute("role", jwtUtil.getRoleFromToken(token));

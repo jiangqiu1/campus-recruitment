@@ -1,86 +1,108 @@
 <template>
 	<view class="page-wrapper">
-		<view class="header-simple" style="padding:12px 16px;flex-direction:row;align-items:center;gap:12px;">
-			<text style="font-size:18px;font-weight:700;color:white;flex:1;">班级管理</text>
-			<text style="font-size:26px;" @click="showAddModal = true">＋</text>
+		<NavBar title="班级管理" :showBack="false" right-text="添加" @rightClick="showAddModal = true" />
+		<!-- 搜索栏 -->
+		<view class="search-box">
+			<uni-icons type="search" size="16" color="#86909C" />
+			<input v-model="keyword" placeholder="搜索班级名称..." />
+			<text class="all-resume-link" @click="goToResumes">全量简历 ›</text>
 		</view>
-		<scroll-view class="content-scrollable" scroll-y>
+
+		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
 			<view class="class-list">
-				<view v-for="(cls, i) in classes" :key="i" class="class-card" @click="goToStudents(cls.id, cls.name)">
+				<view v-for="(cls, i) in filteredClasses" :key="i" class="class-card" @click="goToStudents(cls.id, cls.name)">
 					<view class="class-card-top">
-						<text class="class-icon">👥</text>
+						<view class="class-icon">
+							<uni-icons type="staff" size="28" color="#165DFF" />
+						</view>
 						<view class="class-info">
 							<text class="class-name">{{ cls.name }}</text>
-							<text class="class-major">{{ cls.major || '未设置专业' }}</text>
+							<text class="class-major">{{ cls.major || '未设置专业' }} · {{ cls.grade || '' }}级</text>
 						</view>
-						<text class="class-arrow">›</text>
-					</view>
-					<view class="class-stats">
-						<view class="class-stat-item">
-							<text class="class-stat-num">{{ cls.studentCount || 0 }}</text>
-							<text class="class-stat-label">学生</text>
-						</view>
-						<view class="class-stat-item">
-							<text class="class-stat-num" style="color:#10B981;">{{ cls.employmentRate ?? 0 }}</text>
-							<text class="class-stat-label">就业率</text>
-						</view>
-						<view class="class-stat-item">
-							<text class="class-stat-num" style="color:#165DFF;">{{ cls.deliveryCount || 0 }}</text>
-							<text class="class-stat-label">投递</text>
+						<view class="more-btn" @click.stop="showMoreActions(cls)">
+							<uni-icons type="more" size="16" color="#86909C" />
 						</view>
 					</view>
-					<!-- 删除按钮 -->
-					<view class="delete-btn" @click.stop="handleDeleteClass(cls)">
-						<text style="font-size:18px;color:#EF4444;">🗑</text>
+					<view class="stat-row">
+						<view class="stat-item">
+							<text class="stat-num">{{ cls.studentCount || 0 }}</text>
+							<text class="stat-label">学生数</text>
+						</view>
+						<view class="stat-item">
+							<text class="stat-num">{{ cls.employmentRate ?? 0 }}%</text>
+							<text class="stat-label">就业率</text>
+						</view>
+						<view class="stat-item">
+							<text class="stat-num">{{ cls.deliveryCount || 0 }}</text>
+							<text class="stat-label">投递数</text>
+						</view>
 					</view>
 				</view>
-				<view v-if="!classes.length" class="empty-state">
-					<text style="font-size:48px;margin-bottom:12px;">👥</text>
-					<text class="empty-text">暂无班级数据</text>
-				</view>
+				<EmptyState v-if="!filteredClasses.length" icon="staff" title="暂无班级" desc="点击右上角「添加」创建班级" />
 			</view>
+			<view style="height: calc(60px + env(safe-area-inset-bottom))" />
 		</scroll-view>
 
-		<!-- 添加班级弹窗 -->
-		<view v-if="showAddModal" class="modal-overlay" @click="showAddModal = false">
-			<view class="modal-content" @click.stop>
-				<text style="font-size:18px;font-weight:700;margin-bottom:16px;">添加班级</text>
-				<input class="modal-input" v-model="newClassName" placeholder="班级名称" />
-				<input class="modal-input" v-model="newClassMajor" placeholder="专业名称" />
-				<input class="modal-input" v-model="newClassGrade" placeholder="年级（如2023级）" />
-				<view class="modal-actions">
-					<text class="modal-btn modal-btn-cancel" @click="showAddModal = false">取消</text>
-					<text class="modal-btn modal-btn-confirm" @click="handleAddClass">确定</text>
-				</view>
+		<!-- 添加班级弹出层 -->
+		<PopupDrawer :show="showAddModal" @update:show="showAddModal = $event" title="添加班级">
+			<view class="add-form">
+				<input class="form-input" v-model="newClassName" placeholder="班级名称" />
+				<input class="form-input" v-model="newClassMajor" placeholder="专业" />
+				<input class="form-input" v-model="newClassGrade" placeholder="年级" />
+				<button class="submit-btn" @click="handleAddClass">确认添加</button>
 			</view>
-		</view>
+		</PopupDrawer>
 
-		<TeacherTabBar current="classes" />
+		<TabBar current="classes" path-prefix="/pages/teacher/" :tab-list="teacherTabs" />
 	</view>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed } from 'vue'
+import { onShow } from '@/utils/page-lifecycle'
 import { teacherAPI } from '@/utils/request'
-import TeacherTabBar from '@/components/TeacherTabBar.vue'
+import NavBar from '@/components/NavBar.vue'
+import TabBar from '@/components/TabBar.vue'
+import EmptyState from '@/components/EmptyState.vue'
+import PopupDrawer from '@/components/PopupDrawer.vue'
+import { checkRole } from '@/utils/auth'
 
+checkRole(1)
+
+const teacherTabs = [
+	{ page: 'home', icon: 'home', activeIcon: 'home-filled', label: '首页' },
+	{ page: 'classes', icon: 'staff', activeIcon: 'staff-filled', label: '班级' },
+	{ page: 'jobs', icon: 'list', activeIcon: 'list', label: '岗位' },
+	{ page: 'profile', icon: 'person', activeIcon: 'person-filled', label: '我的' }
+]
+
+const keyword = ref('')
 const classes = ref([])
 const showAddModal = ref(false)
 const newClassName = ref('')
 const newClassMajor = ref('')
 const newClassGrade = ref('')
+const refreshing = ref(false)
 
-onMounted(async () => {
-	await loadClasses()
+const filteredClasses = computed(() => {
+	if (!keyword.value.trim()) return classes.value
+	const kw = keyword.value.toLowerCase()
+	return classes.value.filter(c => (c.name || '').toLowerCase().includes(kw))
 })
+
+onShow(() => { loadClasses() })
+
+const onRefresh = async () => {
+	refreshing.value = true
+	await loadClasses()
+	refreshing.value = false
+}
 
 const loadClasses = async () => {
 	try {
 		const res = await teacherAPI.getClasses()
 		classes.value = res.data || []
-	} catch (e) {
-		console.log('加载班级失败', e)
-	}
+	} catch (e) { console.log('加载班级失败', e) }
 }
 
 const handleAddClass = async () => {
@@ -103,24 +125,30 @@ const handleAddClass = async () => {
 		newClassMajor.value = ''
 		newClassGrade.value = ''
 		await loadClasses()
-	} catch (e) {
-		uni.showToast({ title: '添加失败', icon: 'none' })
-	}
+	} catch (e) { uni.showToast({ title: '添加失败', icon: 'none' }) }
 }
 
-const handleDeleteClass = (cls) => {
-	uni.showModal({
-		title: '确认删除',
-		content: '确定删除班级「' + cls.name + '」吗？',
-		success: async (res) => {
-			if (res.confirm) {
-				try {
-					await teacherAPI.deleteClass(cls.id)
-					uni.showToast({ title: '删除成功', icon: 'success' })
-					await loadClasses()
-				} catch (e) {
-					uni.showToast({ title: '删除失败', icon: 'none' })
-				}
+const showMoreActions = (cls) => {
+	uni.showActionSheet({
+		itemList: ['编辑班级', '删除班级'],
+		success: (res) => {
+			if (res.tapIndex === 0) {
+				uni.showToast({ title: '编辑班级：' + cls.name, icon: 'none' })
+			} else if (res.tapIndex === 1) {
+				uni.showModal({
+					title: '提示',
+					content: '确定删除班级「' + cls.name + '」吗？',
+					success: (r) => {
+						if (r.confirm) {
+							teacherAPI.deleteClass(cls.id).then(() => {
+								uni.showToast({ title: '删除成功', icon: 'success' })
+								loadClasses()
+							}).catch(() => {
+								uni.showToast({ title: '删除失败', icon: 'none' })
+							})
+						}
+					}
+				})
 			}
 		}
 	})
@@ -129,34 +157,33 @@ const handleDeleteClass = (cls) => {
 const goToStudents = (classId, className) => {
 	uni.navigateTo({ url: '/pages/teacher/students?classId=' + classId + '&className=' + encodeURIComponent(className) })
 }
+const goToResumes = () => uni.navigateTo({ url: '/pages/teacher/resumes' })
 </script>
 
 <style scoped>
-.header-simple {
-	background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
-	color: white;
-	flex-shrink: 0;
+/* 搜索框和学生端完全一致 */
+.search-box {
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
+	background: #FFFFFF;
+	border-radius: 24px;
+	padding: 0 16px;
+	height: 40px;
+	margin: 12px 16px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.class-list {
-	padding: 16px;
-}
+.search-box input { flex: 1; font-size: 14px; background: transparent; border: none; color: #1D2129; height: 100%; }
+.all-resume-link { font-size: 13px; color: #165DFF; font-weight: 500; flex-shrink: 0; }
+
+.class-list { padding: 0 16px; }
 .class-card {
 	background: white;
-	border-radius: 16px;
+	border-radius: 12px;
 	padding: 16px;
 	margin-bottom: 12px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 	position: relative;
-	overflow: hidden;
-}
-.class-card::before {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 3px;
-	background: linear-gradient(90deg, #10B981, transparent);
 }
 .class-card-top {
 	flex-direction: row;
@@ -165,110 +192,57 @@ const goToStudents = (classId, className) => {
 	margin-bottom: 16px;
 }
 .class-icon {
-	font-size: 32px;
 	width: 48px;
 	height: 48px;
-	background: rgba(16,185,129,0.1);
+	background: rgba(22,93,255,0.08);
 	border-radius: 12px;
 	align-items: center;
 	justify-content: center;
-	text-align: center;
-	line-height: 48px;
 }
 .class-info { flex: 1; }
-.class-name {
-	font-size: 16px;
-	font-weight: 700;
-	color: #1D2129;
-	display: block;
-	margin-bottom: 4px;
+.class-name { font-size: 16px; font-weight: 700; color: #1D2129; display: block; margin-bottom: 4px; }
+.class-major { font-size: 13px; color: #86909C; display: block; }
+.more-btn {
+	width: 32px;
+	height: 32px;
+	align-items: center;
+	justify-content: center;
 }
-.class-major {
-	font-size: 13px;
-	color: #86909C;
-	display: block;
-}
-.class-arrow { color: #C9CDD4; font-size: 20px; }
-.class-stats {
+.stat-row {
 	flex-direction: row;
 	justify-content: space-around;
 	padding-top: 12px;
-	border-top: 1px solid #F2F3F5;
+	border-top: 0.5px solid #F2F3F5;
 }
-.class-stat-item { align-items: center; gap: 4px; }
-.class-stat-num {
-	font-size: 20px;
-	font-weight: 800;
-	color: #1D2129;
-}
-.class-stat-label {
-	font-size: 12px;
-	color: #86909C;
-}
-.delete-btn {
-	position: absolute;
-	bottom: 12px;
-	right: 12px;
-	width: 36px;
-	height: 36px;
-	align-items: center;
-	justify-content: center;
-}
+.stat-item { align-items: center; gap: 4px; }
+.stat-num { font-size: 20px; font-weight: 800; color: #1D2129; }
+.stat-label { font-size: 12px; color: #86909C; }
 
-/* Modal */
-.modal-overlay {
-	position: fixed;
-	top: 0; left: 0; right: 0; bottom: 0;
-	background: rgba(0,0,0,0.5);
-	align-items: center;
-	justify-content: center;
-	z-index: 1000;
-}
-.modal-content {
-	background: white;
-	border-radius: 20px;
-	padding: 28px;
-	width: 80%;
-	max-width: 340px;
-	gap: 12px;
-}
-.modal-input {
-	border: 1px solid #E2E8F0;
-	border-radius: 10px;
-	padding: 12px 14px;
-	font-size: 14px;
-	color: #1D2129;
-	background: #F7F8FA;
-}
-.modal-actions {
-	flex-direction: row;
-	gap: 12px;
-	margin-top: 8px;
-}
-.modal-btn {
-	flex: 1;
-	padding: 12px;
-	border-radius: 10px;
-	text-align: center;
+.add-form { padding: 0; gap: 12px; }
+.form-input {
+	width: 100%;
+	height: 44px;
+	border: 1px solid #E5E6EB;
+	border-radius: 8px;
+	padding: 0 12px;
 	font-size: 15px;
-	font-weight: 600;
+	background: #F7F8FA;
+	box-sizing: border-box;
+	color: #1D2129;
 }
-.modal-btn-cancel {
-	background: #F2F3F5;
-	color: #4E5969;
+.form-input:focus {
+	border-color: #165DFF;
+	background: #FFFFFF;
 }
-.modal-btn-confirm {
+.submit-btn {
+	width: 100%;
+	height: 44px;
+	border-radius: 12px;
 	background: #165DFF;
 	color: white;
-}
-
-.empty-state {
-	padding: 60px 20px;
-	align-items: center;
-	justify-content: center;
-}
-.empty-text {
-	font-size: 14px;
-	color: #86909C;
+	font-size: 15px;
+	font-weight: 600;
+	border: none;
+	margin-top: 8px;
 }
 </style>

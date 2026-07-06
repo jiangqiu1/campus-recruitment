@@ -1,5 +1,6 @@
 package com.recruit.controller;
 
+import com.recruit.annotation.LogOperation;
 import com.recruit.entity.JobMatchRecord;
 import com.recruit.service.JobMatchRecordService;
 import com.recruit.utils.Result;
@@ -16,7 +17,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/job-matches")
-public class JobMatchController {
+public class JobMatchController extends BaseController {
 
     @Autowired
     private JobMatchRecordService jobMatchRecordService;
@@ -116,8 +117,10 @@ public class JobMatchController {
      * @param params 包含jobId和studentId的参数
      * @return 生成结果
      */
+    @LogOperation("生成人岗匹配")
     @PostMapping("/generate")
     public Result<String> generateMatchRecord(@RequestBody Map<String, Long> params) {
+        requireTeacher();
         Long jobId = params.get("jobId");
         Long studentId = params.get("studentId");
 
@@ -139,9 +142,13 @@ public class JobMatchController {
      * @param jobId 岗位ID
      * @return 生成的记录数量
      */
+    @LogOperation("批量生成人岗匹配")
     @PostMapping("/batch-generate/{jobId}")
-    public Result<Map<String, Integer>> batchGenerateMatchRecords(@PathVariable Long jobId) {
-        int count = jobMatchRecordService.batchGenerateMatchRecords(jobId);
+    public Result<Map<String, Integer>> batchGenerateMatchRecords(
+            @PathVariable Long jobId,
+            @RequestParam(required = false) Long classId) {
+        requireTeacher();
+        int count = jobMatchRecordService.batchGenerateMatchRecords(jobId, classId);
 
         Map<String, Integer> result = new java.util.HashMap<>();
         result.put("generatedCount", count);
@@ -155,8 +162,10 @@ public class JobMatchController {
      * @param id 记录ID
      * @return 更新结果
      */
+    @LogOperation("更新推送状态")
     @PutMapping("/{id}/push")
     public Result<String> updatePushedStatus(@PathVariable Long id) {
+        requireTeacher();
         boolean success = jobMatchRecordService.updatePushedStatus(id);
         if (!success) {
             return Result.error("更新推送状态失败");
@@ -187,8 +196,10 @@ public class JobMatchController {
      * @param id 记录ID
      * @return 删除结果
      */
+    @LogOperation("删除匹配记录")
     @DeleteMapping("/{id}")
     public Result<String> deleteJobMatch(@PathVariable Long id) {
+        requireTeacher();
         boolean success = jobMatchRecordService.removeById(id);
         if (!success) {
             return Result.error("删除失败");

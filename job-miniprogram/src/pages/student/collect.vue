@@ -1,201 +1,284 @@
 <template>
 	<view class="page-wrapper">
-		<view class="header-simple" style="padding:12px 16px;flex-direction:row;align-items:center;gap:12px;">
-			<text style="font-size:20px;" @click="goBack">‹</text>
-			<text style="font-size:18px;font-weight:700;color:white;">我的收藏</text>
-		</view>
-		<scroll-view class="content-scrollable" scroll-y refresher-enabled="true" :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
+		<NavBar title="我的收藏" />
+		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh" @scrolltolower="loadMore">
+			<view v-if="editing" class="batch-bar">
+				<button class="batch-btn" @click="batchRemove">批量取消收藏</button>
+			</view>
+			<view class="sort-bar">
+				<text v-for="s in sorts" :key="s.value" class="sort-tab" :class="{ active: currentSort === s.value }" @click="currentSort = s.value">{{ s.label }}</text>
+				<text class="edit-text" @click="editing = !editing">{{ editing ? '完成' : '编辑' }}</text>
+			</view>
 			<view class="card-list">
-				<view v-for="(fav, i) in favorites" :key="i" class="card-item" @click="goToDetail(fav.jobId)">
-					<view class="card-header-row">
-						<view>
+				<view v-for="(fav, i) in sortedList" :key="i" class="card-item" @click="!editing && goToDetail(fav.jobId)">
+					<view v-if="editing" class="check-box" @click.stop="toggleSelect(fav.jobId)">
+						<uni-icons :type="selectedIds.has(fav.jobId) ? 'checkbox-filled' : 'circle'" :size="20" :color="selectedIds.has(fav.jobId) ? '#165DFF' : '#C9CDD4'" />
+					</view>
+					<view class="card-body">
+						<view class="card-header">
 							<text class="card-title">{{ fav.title || '岗位 #' + fav.jobId }}</text>
-							<text class="card-sub">{{ fav.companyName || '' }}</text>
+							<text class="card-salary">{{ fav.salaryText || '' }}</text>
 						</view>
-						<text class="card-salary">{{ fav.salaryText || '' }}</text>
-					</view>
-					<view class="card-info">
-						<text>{{ fav.location || '' }}</text>
-						<text>{{ fav.education || '' }}</text>
-					</view>
-					<view class="card-actions">
-						<button class="btn-sm" :class="deliveredJobIds.has(fav.jobId) ? 'btn-disabled' : 'btn-primary'" :disabled="deliveredJobIds.has(fav.jobId)" @click.stop="handleDeliver(fav)">{{ deliveredJobIds.has(fav.jobId) ? '已投递' : '投递' }}</button>
-						<button class="btn-sm btn-outline" @click.stop="removeFavorite(fav.jobId)">取消收藏</button>
+						<text class="card-sub">{{ fav.companyName || '' }}</text>
+						<view class="card-meta">
+							<text class="meta-text">{{ fav.location || '' }}</text>
+							<text class="meta-text">{{ fav.education || '' }}</text>
+						</view>
+						<view v-if="!editing" class="card-actions">
+							<button class="action-btn btn-primary" :class="{ disabled: deliveredJobIds.has(fav.jobId) }" :disabled="deliveredJobIds.has(fav.jobId)" @click.stop="handleDeliver(fav)">{{ deliveredJobIds.has(fav.jobId) ? '已投递' : '投递' }}</button>
+						</view>
 					</view>
 				</view>
-				<view v-if="!favorites.length" class="empty-state">
-					<text style="font-size:48px;margin-bottom:12px;">⭐</text>
-					<text class="empty-text">暂无收藏岗位</text>
-					<text style="font-size:13px;color:#C9CDD4;margin-top:8px;">浏览岗位时点击收藏按钮即可添加</text>
-				</view>
+				<EmptyState v-if="!favorites.length" icon="star" title="暂无收藏" desc="浏览岗位时点击收藏按钮即可添加" />
 			</view>
 		</scroll-view>
 	</view>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { favoriteAPI, deliveryAPI } from '@/utils/request'
+import { ref, computed } from 'vue'
+import { favoriteAPI, deliveryAPI, jobAPI } from '@/utils/request'
+import NavBar from '@/components/NavBar.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 const refreshing = ref(false)
 const favorites = ref([])
 const deliveredJobIds = ref(new Set())
+const editing = ref(false)
+const selectedIds = ref(new Set())
+const currentSort = ref('time')
 
-const onRefresh = async () => {
-	refreshing.value = true
-	const sid = getStudentId()
-	if (sid) {
-		try {
-			const [fRes, dRes] = await Promise.all([
-				favoriteAPI.getFavorites({ studentId: sid }),
-				deliveryAPI.getDeliveriesByStudentId({ studentId: sid })
-			])
-			favorites.value = (fRes.data || []).map(f => ({
-				...f,
-				title: f.title || '岗位 #' + f.jobId,
-				companyName: f.companyName || '',
-				location: f.location || '',
-				salaryText: f.salaryText || ''
-			}))
-			deliveredJobIds.value = new Set((dRes.data || []).map(d => d.jobId))
-		} catch (e) { console.error('刷新失败', e) }
+const sorts = [
+	{ label: '按时间', value: 'time' },
+	{ label: '按薪资', value: 'salary' },
+	{ label: '按匹配度', value: 'match' }
+]
+
+const sortedList = computed(() => {
+	const list = [...favorites.value]
+	if (currentSort.value === 'salary') {
+		list.sort((a, b) => parseSalary(b.salaryText) - parseSalary(a.salaryText))
 	}
-	refreshing.value = false
-}
+	return list
+})
 
+const parseSalary = (s) => {
+	if (!s) return 0
+	const nums = s.match(/\d+/g)
+	return nums ? parseInt(nums[0]) : 0
+}
 
 const getStudentId = () => {
 	try {
 		const raw = uni.getStorageSync('userInfo')
 		if (!raw) return null
 		const obj = JSON.parse(raw)
-		const sid = obj.id || obj.userId
-		return sid ? Number(sid) : null
+		return obj.id || obj.userId ? Number(obj.id || obj.userId) : null
 	} catch (e) { return null }
 }
 
-onMounted(async () => {
+loadData()
+async function loadData() {
 	const sid = getStudentId()
-	if (!sid) { uni.showToast({ title: '请先登录', icon: 'none' }); return }
+	if (!sid) { favorites.value = []; return }
 	try {
-		const [fRes, dRes] = await Promise.all([
-			favoriteAPI.getFavorites({ studentId: sid }),
-			deliveryAPI.getDeliveriesByStudentId({ studentId: sid })
-		])
-		favorites.value = (fRes.data || []).map(f => ({
-			...f,
-			title: f.title || '岗位 #' + f.jobId,
-			companyName: f.companyName || '',
-			location: f.location || '',
-			salaryText: f.salaryText || ''
-		}))
-		deliveredJobIds.value = new Set((dRes.data || []).map(d => d.jobId))
+		const fRes = await favoriteAPI.getFavorites({ studentId: sid })
+		const rawList = fRes.data || []
+		if (!Array.isArray(rawList) || !rawList.length) { favorites.value = []; return }
+		const enriched = []
+		for (const fav of rawList) {
+			const jobId = fav.jobId || fav.id
+			if (!jobId) continue
+			try {
+				const jRes = await jobAPI.getJobDetail(jobId)
+				const job = jRes.data || {}
+				enriched.push({ ...fav, jobId, title: job.title || job.jobTitle || '岗位 #' + jobId, companyName: job.companyName || '', location: job.location || '', education: job.education || '', salaryText: job.salaryText || job.salaryRange || '' })
+			} catch (e) {
+				enriched.push({ ...fav, jobId, title: '岗位 #' + jobId, companyName: '', location: '', education: '', salaryText: '' })
+			}
+		}
+		favorites.value = enriched
+		try {
+			const dRes = await deliveryAPI.getDeliveriesByStudentId({ studentId: sid })
+			deliveredJobIds.value = new Set((dRes.data || []).map(d => d.jobId))
+		} catch (e) { deliveredJobIds.value = new Set() }
 	} catch (e) {
-		console.error('加载收藏数据失败', e)
-		uni.showToast({ title: '加载失败', icon: 'none' })
+		console.error('加载收藏失败', e)
+		favorites.value = []
 	}
-})
+}
+
+const onRefresh = async () => {
+	refreshing.value = true
+	await loadData()
+	refreshing.value = false
+}
+const loadMore = () => {}
+
+const toggleSelect = (jobId) => {
+	if (!jobId) return
+	const next = new Set(selectedIds.value)
+	if (next.has(jobId)) next.delete(jobId); else next.add(jobId)
+	selectedIds.value = next
+}
+
+const batchRemove = async () => {
+	const ids = [...selectedIds.value]
+	if (!ids.length) { uni.showToast({ title: '请选择要取消收藏的岗位', icon: 'none' }); return }
+	uni.showModal({
+		title: '批量取消收藏',
+		content: '确定取消选中的 ' + ids.length + ' 个收藏吗？',
+		success: async (r) => {
+			if (!r.confirm) return
+			const sid = getStudentId()
+			try {
+				await Promise.all(ids.map(jid => favoriteAPI.removeFavorite(jid, sid)))
+				favorites.value = favorites.value.filter(f => !ids.includes(f.jobId || f.id))
+				selectedIds.value = new Set()
+				editing.value = false
+				uni.showToast({ title: '已取消收藏', icon: 'success' })
+			} catch (e) { uni.showToast({ title: '操作失败，请重试', icon: 'none' }) }
+		}
+	})
+}
 
 const goToDetail = (id) => {
+	if (!id) return
 	uni.navigateTo({ url: '/pages/student/job-detail?id=' + id })
 }
 
 const handleDeliver = async (job) => {
-	const jobId = job.jobId || job.id
-	if (deliveredJobIds.value.has(jobId)) {
-		uni.showToast({ title: '已投递过', icon: 'none' })
-		return
-	}
+	const jid = job.jobId || job.id
+	if (!jid) return
+	if (deliveredJobIds.value.has(jid)) return
 	try {
-		await deliveryAPI.createDelivery({ jobId: jobId, studentId: getStudentId() })
-		deliveredJobIds.value.add(jobId)
+		await deliveryAPI.createDelivery({ jobId: jid, studentId: getStudentId() })
+		deliveredJobIds.value.add(jid)
 		uni.showToast({ title: '投递成功', icon: 'success' })
 	} catch (e) {
-		if (e && e.message && e.message.includes('重复投递')) {
-			deliveredJobIds.value.add(jobId)
-			uni.showToast({ title: '已投递过', icon: 'none' })
-		} else {
-			uni.showToast({ title: '投递失败', icon: 'none' })
-		}
+		if (e?.message?.includes('重复投递')) { deliveredJobIds.value.add(jid); uni.showToast({ title: '已投递过', icon: 'none' }) }
+		else { uni.showToast({ title: '投递失败', icon: 'none' }) }
 	}
-}
-
-const removeFavorite = async (jobId) => {
-	try {
-		const sid = getStudentId()
-		await favoriteAPI.removeFavorite(jobId, sid)
-		favorites.value = favorites.value.filter(f => f.jobId !== jobId)
-		uni.showToast({ title: '已取消收藏', icon: 'none' })
-	} catch (e) {
-		uni.showToast({ title: '操作失败', icon: 'none' })
-	}
-}
-
-const goBack = () => {
-	uni.navigateBack()
 }
 </script>
 
 <style scoped>
+.batch-bar {
+	padding: 12px 16px;
+	background: #FFFFFF;
+	border-bottom: 0.5px solid #F2F3F5;
+}
+.batch-btn {
+	padding: 8px 16px;
+	background: rgba(245, 63, 63, 0.08);
+	color: #F53F3F;
+	border: none;
+	border-radius: 6px;
+	font-size: 13px;
+	font-weight: 500;
+}
+.sort-bar {
+	flex-direction: row;
+	align-items: center;
+	padding: 0 16px;
+	background: #FFFFFF;
+	gap: 20px;
+	border-bottom: 0.5px solid #F2F3F5;
+	height: 44px;
+}
+.sort-tab {
+	font-size: 14px;
+	color: #86909C;
+	font-weight: 500;
+	position: relative;
+	padding-bottom: 4px;
+}
+.sort-tab.active {
+	color: #1D2129;
+	font-weight: 600;
+}
+.sort-tab.active::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 20px;
+	height: 3px;
+	background: #165DFF;
+	border-radius: 2px;
+}
+.edit-text {
+	margin-left: auto;
+	font-size: 14px;
+	color: #165DFF;
+	font-weight: 500;
+}
 .card-list {
-	padding: 16px;
+	padding: 12px 16px;
+	gap: 12px;
 }
 .card-item {
-	background: white;
-	border-radius: 16px;
-	padding: 16px;
-	margin-bottom: 12px;
+	flex-direction: row;
+	background: #FFFFFF;
+	border-radius: 12px;
+	padding: 14px;
+	gap: 12px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.card-header-row {
+.check-box {
+	justify-content: center;
+	align-items: center;
+}
+.card-body {
+	flex: 1;
+	gap: 6px;
+}
+.card-header {
 	flex-direction: row;
 	justify-content: space-between;
-	align-items: flex-start;
-	margin-bottom: 8px;
+	align-items: center;
 }
 .card-title {
-	font-size: 16px;
-	font-weight: 700;
+	font-size: 15px;
+	font-weight: 600;
 	color: #1D2129;
-	display: block;
-	margin-bottom: 4px;
+	flex: 1;
+}
+.card-salary {
+	font-size: 15px;
+	font-weight: 600;
+	color: #165DFF;
 }
 .card-sub {
 	font-size: 13px;
 	color: #86909C;
 }
-.card-salary {
-	font-size: 18px;
-	font-weight: 800;
-	color: #165DFF;
-}
-.card-info {
+.card-meta {
 	flex-direction: row;
-	gap: 12px;
-	font-size: 13px;
-	color: #86909C;
-	margin-bottom: 12px;
+	gap: 8px;
+}
+.meta-text {
+	font-size: 12px;
+	color: #C9CDD4;
 }
 .card-actions {
 	flex-direction: row;
 	gap: 8px;
-	padding-top: 12px;
-	border-top: 1px solid #F2F3F5;
+	margin-top: 4px;
 }
-.btn-sm {
+.action-btn {
 	flex: 1;
-	padding: 10px;
-	border-radius: 10px;
-	font-size: 14px;
-	font-weight: 600;
+	height: 32px;
+	border-radius: 6px;
+	font-size: 13px;
+	font-weight: 500;
 	align-items: center;
 	justify-content: center;
+	border: none;
 }
-.btn-primary { background: #165DFF; color: white; }
-.btn-outline { background: white; border: 1px solid #E2E8F0; color: #4E5969; }
-.empty-state {
-	padding: 60px 20px;
-	align-items: center;
-}
-.empty-text { font-size: 14px; color: #86909C; }
+.btn-primary { background: #165DFF; color: #FFFFFF; }
+.btn-primary.disabled { background: #E5E6EB; color: #A9AEB8; }
+.card-item:active { background: #F7F8FA; }
+.sort-tab:active { opacity: 0.7; }
 </style>

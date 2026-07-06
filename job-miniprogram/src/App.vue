@@ -8,56 +8,51 @@
 				try {
 					const userInfo = JSON.parse(userInfoStr)
 					const role = userInfo.role
-					if (role === 0 || role === '0') {
-						uni.reLaunch({ url: '/pages/student/home' })
-					} else if (role === 1 || role === '1') {
-						uni.reLaunch({ url: '/pages/teacher/home' })
-					} else if (role === 2 || role === '2') {
-						uni.reLaunch({ url: '/pages/hr/home' })
-					} else {
-						uni.reLaunch({ url: '/pages/student/home' })
-					}
+					const homeMap = {0: '/pages/student/home', 1: '/pages/teacher/home', 2: '/pages/hr/home'}
+					uni.reLaunch({ url: homeMap[role] || '/pages/student/home' })
 				} catch(e) {
 					uni.reLaunch({ url: '/pages/student/login' })
 				}
-			} else {
-				uni.reLaunch({ url: '/pages/index/index' })
 			}
+			// 没有 token 时不做跳转，由 pages/index/index 处理
 		}
 	}
 </script>
 
 <style>
-/* 全局样式 - 匹配HTML原型 */
-/* 注意: 微信小程序WXSS不支持 * 通配符 */
+/* 全局基础样式 - 补充规范 */
 page {
-	display: flex;
-	flex-direction: column;
-	margin: 0;
-	padding: 0;
-	background: #F5F7FA;
+	background-color: #F7F8FA;
 	height: 100%;
 	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 	-webkit-tap-highlight-color: transparent;
 }
+
+/* 所有 view 默认纵向 flex，方便布局 */
 view {
 	display: flex;
 	flex-direction: column;
+	box-sizing: border-box;
 }
+
 scroll-view {
-	background: #F5F7FA;
+	background: #F7F8FA;
 }
+
+/* 可滚动容器统一风格 */
 .content-scrollable {
 	flex: 1;
 	overflow-y: auto;
 	overflow-x: hidden;
-	background: #F5F7FA;
+	background: #F7F8FA;
 }
+
+/* 页面根容器，确保占满高度 */
 .page-wrapper {
 	width: 100%;
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	background: #F5F7FA;
+	background: #F7F8FA;
 }
 </style>

@@ -5,19 +5,34 @@ import com.recruit.entity.Delivery;
 import com.recruit.entity.Job;
 import com.recruit.entity.Resume;
 import com.recruit.entity.SysUser;
+import com.recruit.entity.Class;
+import com.recruit.service.ClassService;
 import com.recruit.service.CompanyService;
 import com.recruit.service.DeliveryService;
 import com.recruit.service.JobService;
 import com.recruit.service.ResumeService;
 import com.recruit.service.UserService;
+import com.recruit.dto.DeliveryStatusUpdateRequest;
+import com.recruit.dto.InterviewArrangeRequest;
 import com.recruit.utils.Result;
+import com.recruit.dto.PageResult;
+import com.recruit.annotation.LogOperation;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+
+import javax.validation.Valid;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -25,7 +40,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/deliveries")
-public class DeliveryController {
+public class DeliveryController extends BaseController {
 
     @Autowired
     private DeliveryService deliveryService;
@@ -41,11 +56,44 @@ public class DeliveryController {
 
     @Autowired
     private CompanyService companyService;
+    
+    @Autowired(required = false)
+    private ClassService classService;
 
     @GetMapping
-    public Result<List<DeliveryVO>> getAllDeliveries() {
-        List<Delivery> list = deliveryService.list();
-        return Result.success(enrichDeliveries(list));
+    public Result<PageResult<DeliveryVO>> getAllDeliveries(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        List<Delivery> list;
+        Integer role = getCurrentRole();
+        long total;
+        
+        if (Objects.equals(role, 1)) {
+            Long teacherId = getCurrentUserId();
+            List<Class> classes = classService != null ? classService.selectByTeacherId(teacherId) : new ArrayList<>();
+            List<Long> studentIds = new ArrayList<>();
+            for (Class clazz : classes) {
+                List<Long> ids = classService != null ? classService.getStudentIdsByClassId(clazz.getId()) : new ArrayList<>();
+                studentIds.addAll(ids);
+            }
+            if (studentIds.isEmpty()) {
+                list = new ArrayList<>();
+                total = 0;
+            } else {
+                com.baomidou.mybatisplus.core.metadata.IPage<Delivery> p = deliveryService.lambdaQuery()
+                        .in(Delivery::getStudentId, studentIds)
+                        .orderByDesc(Delivery::getCreateTime)
+                        .page(new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(page, size));
+                list = p.getRecords();
+                total = p.getTotal();
+            }
+        } else {
+            com.baomidou.mybatisplus.core.metadata.IPage<Delivery> p = deliveryService.page(new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(page, size));
+            list = p.getRecords();
+            total = p.getTotal();
+        }
+        List<DeliveryVO> voList = enrichDeliveries(list);
+        return Result.success(PageResult.of(voList, total, page, size));
     }
 
     @GetMapping("/{id}")
@@ -85,6 +133,7 @@ public class DeliveryController {
         return Result.success(enrichDeliveries(list));
     }
 
+    @LogOperation("投递简历")
     @PostMapping("/deliver")
     public Result<String> deliverResume(@RequestParam Long studentId, @RequestBody Map<String, Object> params) {
         Object jobIdObj = params.get("jobId");
@@ -101,34 +150,17 @@ public class DeliveryController {
         return ok ? Result.success("简历投递成功") : Result.error("投递失败");
     }
 
+    @LogOperation("更新投递状态")
     @PutMapping("/{id}/status")
-    public Result<String> updateDeliveryStatus(@PathVariable Long id, @RequestBody Map<String, Object> params) {
-        Object statusObj = params.get("status");
-        if (statusObj == null) return Result.error("缺少status参数");
-        Integer status;
-        try {
-            status = statusObj instanceof Number ? ((Number) statusObj).intValue() : Integer.valueOf(statusObj.toString());
-        } catch (Exception e) {
-            return Result.error("status参数格式错误");
-        }
-        String feedback = params.containsKey("feedback") ? params.get("feedback").toString() : null;
-        boolean ok = deliveryService.updateDeliveryStatus(id, status, feedback);
+    public Result<String> updateDeliveryStatus(@PathVariable Long id, @Valid @RequestBody DeliveryStatusUpdateRequest request) {
+        boolean ok = deliveryService.updateDeliveryStatus(id, request.getStatus(), request.getFeedback());
         return ok ? Result.success("投递状态更新成功") : Result.error("更新失败");
     }
 
+    @LogOperation("安排面试")
     @PutMapping("/{id}/arrange-interview")
-    public Result<String> arrangeInterview(@PathVariable Long id, @RequestBody Map<String, Object> params) {
-        Object timeObj = params.get("interviewTime");
-        Object locObj = params.get("interviewLocation");
-        if (timeObj == null || locObj == null) return Result.error("缺少面试时间或地点参数");
-        LocalDateTime t;
-        try {
-            t = LocalDateTime.parse(timeObj.toString());
-        } catch (Exception e) {
-            return Result.error("面试时间格式错误");
-        }
-        String loc = locObj.toString();
-        boolean ok = deliveryService.arrangeInterview(id, t, loc);
+    public Result<String> arrangeInterview(@PathVariable Long id, @Valid @RequestBody InterviewArrangeRequest request) {
+        boolean ok = deliveryService.arrangeInterview(id, request.getInterviewTime(), request.getInterviewLocation());
         return ok ? Result.success("面试安排成功") : Result.error("面试安排失败");
     }
 
@@ -204,25 +236,83 @@ public class DeliveryController {
                 vo.setStudentName(student.getRealName() != null ? student.getRealName() : student.getUsername());
             }
         }
-        // 查询岗位名称
+        // 查询岗位名称、企业名称
         if (d.getJobId() != null) {
             Job job = jobService.getById(d.getJobId());
             if (job != null) {
                 vo.setJobTitle(job.getTitle());
-                // 查询企业名称
-                if (job.getCompanyId() != null) {
-                    com.recruit.entity.Company company = companyService.getById(job.getCompanyId());
-                    if (company != null) {
-                        vo.setCompanyName(company.getName());
-                    }
+                com.recruit.entity.Company company = companyService.getById(job.getCompanyId());
+                if (company != null) {
+                    vo.setCompanyName(company.getName());
                 }
             }
         }
         return vo;
     }
 
+    /**
+     * 批量组装投递VO（批量查询代替逐条查询，消除 N+1）
+     * 原先每条投递记录独立查学生、岗位、企业，100条=301次查询
+     * 优化后批量查3次，共4次查询
+     */
     private List<DeliveryVO> enrichDeliveries(List<Delivery> list) {
-        return list.stream().map(this::enrichDelivery).collect(Collectors.toList());
+        if (list.isEmpty()) return new ArrayList<>();
+
+        // 1. 批量收集所有学生ID、岗位ID
+        Set<Long> studentIds = new HashSet<>();
+        Set<Long> jobIds = new HashSet<>();
+        for (Delivery d : list) {
+            if (d.getStudentId() != null) studentIds.add(d.getStudentId());
+            if (d.getJobId() != null) jobIds.add(d.getJobId());
+        }
+
+        // 2. 批量查询学生信息
+        Map<Long, SysUser> studentMap = new HashMap<>();
+        if (!studentIds.isEmpty()) {
+            List<SysUser> students = userService.listByIds(new ArrayList<>(studentIds));
+            for (SysUser s : students) {
+                studentMap.put(s.getId(), s);
+            }
+        }
+
+        // 3. 批量查询岗位信息
+        Map<Long, Job> jobMap = new HashMap<>();
+        Map<Long, Long> jobCompanyMap = new HashMap<>(); // jobId -> companyId
+        if (!jobIds.isEmpty()) {
+            List<Job> jobs = jobService.listByIds(new ArrayList<>(jobIds));
+            for (Job j : jobs) {
+                jobMap.put(j.getId(), j);
+                if (j.getCompanyId() != null) jobCompanyMap.put(j.getId(), j.getCompanyId());
+            }
+        }
+
+        // 4. 批量查询企业信息
+        Map<Long, com.recruit.entity.Company> companyMap = new HashMap<>();
+        Set<Long> companyIds = new HashSet<>(jobCompanyMap.values());
+        if (!companyIds.isEmpty()) {
+            List<com.recruit.entity.Company> companies = companyService.listByIds(new ArrayList<>(companyIds));
+            for (com.recruit.entity.Company c : companies) {
+                companyMap.put(c.getId(), c);
+            }
+        }
+
+        // 5. 组装结果
+        return list.stream().map(d -> {
+            DeliveryVO vo = new DeliveryVO(d);
+            SysUser student = studentMap.get(d.getStudentId());
+            if (student != null) {
+                vo.setStudentName(student.getRealName() != null ? student.getRealName() : student.getUsername());
+            }
+            Job job = jobMap.get(d.getJobId());
+            if (job != null) {
+                vo.setJobTitle(job.getTitle());
+                com.recruit.entity.Company company = companyMap.get(job.getCompanyId());
+                if (company != null) {
+                    vo.setCompanyName(company.getName());
+                }
+            }
+            return vo;
+        }).collect(Collectors.toList());
     }
 
     @GetMapping("/statistics/by-job/{jobId}")
@@ -233,6 +323,7 @@ public class DeliveryController {
     /**
      * 批量更新投递状态
      */
+    @Transactional(rollbackFor = Exception.class)
     @PutMapping("/batch-status")
     public Result<String> batchUpdateStatus(@RequestBody Map<String, Object> params) {
         @SuppressWarnings("unchecked")

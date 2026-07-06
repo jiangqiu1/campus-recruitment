@@ -1,49 +1,30 @@
 <template>
 	<view class="page-wrapper">
-		<scroll-view class="content-scrollable" scroll-y>
+		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
 			<!-- 顶部导航 -->
-			<view class="header-simple">
-				<view class="header-top-simple">
-					<view class="location">
-						<text>📍</text>
-						<text>广州</text>
-						<text>▼</text>
-					</view>
-					<view class="header-actions">
-						<view class="header-action-btn" @click="goToCollect">
-							<text>⭐</text>
-						</view>
-						<view class="header-action-btn" @click="goToMessages">
-							<text>🔔</text>
-							<text v-if="unreadCount" class="badge">{{ unreadCount }}</text>
-						</view>
-					</view>
+			<view class="header-section" :style="{ paddingTop: (statusBarHeight + 16) + 'px' }">
+				<view class="header-top">
+					<text class="greeting-text">您好，{{ userName }}</text>
 				</view>
 				<view class="search-box">
-					<text class="search-icon">🔍</text>
+					<uni-icons type="search" size="16" color="#86909C" />
 					<input v-model="keyword" placeholder="搜索岗位、公司、关键词..." @confirm="handleSearch" />
 				</view>
 			</view>
 
-			<!-- 快捷入口（原轮播图位，已移除） -->
-
-			<!-- 快捷入口 -->
+			<!-- 快捷入口（3个，投递记录已移至TabBar） -->
 			<view class="quick-menu">
-				<view class="quick-item" @click="goToDeliveries">
-					<view class="quick-icon blue"><text>📋</text></view>
-					<text>投递记录</text>
+				<view class="quick-item" @click="goToAIMatches">
+					<view class="quick-icon"><uni-icons type="star" size="24" color="#165DFF" /></view>
+					<text>AI智能匹配</text>
 				</view>
-				<view class="quick-item" @click="goToCollect">
-					<view class="quick-icon green"><text>⭐</text></view>
-					<text>我的收藏</text>
+				<view class="quick-item" @click="goToHotJobs">
+					<view class="quick-icon"><uni-icons type="list" size="24" color="#165DFF" /></view>
+					<text>热门岗位</text>
 				</view>
-				<view class="quick-item" @click="goToProfile">
-					<view class="quick-icon orange"><text>👤</text></view>
-					<text>个人中心</text>
-				</view>
-				<view class="quick-item" @click="goToMessages">
-					<view class="quick-icon purple"><text>💬</text></view>
-					<text>消息通知</text>
+				<view class="quick-item" @click="goToResume">
+					<view class="quick-icon"><uni-icons type="compose" size="24" color="#165DFF" /></view>
+					<text>简历管理</text>
 				</view>
 			</view>
 
@@ -54,103 +35,119 @@
 				</view>
 				<view class="stat-row">
 					<view class="stat-box">
-						<text class="stat-label">📮 投递次数</text>
 						<text class="stat-num">{{ stats.deliveries || 0 }}</text>
+						<text class="stat-label">投递次数</text>
 					</view>
-					<view class="stat-box green">
-						<text class="stat-label">👀 被查看</text>
+					<view class="stat-box">
 						<text class="stat-num">{{ stats.viewed || 0 }}</text>
+						<text class="stat-label">被查看</text>
 					</view>
-					<view class="stat-box orange">
-						<text class="stat-label">📞 面试邀请</text>
+					<view class="stat-box">
 						<text class="stat-num">{{ stats.interviews || 0 }}</text>
+						<text class="stat-label">面试邀请</text>
 					</view>
-					<view class="stat-box purple">
-						<text class="stat-label">✅ 录用通知</text>
+					<view class="stat-box">
 						<text class="stat-num">{{ stats.offers || 0 }}</text>
+						<text class="stat-label">录用通知</text>
 					</view>
 				</view>
 			</view>
 
-			<!-- AI推荐岗位 -->
-			<view class="data-section">
-				<view class="section-header">
-					<text class="section-title">🤖 AI 推荐岗位</text>
+				<!-- 列表Tab + 岗位列表 -->
+			<view class="list-section">
+				<view class="list-tabs">
+					<text class="list-tab" :class="{ active: currentListTab === 'recommend' }" @click="switchListTab('recommend')">推荐</text>
+					<text class="list-tab" :class="{ active: currentListTab === 'latest' }" @click="switchListTab('latest')">最新</text>
 					<text class="section-more" @click="loadMoreJobs">更多 ›</text>
 				</view>
-			</view>
-			<view class="card-list">
-				<view v-for="(job, i) in recommendJobs" :key="i" class="card-item" :class="job.colorClass" @click="goToJobDetail(job.id)">
-					<view class="card-header-row">
-						<view>
-							<text class="card-title">{{ job.title }}</text>
-							<text class="card-sub">{{ job.companyName }}</text>
-						</view>
-						<text class="card-salary">{{ job.salaryText }}</text>
-					</view>
-					<view class="card-info">
-						<text>{{ job.location }}</text>
-						<text>{{ job.experience }}</text>
-						<text>{{ job.education }}</text>
-					</view>
-					<view class="card-actions">
-						<button class="btn-sm" :class="deliverBtnDisabled(job) ? 'btn-disabled' : 'btn-primary'" :disabled="deliverBtnDisabled(job)" @click.stop="handleDeliver(job)">{{ deliverBtnText(job) }}</button>
-						<button class="btn-sm btn-outline" @click.stop="goToJobDetail(job.id)">查看详情</button>
-					</view>
-				</view>
-				<view v-if="!recommendJobs.length" class="empty-state">
-					<text>暂无推荐岗位</text>
+				<view class="card-list">
+					<JobCard
+						v-for="job in recommendJobs"
+						:key="job.id"
+						:job="job"
+						:show-match="true"
+						:match-score="job.matchScore"
+						:delivered="deliveredJobIds.has(job.id)"
+						:show-deliver="true"
+						@click="goToJobDetail(job.id)"
+						@deliver="handleDeliver"
+					/>
+					<EmptyState v-if="!recommendJobs.length" icon="inbox" title="暂无推荐岗位" desc="完善简历后系统会为你推荐匹配岗位" btn-text="完善简历" @action="goToProfile" />
 				</view>
 			</view>
 		</scroll-view>
-
-		<!-- 底部导航 -->
+		<!-- 底部安全区 -->
+		<view style="height: calc(50px + env(safe-area-inset-bottom))" />
 		<TabBar current="home" />
 	</view>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { request, jobAPI, deliveryAPI, statisticsAPI, favoriteAPI, mapJobData } from '@/utils/request'
+import { ref, onMounted } from 'vue'
+import { request, jobAPI, deliveryAPI, statisticsAPI, favoriteAPI, mapJobData, matchAPI } from '@/utils/request'
 import TabBar from '@/components/TabBar.vue'
+import JobCard from '@/components/JobCard.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 const keyword = ref('')
 const unreadCount = ref(0)
 const recommendJobs = ref([])
 const stats = ref({})
 const deliveredJobIds = ref(new Set())
-const favoritedJobIds = ref(new Set())
+const refreshing = ref(false)
+const currentListTab = ref('recommend')
+const statusBarHeight = ref(0)
+const userName = ref('学生用户')
 
-const deliverBtnText = (job) => deliveredJobIds.value.has(job.id) ? '已投递' : '立即投递'
-const deliverBtnDisabled = (job) => deliveredJobIds.value.has(job.id)
-
-// 模拟数据（API不通时使用）
 const mockJobs = [
-	{ id: 1, title: '前端开发实习生', salaryRange: '4K-6K', location: '广州', education: '大专及以上', companyId: 1, colorClass: 'green', matchScore: 92 },
-	{ id: 2, title: 'Java开发助理', salaryRange: '5K-7K', location: '深圳', education: '大专及以上', companyId: 1, colorClass: 'orange', matchScore: 88 },
-	{ id: 3, title: 'UI设计实习生', salaryRange: '3K-5K', location: '广州', education: '大专及以上', companyId: 1, colorClass: 'ai', matchScore: 85 },
-	{ id: 4, title: '测试工程师', salaryRange: '4K-6K', location: '珠海', education: '本科', companyId: 1, colorClass: 'red', matchScore: 80 },
-	{ id: 5, title: '运维实习生', salaryRange: '3K-5K', location: '广州', education: '大专', companyId: 1, colorClass: '', matchScore: 78 }
+	{ id: 1, title: '前端开发实习生', salaryRange: '4K-6K', location: '广州', education: '大专及以上', companyName: '广州科技公司', matchScore: 92 },
+	{ id: 2, title: 'Java开发助理', salaryRange: '5K-7K', location: '深圳', education: '大专及以上', companyName: '深圳信息科技', matchScore: 88 },
+	{ id: 3, title: 'UI设计实习生', salaryRange: '3K-5K', location: '广州', education: '大专及以上', companyName: '数字创意公司', matchScore: 85 }
 ].map(mapJobData)
-
 const mockStats = { deliveries: 12, viewed: 8, interviews: 3, offers: 1 }
 
+const switchListTab = (tab) => {
+	if (currentListTab.value === tab) return
+	currentListTab.value = tab
+	loadData()
+}
+
 onMounted(async () => {
+	try {
+		const raw = uni.getStorageSync('userInfo')
+		if (raw) {
+			const ui = JSON.parse(raw)
+			userName.value = ui.realName || '学生用户'
+		}
+	} catch (e) { console.error('获取用户信息失败', e) }
+	try {
+		const winInfo = uni.getWindowInfo()
+		statusBarHeight.value = winInfo.statusBarHeight || 0
+	} catch (e) {
+		try {
+			const sysInfo = uni.getSystemInfoSync()
+			statusBarHeight.value = sysInfo.statusBarHeight || 0
+		} catch (e2) { console.error('获取状态栏高度失败', e2) }
+	}
 	await loadData()
 	await loadUserState()
 })
 
+const onRefresh = async () => {
+	refreshing.value = true
+	await loadData()
+	refreshing.value = false
+}
+
 const loadData = async () => {
 	try {
 		const [jobsRes, statsRes] = await Promise.all([
-			jobAPI.getRecommendJobs(),
+			jobAPI.getRecommendJobs({ sort: currentListTab.value }),
 			statisticsAPI.getStudentOverview()
 		])
-		// 后端岗位数据字段映射 + 补充公司名
 		const rawJobs = jobsRes.data || []
 		recommendJobs.value = await Promise.all(rawJobs.map(async (j) => {
 			const mapped = mapJobData(j)
-			// 补充公司名
 			if (j.companyId && !mapped.companyName) {
 				try {
 					const cRes = await request({ url: '/companies/' + j.companyId })
@@ -162,21 +159,35 @@ const loadData = async () => {
 		}))
 		const d = statsRes.data || {}
 		stats.value = { deliveries: d.myDeliveries || 0, viewed: d.viewedDeliveries || 0, interviews: d.interviewCount || 0, offers: d.offersCount || 0 }
+
+		// 加载匹配分数并合并到岗位数据中
+		try {
+			const studentId = getStudentId()
+			if (studentId) {
+				const matchRes = await matchAPI.getByStudent(studentId)
+				const matchMap = {}
+				;(matchRes.data || []).forEach(m => { matchMap[m.jobId] = m.matchScore })
+				recommendJobs.value = recommendJobs.value.map(j => {
+					const dbScore = matchMap[j.id]
+					if (dbScore) {
+						const score = typeof dbScore === 'number' && dbScore > 1
+							? Math.round(dbScore)      // 已经是百分�?如 88)
+							: Math.round(dbScore * 100)  // 小�?如 0.88)
+						return { ...j, matchScore: score }
+					}
+					// 退化：从 mock 数据取默认匹配度
+					const mock = mockJobs.find(m => m.id === j.id)
+					return { ...j, matchScore: mock ? mock.matchScore : 0 }
+				})
+			}
+		} catch (me) {
+			console.log('加载匹配度失败', me)
+		}
 	} catch (e) {
 		console.log('API接口未就绪，使用模拟数据')
-		recommendJobs.value = mockJobs
+		recommendJobs.value = currentListTab.value === 'latest' ? [...mockJobs].reverse() : mockJobs
 		stats.value = mockStats
 	}
-}
-
-const handleSearch = () => {
-	if (keyword.value.trim()) {
-		uni.navigateTo({ url: '/pages/student/job-detail?search=' + encodeURIComponent(keyword.value) })
-	}
-}
-
-const goToJobDetail = (id) => {
-	uni.navigateTo({ url: '/pages/student/job-detail?id=' + id })
 }
 
 const getStudentId = () => {
@@ -184,29 +195,39 @@ const getStudentId = () => {
 		const raw = uni.getStorageSync('userInfo')
 		if (!raw) return null
 		const obj = JSON.parse(raw)
-		const sid = obj.id || obj.userId
-		return sid ? Number(sid) : null
+		return obj.id || obj.userId ? Number(obj.id || obj.userId) : null
 	} catch (e) { return null }
 }
 
 const loadUserState = async () => {
 	try {
-		const sid = getStudentId()
-		const [dRes, fRes] = await Promise.all([
-			deliveryAPI.getDeliveriesByStudentId({ studentId: sid }),
-			favoriteAPI.getFavorites({ studentId: sid })
+		const raw = uni.getStorageSync('userInfo')
+		if (!raw) return
+		const obj = JSON.parse(raw)
+		const sid = obj.id || obj.userId
+		if (!sid) return
+		const [dRes] = await Promise.all([
+			deliveryAPI.getDeliveriesByStudentId({ studentId: Number(sid) })
 		])
 		deliveredJobIds.value = new Set((dRes.data || []).map(d => d.jobId))
-		favoritedJobIds.value = new Set((fRes.data || []).map(d => d.jobId))
 	} catch (e) {
 		console.log('加载用户状态失败', e)
+	}
+}
+
+const handleSearch = () => {
+	if (keyword.value.trim()) {
+		uni.navigateTo({ url: '/pages/student/search-result?q=' + encodeURIComponent(keyword.value) })
 	}
 }
 
 const handleDeliver = async (job) => {
 	if (deliveredJobIds.value.has(job.id)) return
 	try {
-		const sid = getStudentId()
+		const raw = uni.getStorageSync('userInfo')
+		if (!raw) return
+		const obj = JSON.parse(raw)
+		const sid = obj.id || obj.userId
 		await deliveryAPI.createDelivery({ jobId: job.id, studentId: sid })
 		deliveredJobIds.value.add(job.id)
 		uni.showToast({ title: '投递成功', icon: 'success' })
@@ -220,170 +241,102 @@ const handleDeliver = async (job) => {
 	}
 }
 
-const loadMoreJobs = () => {
-	uni.showToast({ title: '加载更多...', icon: 'none' })
-}
-
-const goToDeliveries = () => {
-	uni.navigateTo({ url: '/pages/student/deliveries' })
-}
-
-const goToCollect = () => {
-	uni.navigateTo({ url: '/pages/student/collect' })
-}
-
-const goToProfile = () => {
-	uni.navigateTo({ url: '/pages/student/profile' })
-}
-
-const goToMessages = () => {
-	uni.navigateTo({ url: '/pages/student/messages' })
-}
+const goToJobDetail = (id) => uni.navigateTo({ url: '/pages/student/job-detail?id=' + id })
+const goToCollect = () => uni.navigateTo({ url: '/pages/student/collect' })
+const goToProfile = () => uni.navigateTo({ url: '/pages/student/profile' })
+const goToMessages = () => uni.navigateTo({ url: '/pages/student/messages' })
+const goToAIMatches = () => uni.navigateTo({ url: '/pages/student/ai-matches' })
+const goToHotJobs = () => uni.navigateTo({ url: '/pages/student/hot-jobs' })
+const goToResume = () => uni.navigateTo({ url: '/pages/student/resume-edit' })
+const goToCityPicker = () => uni.showToast({ title: '选择城市', icon: 'none' })
+const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none' })
 </script>
 
 <style scoped>
 /* Header */
-.header-simple {
+.header-section {
 	background: linear-gradient(135deg, #165DFF 0%, #2563EB 100%);
 	color: white;
-	padding: 16px;
-	position: relative;
-	overflow: hidden;
+	padding: 16px 16px 24px;
 	flex-shrink: 0;
 }
-.header-simple::before {
-	content: '';
-	position: absolute;
-	top: -50%;
-	right: -20%;
-	width: 200px;
-	height: 200px;
-	background: rgba(255,255,255,0.08);
-	border-radius: 50%;
-}
-.header-top-simple {
+.header-top {
 	flex-direction: row;
-	justify-content: space-between;
+	justify-content: flex-start;
 	align-items: center;
-	position: relative;
-	z-index: 1;
+	margin-bottom: 16px;
 }
-.location {
-	flex-direction: row;
-	align-items: center;
-	gap: 6px;
-	font-size: 14px;
-	opacity: 0.9;
+.greeting-text {
+	font-size: 20px;
+	font-weight: 700;
+	color: #FFFFFF;
 }
-.header-actions {
-	flex-direction: row;
-	gap: 12px;
-}
-.header-action-btn {
-	width: 36px;
-	height: 36px;
-	border-radius: 50%;
-	background: rgba(255,255,255,0.15);
-	align-items: center;
-	justify-content: center;
-	font-size: 18px;
-	position: relative;
-}
-.badge {
-	position: absolute;
-	top: -2px;
-	right: -2px;
-	width: 18px;
-	height: 18px;
-	background: #EF4444;
-	border-radius: 50%;
-	font-size: 10px;
-	align-items: center;
-	justify-content: center;
-	border: 2px solid #165DFF;
-	color: white;
-	font-weight: 600;
-}
+
+/* 搜索框 */
 .search-box {
-	position: relative;
-	margin-top: 12px;
-	z-index: 1;
 	flex-direction: row;
 	align-items: center;
+	gap: 8px;
+	background: #FFFFFF;
+	border-radius: 24px;
+	padding: 0 16px;
+	height: 40px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 .search-box input {
 	flex: 1;
-	height: 44px;
-	border-radius: 12px;
+	height: 100%;
 	border: none;
-	padding: 0 16px 0 42px;
+	padding: 0;
 	font-size: 14px;
-	background: rgba(255,255,255,0.95);
+	background: transparent;
 	color: #1D2129;
 	outline: none;
 }
-.search-icon {
-	position: absolute;
-	left: 14px;
-	z-index: 1;
-	font-size: 16px;
-}
-
-/* Quick Menu */
+/* 快捷入口 */
 .quick-menu {
 	flex-direction: row;
 	justify-content: space-around;
-	padding: 16px 16px;
+	padding: 20px 16px;
 	background: white;
-	margin: 12px 0 0;
+	margin: -12px 16px 0;
+	border-radius: 12px;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	position: relative;
+	z-index: 10;
 }
 .quick-item {
 	align-items: center;
 	gap: 8px;
 }
 .quick-icon {
-	width: 52px;
-	height: 52px;
-	border-radius: 16px;
+	width: 48px;
+	height: 48px;
+	border-radius: 12px;
+	background: rgba(22,93,255,0.08);
 	align-items: center;
 	justify-content: center;
-	font-size: 24px;
-	box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
-.quick-icon.blue { background: linear-gradient(135deg, #165DFF, #60A5FA); }
-.quick-icon.green { background: linear-gradient(135deg, #10B981, #34D399); }
-.quick-icon.orange { background: linear-gradient(135deg, #F59E0B, #FBBF24); }
-.quick-icon.purple { background: linear-gradient(135deg, #8B5CF6, #A78BFA); }
-.quick-item text:last-child {
+.quick-item text {
 	font-size: 12px;
 	color: #4E5969;
 	font-weight: 500;
 }
-
+.quick-item:active {
+	transform: scale(0.95);
+}
 /* Data Section */
 .data-section {
 	padding: 0 16px;
-	margin-top: 12px;
-	margin-bottom: 12px;
+	margin-top: 20px;
 }
 .section-header {
-	flex-direction: row;
-	justify-content: space-between;
-	align-items: center;
 	margin-bottom: 12px;
 }
 .section-title {
-	font-size: 17px;
-	font-weight: 700;
+	font-size: 16px;
+	font-weight: 600;
 	color: #1D2129;
-	flex-direction: row;
-	align-items: center;
-	gap: 8px;
-}
-.section-more {
-	font-size: 13px;
-	color: #165DFF;
-	font-weight: 500;
 }
 .stat-row {
 	flex-direction: row;
@@ -394,131 +347,60 @@ const goToMessages = () => {
 	flex: 1;
 	min-width: calc(50% - 6px);
 	background: white;
-	border-radius: 16px;
-	padding: 20px;
-	position: relative;
-	overflow: hidden;
+	border-radius: 12px;
+	padding: 16px;
+	align-items: flex-start;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-.stat-box::before {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 3px;
-	background: linear-gradient(90deg, #165DFF, transparent);
-}
-.stat-box.green::before { background: linear-gradient(90deg, #10B981, transparent); }
-.stat-box.orange::before { background: linear-gradient(90deg, #F59E0B, transparent); }
-.stat-box.purple::before { background: linear-gradient(90deg, #8B5CF6, transparent); }
-.stat-label {
-	font-size: 13px;
-	color: #86909C;
-	margin-bottom: 8px;
-	flex-direction: row;
-	align-items: center;
-	gap: 6px;
 }
 .stat-num {
-	font-size: 28px;
-	font-weight: 800;
-	color: #1D2129;
-}
-
-/* Card List */
-.card-list {
-	padding: 0 16px;
-	margin-bottom: 12px;
-}
-.card-item {
-	background: white;
-	border-radius: 16px;
-	padding: 16px;
-	margin-bottom: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-	position: relative;
-	overflow: hidden;
-}
-.card-item::before {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 4px;
-	height: 100%;
-	background: #165DFF;
-}
-.card-item.green::before { background: #10B981; }
-.card-item.orange::before { background: #F59E0B; }
-.card-item.red::before { background: #EF4444; }
-.card-item.ai::before { background: #0EA5E9; }
-.card-header-row {
-	flex-direction: row;
-	justify-content: space-between;
-	align-items: flex-start;
-	margin-bottom: 12px;
-}
-.card-title {
-	font-size: 16px;
+	font-size: 22px;
 	font-weight: 700;
 	color: #1D2129;
-	display: block;
 	margin-bottom: 4px;
 }
-.card-sub {
-	font-size: 13px;
+.stat-label {
+	font-size: 12px;
 	color: #86909C;
-	display: block;
 }
-.card-salary {
-	font-size: 18px;
-	font-weight: 800;
-	color: #165DFF;
+/* 列表区 */
+.list-section {
+	padding: 0 16px;
+	margin-top: 20px;
 }
-.card-info {
+.list-tabs {
 	flex-direction: row;
-	gap: 12px;
-	font-size: 13px;
-	color: #86909C;
+	align-items: center;
 	margin-bottom: 12px;
+	gap: 20px;
 }
-.card-actions {
-	flex-direction: row;
-	gap: 8px;
-	padding-top: 12px;
-	border-top: 1px solid #F2F3F5;
-}
-.btn-sm {
-	flex: 1;
-	padding: 10px;
-	border-radius: 10px;
-	border: none;
-	font-size: 14px;
-	font-weight: 600;
-	text-align: center;
-	align-items: center;
-	justify-content: center;
-}
-.btn-primary {
-	background: #165DFF;
-	color: white;
-}
-.btn-outline {
-	background: white;
-	border: 1px solid #E2E8F0;
-	color: #4E5969;
-}
-.btn-disabled {
-	background: #E5E6EB;
-	color: #A9AEB8;
-	border: none;
-}
-.empty-state {
-	padding: 40px;
-	align-items: center;
-	justify-content: center;
+.list-tab {
+	font-size: 15px;
 	color: #86909C;
-	font-size: 14px;
+	font-weight: 500;
+	padding-bottom: 4px;
+	position: relative;
+}
+.list-tab.active {
+	color: #1D2129;
+	font-weight: 600;
+}
+.list-tab.active::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 20px;
+	height: 3px;
+	background: #165DFF;
+	border-radius: 2px;
+}
+.section-more {
+	margin-left: auto;
+	font-size: 13px;
+	color: #165DFF;
+	font-weight: 500;
+}
+.card-list {
+	margin-bottom: 12px;
 }
 </style>
