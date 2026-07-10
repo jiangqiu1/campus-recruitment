@@ -16,18 +16,33 @@ import EnterpriseAudit from '../views/pc/admin/EnterpriseAudit.vue'
 import OperationLog from '../views/pc/admin/OperationLog.vue'
 import DataExport from '../views/pc/admin/DataExport.vue'
 import SystemSettings from '../views/pc/admin/SystemSettings.vue'
+import JobOversight from '../views/pc/admin/JobOversight.vue'
+import AIStats from '../views/pc/admin/AIStats.vue'
+
+// 共享页面（所有角色通用）
+import Profile from '../views/pc/Profile.vue'
+import Password from '../views/pc/Password.vue'
 
 // 教师端页面（PC 后台）
 import TeacherDashboard from '../views/pc/teacher/Dashboard.vue'
 import ClassManagement from '../views/pc/teacher/ClassManagement.vue'
 import JobPosting from '../views/pc/teacher/JobPosting.vue'
 import DeliveryBoard from '../views/pc/teacher/DeliveryBoard.vue'
+import ResumeManage from '../views/pc/teacher/ResumeManage.vue'
+import AIMatch from '../views/pc/teacher/AIMatch.vue'
+import AIParse from '../views/pc/teacher/AIParse.vue'
+import CompanyDetail from '../views/pc/teacher/CompanyDetail.vue'
+import Approvals from '../views/pc/teacher/Approvals.vue'
 
 // HR端页面（PC 后台）
 import HRBatchResume from '../views/pc/hr/BatchResume.vue'
 import HRDataStats from '../views/pc/hr/DataStats.vue'
 import HRJobAnalysis from '../views/pc/hr/JobAnalysis.vue'
 import HRAccountManagement from '../views/pc/hr/AccountManagement.vue'
+import HRJobManage from '../views/pc/hr/JobManage.vue'
+import HRCandidateManage from '../views/pc/hr/CandidateManage.vue'
+import HRInterviewManage from '../views/pc/hr/InterviewManage.vue'
+import HRCompanyProfile from '../views/pc/hr/CompanyProfile.vue'
 
 const routes = [
   // 登录页
@@ -90,6 +105,36 @@ const routes = [
         name: 'SystemSettings',
         component: SystemSettings,
         meta: { title: '系统设置', role: 'admin' }
+      },
+      {
+        path: 'jobs',
+        name: 'JobOversight',
+        component: JobOversight,
+        meta: { title: '岗位监管', role: 'admin' }
+      },
+      {
+        path: 'ai-stats',
+        name: 'AIStats',
+        component: AIStats,
+        meta: { title: 'AI使用统计', role: 'admin' }
+      },
+      {
+        path: 'profile',
+        name: 'AdminProfile',
+        component: Profile,
+        meta: { title: '个人信息', role: 'admin' }
+      },
+      {
+        path: 'password',
+        name: 'AdminPassword',
+        component: Password,
+        meta: { title: '修改密码', role: 'admin' }
+      },
+      {
+        path: 'messages',
+        name: 'AdminMessages',
+        component: () => import('@/views/pc/admin/MessageList.vue'),
+        meta: { title: '消息通知', role: 'admin' }
       }
     ]
   },
@@ -123,6 +168,54 @@ const routes = [
         name: 'DeliveryBoard',
         component: DeliveryBoard,
         meta: { title: '投递看板', role: 'teacher' }
+      },
+      {
+        path: 'resumes',
+        name: 'ResumeManage',
+        component: ResumeManage,
+        meta: { title: '简历管理', role: 'teacher' }
+      },
+      {
+        path: 'ai-match',
+        name: 'AIMatch',
+        component: AIMatch,
+        meta: { title: 'AI人岗匹配', role: 'teacher' }
+      },
+      {
+        path: 'ai-parse',
+        name: 'AIParse',
+        component: AIParse,
+        meta: { title: 'AI简历分析', role: 'teacher' }
+      },
+      {
+        path: 'companies',
+        name: 'TeacherCompanyDetail',
+        component: CompanyDetail,
+        meta: { title: '企业详情', role: 'teacher' }
+      },
+      {
+        path: 'approvals',
+        name: 'Approvals',
+        component: Approvals,
+        meta: { title: '审批管理', role: 'teacher' }
+      },
+      {
+        path: 'profile',
+        name: 'TeacherProfile',
+        component: Profile,
+        meta: { title: '个人信息', role: 'teacher' }
+      },
+      {
+        path: 'password',
+        name: 'TeacherPassword',
+        component: Password,
+        meta: { title: '修改密码', role: 'teacher' }
+      },
+      {
+        path: 'messages',
+        name: 'TeacherMessages',
+        component: () => import('@/views/pc/admin/MessageList.vue'),
+        meta: { title: '消息通知', role: 'teacher' }
       }
     ]
   },
@@ -156,6 +249,48 @@ const routes = [
         name: 'HRAccountManagement',
         component: HRAccountManagement,
         meta: { title: '账号管理', role: 'hr' }
+      },
+      {
+        path: 'jobs',
+        name: 'HRJobManage',
+        component: HRJobManage,
+        meta: { title: '岗位管理', role: 'hr' }
+      },
+      {
+        path: 'candidates',
+        name: 'HRCandidateManage',
+        component: HRCandidateManage,
+        meta: { title: '候选人管理', role: 'hr' }
+      },
+      {
+        path: 'interviews',
+        name: 'HRInterviewManage',
+        component: HRInterviewManage,
+        meta: { title: '面试管理', role: 'hr' }
+      },
+      {
+        path: 'company',
+        name: 'HRCompanyProfile',
+        component: HRCompanyProfile,
+        meta: { title: '企业信息', role: 'hr' }
+      },
+      {
+        path: 'profile',
+        name: 'HRProfile',
+        component: Profile,
+        meta: { title: '个人信息', role: 'hr' }
+      },
+      {
+        path: 'password',
+        name: 'HRPassword',
+        component: Password,
+        meta: { title: '修改密码', role: 'hr' }
+      },
+      {
+        path: 'messages',
+        name: 'HRMessages',
+        component: () => import('@/views/pc/admin/MessageList.vue'),
+        meta: { title: '消息通知', role: 'hr' }
       }
     ]
   },

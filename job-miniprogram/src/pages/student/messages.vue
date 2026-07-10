@@ -2,6 +2,8 @@
 	<view class="page-wrapper">
 		<NavBar title="消息中心" :showBack="false" />
 		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
+			<LoadingState type="skeleton" :rows="4" v-if="loading" />
+			<view v-if="!loading">
 			<view class="msg-tabs">
 				<text v-for="cat in categories" :key="cat.value" class="msg-tab" :class="{ active: currentCat === cat.value }" @click="currentCat = cat.value">{{ cat.label }}</text>
 			</view>
@@ -21,12 +23,15 @@
 				</view>
 				<EmptyState v-if="!filteredList.length" icon="chat" title="暂无消息" desc="有新的投递反馈或面试通知会出现在这里" />
 			</view>
+			</view>
+			<view style="height: calc(60px + env(safe-area-inset-bottom))" />
 		</scroll-view>
 		<TabBar current="messages" />
 	</view>
 </template>
 
 <script setup>
+import LoadingState from '@/components/LoadingState.vue'
 import { ref, computed } from 'vue'
 import { messageAPI } from '@/utils/request'
 import TabBar from '@/components/TabBar.vue'
@@ -67,7 +72,7 @@ const TYPE_MAP = { 0: 'system', 1: 'company', 2: 'ai' }
 loadData()
 async function loadData() {
 	const sid = getStudentId()
-	if (!sid) return
+	if (!sid) { loading.value = false; return }
 	try {
 		const res = await messageAPI.getMessages({ studentId: sid })
 		messages.value = (res.data || []).map(m => ({
@@ -76,6 +81,7 @@ async function loadData() {
 			time: m.createTime ? m.createTime.replace('T', ' ').substring(0, 16) : ''
 		}))
 	} catch (e) { console.log('加载消息失败', e) }
+	finally { loading.value = false }
 }
 
 const refreshing = ref(false)

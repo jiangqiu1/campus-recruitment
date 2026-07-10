@@ -142,8 +142,18 @@
 					<text class="modal-close" @click="showInterviewPopup = false">✕</text>
 				</view>
 				<view class="modal-body">
-					<text class="form-label">面试时间</text>
-					<input class="form-input" v-model="interviewForm.time" type="text" placeholder="例：2026-07-04 14:00" />
+					<text class="form-label">面试日期</text>
+					<picker mode="date" :value="interviewDate" @change="onInterviewDateChange" fields="day">
+						<view class="picker-input" :class="{ 'picker-placeholder': !interviewDate }">
+							{{ interviewDate || '点击选择日期' }}
+						</view>
+					</picker>
+					<text class="form-label" style="margin-top:12px;">面试时间</text>
+					<picker mode="time" :value="interviewTime" @change="onInterviewTimeChange">
+						<view class="picker-input" :class="{ 'picker-placeholder': !interviewTime }">
+							{{ interviewTime || '点击选择时间' }}
+						</view>
+					</picker>
 					<text class="form-label" style="margin-top:12px;">面试地点</text>
 					<input class="form-input" v-model="interviewForm.location" type="text" placeholder="线上/公司地址" />
 					<text class="form-label" style="margin-top:12px;">备注（选填）</text>
@@ -169,11 +179,16 @@ const scoreComment = ref('')
 const scoreDims = ref([])
 const scoreExpanded = ref(false)
 const showInterviewPopup = ref(false)
-const interviewForm = ref({ time: '', location: '', note: '' })
+const interviewDate = ref('')
+const interviewTime = ref('')
+const interviewForm = ref({ location: '', note: '' })
 
 const DELIVERY_STATUS = ['pending', 'viewed', 'interview', 'accepted', 'rejected']
 const DELIVERY_STATUS_TEXT = ['待查看', '已查看', '面试中', '已录用', '未通过']
 const STATUS_TO_INT = { pending: 0, viewed: 1, interview: 2, accepted: 3, rejected: 4 }
+
+const onInterviewDateChange = (e) => { interviewDate.value = e.detail.value }
+const onInterviewTimeChange = (e) => { interviewTime.value = e.detail.value }
 
 const avatarChar = computed(() => (candidate.value.studentName || '?').charAt(0))
 
@@ -325,16 +340,27 @@ const handleReject = () => {
 }
 
 const submitInterview = async () => {
-	if (!interviewForm.value.time || !interviewForm.value.location) {
-		uni.showToast({ title: '请填写面试时间和地点', icon: 'none' }); return
+	const dateStr = interviewDate.value
+	const timeStr = interviewTime.value
+	if (!dateStr || !timeStr) {
+		uni.showToast({ title: '请选择面试日期和时间', icon: 'none' }); return
+	}
+	if (!interviewForm.value.location || !interviewForm.value.location.trim()) {
+		uni.showToast({ title: '请填写面试地点', icon: 'none' }); return
 	}
 	try {
-		await hrAPI.updateDeliveryStatus(candidate.value.id, { status: 2 })
+		const dateTime = dateStr + 'T' + timeStr + ':00'
+		await hrAPI.arrangeInterview(candidate.value.id, {
+			interviewTime: dateTime,
+			interviewLocation: interviewForm.value.location.trim()
+		})
 		candidate.value.status = 'interview'
 		candidate.value.statusText = '面试中'
 		uni.showToast({ title: '面试已安排', icon: 'success' })
 		showInterviewPopup.value = false
-		interviewForm.value = { time: '', location: '', note: '' }
+		interviewDate.value = ''
+		interviewTime.value = ''
+		interviewForm.value = { location: '', note: '' }
 	} catch (e) { uni.showToast({ title: '操作失败', icon: 'none' }) }
 }
 
@@ -491,6 +517,14 @@ const goBack = () => uni.navigateBack()
 .modal-close { font-size: 20px; color: #86909C; padding: 4px; }
 .modal-body { padding: 16px 20px 20px; }
 .form-label { font-size: 13px; color: #4E5969; font-weight: 500; margin-bottom: 6px; display: block; }
+.picker-input {
+	width: 100%; height: 44px; border: 1px solid #E5E6EB;
+	border-radius: 8px; padding: 0 12px; font-size: 14px;
+	color: #1D2129; background: #F7F8FA; box-sizing: border-box;
+	align-items: center; justify-content: center;
+	line-height: 44px;
+}
+.picker-placeholder { color: #C9CDD4; }
 .form-input {
 	width: 100%; height: 44px; border: 1px solid #E5E6EB;
 	border-radius: 8px; padding: 0 12px; font-size: 14px;

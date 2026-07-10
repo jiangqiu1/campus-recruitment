@@ -4,9 +4,10 @@ import com.recruit.entity.Company;
 import com.recruit.entity.SysUser;
 import com.recruit.service.CompanyService;
 import com.recruit.service.UserService;
+import com.recruit.utils.AESUtil;
 import com.recruit.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,7 +25,11 @@ public class CompanyAccountController {
     @Autowired
     private CompanyService companyService;
 
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private AESUtil aesUtil;
 
     /**
      * 获取企业下所有子账号（HR角色）
@@ -42,6 +47,14 @@ public class CompanyAccountController {
         // 脱敏处理
         for (SysUser user : accounts) {
             user.setPassword(null);
+            // AES解密手机号
+            if (user.getPhone() != null && !user.getPhone().isEmpty()) {
+                try {
+                    user.setPhone(aesUtil.decrypt(user.getPhone()));
+                } catch (Exception e) {
+                    user.setPhone("[加密数据]");
+                }
+            }
         }
         return Result.success(accounts);
     }

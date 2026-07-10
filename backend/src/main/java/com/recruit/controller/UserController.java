@@ -6,7 +6,7 @@ import com.recruit.utils.AESUtil;
 import com.recruit.utils.Result;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,8 +25,9 @@ public class UserController {
     
     @Autowired
     private AESUtil aesUtil;
-    
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     
     /**
      * 获取所有用户列表
@@ -149,6 +150,11 @@ public class UserController {
             user.setPhone(aesUtil.encrypt(user.getPhone()));
         }
         
+        // 关键修复：编辑时密码为空串则不更新，避免覆盖数据库中的加密密码
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            user.setPassword(null);
+        }
+        
         user.setId(id);
         userService.updateById(user);
         
@@ -163,15 +169,10 @@ public class UserController {
      */
     @DeleteMapping("/{id}")
     public Result<String> deleteUser(@PathVariable Long id) {
-        SysUser user = userService.getById(id);
-        if (user == null) {
+        boolean ok = userService.removeById(id);
+        if (!ok) {
             return Result.error(404, "用户不存在");
         }
-        
-        // 软删除（设置deleted=1）
-        user.setDeleted(1);
-        userService.updateById(user);
-        
         return Result.success("用户删除成功");
     }
     
@@ -184,19 +185,17 @@ public class UserController {
      */
     @PutMapping("/{id}/status")
     public Result<String> updateUserStatus(@PathVariable Long id, @RequestBody Map<String, Integer> params) {
-        SysUser user = userService.getById(id);
-        if (user == null) {
-            return Result.error(404, "用户不存在");
-        }
-        
         Integer status = params.get("status");
         if (status == null || (status != 0 && status != 1)) {
             return Result.error("status参数错误（应为0或1）");
         }
-        
-        user.setStatus(status);
-        userService.updateById(user);
-        
+        boolean ok = userService.lambdaUpdate()
+                .eq(SysUser::getId, id)
+                .set(SysUser::getStatus, status)
+                .update();
+        if (!ok) {
+            return Result.error(404, "用户不存在");
+        }
         return Result.success(status == 0 ? "用户已禁用" : "用户已启用");
     }
     

@@ -1,10 +1,10 @@
 ﻿<template>
-  <div class="delivery-board">
+  <div class="delivery-board fade-in">
+    <div class="page-header">
+      <h2>投递追踪看板</h2>
+      <p>查看投递统计 · 追踪学生进展</p>
+    </div>
     <div class="card">
-      <div class="card-header">
-        <h2>投递追踪看板</h2>
-      </div>
-
       <template v-if="deliveryStats.length > 0">
         <table class="data-table">
           <thead>
@@ -40,12 +40,13 @@
     </div>
 
     <!-- 投递明细对话框 -->
-    <el-dialog v-model="detailDialogVisible" :title="selectedJobTitle + ' - 投递明细'" width="800px">
+    <el-dialog v-model="detailDialogVisible" :title="selectedJobTitle + ' - 投递明细'" width="800px"
+      append-to-body modal-class="delivery-overlay">
       <el-table :data="deliveryDetailList" border stripe style="width:100%;" v-if="deliveryDetailList.length > 0">
         <el-table-column label="学生姓名" width="120">
           <template #default="scope">{{ scope.row.studentName || '-' }}</template>
         </el-table-column>
-        <el-table-column label="岗位" min-width="150">
+        <el-table-column label="岗位" min-width="150" show-overflow-tooltip>
           <template #default="scope">{{ scope.row.jobTitle || '-' }}</template>
         </el-table-column>
         <el-table-column label="状态" width="100">
@@ -161,4 +162,16 @@ const viewStudentResume = async (delivery) => {
 .status-3 { background: #D1FAE5; color: #059669; }
 .status-4 { background: #FEE2E2; color: #EF4444; }
 .empty-state { text-align: center; padding: 60px 20px; }
+</style>
+
+<style>
+.delivery-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  z-index: 9999 !important;
+}
 </style>

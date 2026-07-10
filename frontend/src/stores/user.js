@@ -16,11 +16,16 @@ export const useUserStore = defineStore('user', () => {
   const companyId = computed(() => userInfo.value?.companyId || null)
   const username = computed(() => userInfo.value?.username || '')
   const realName = computed(() => userInfo.value?.realName || '')
-  const userRole = computed(() => userInfo.value?.role || '')
-  const isAdmin = computed(() => userRole.value === 'admin')
-  const isTeacher = computed(() => userRole.value === 'teacher')
-  const isHR = computed(() => userRole.value === 'hr')
-  const isStudent = computed(() => userRole.value === 'student')
+  // 后端 role: 0=学生, 1=教师, 2=HR, 3=管理员
+  const rawRole = computed(() => userInfo.value?.role)
+  const userRole = computed(() => {
+    const roleMap = { 0: 'student', 1: 'teacher', 2: 'hr', 3: 'admin' }
+    return roleMap[rawRole.value] || ''
+  })
+  const isAdmin = computed(() => rawRole.value === 3)
+  const isTeacher = computed(() => rawRole.value === 1)
+  const isHR = computed(() => rawRole.value === 2)
+  const isStudent = computed(() => rawRole.value === 0)
 
   // ==================== 方法 ====================
 
@@ -68,17 +73,19 @@ export const useUserStore = defineStore('user', () => {
    * 用户登出
    */
   async function logout() {
+    // 标记退出状态，防止响应拦截器重复弹窗和跳转
+    window.__isLoggingOut = true
     try {
       if (token.value) {
         await authAPI.logout()
       }
     } catch (error) {
-      console.error('登出接口调用失败:', error)
+      // 忽略退出时的接口错误
     } finally {
       clearToken()
       clearUserInfo()
       ElMessage.success('已登出')
-      window.location.href = '/login'
+      setTimeout(() => { window.location.href = '/login' }, 100)
     }
   }
 

@@ -54,18 +54,22 @@ public class AiService {
     }
 
     /**
-     * 人岗匹配：计算某学生与某岗位的匹配度
+     * 人岗匹配：计算某学生与某岗位的匹配度（含子维度）
      */
     public Map<String, Object> matchJob(String jobTitle, String jobDescription, String jobRequirements,
                                           String studentName, String resumeText) {
-        String prompt = "你是一个招聘匹配专家。请评估以下学生与岗位的匹配程度。\n\n"
+        String prompt = "你是一个招聘匹配专家。请从多个维度评估以下学生与岗位的匹配程度。\n\n"
                 + "## 岗位名称\n" + jobTitle + "\n\n"
                 + "## 岗位描述\n" + jobDescription + "\n\n"
                 + "## 任职要求\n" + jobRequirements + "\n\n"
                 + "## 学生简历\n" + truncate(resumeText, 2000) + "\n\n"
-                + "请严格按以下 JSON 格式返回（匹配度0-100的整数）：\n"
+                + "请严格按以下 JSON 格式返回（所有分数为0-100的整数）：\n"
                 + "{\n"
                 + "  \"matchScore\": 整体匹配度,\n"
+                + "  \"skillMatch\": 技能匹配度（考察技术栈与岗位技能要求的重合程度，如Java,Spring等）,\n"
+                + "  \"eduMatch\": 学历匹配度（考察学历层次与岗位要求的匹配，如本科/硕士/博士）,\n"
+                + "  \"expMatch\": 经验匹配度（考察实习/项目经验与岗位方向的关联程度）,\n"
+                + "  \"majorFit\": 专业契合度（考察所学专业与岗位类别的契合程度）,\n"
                 + "  \"matchReason\": \"20字以内的匹配理由\"\n"
                 + "}\n"
                 + "只返回 JSON，不要包含其他文字。";
@@ -94,6 +98,7 @@ public class AiService {
                 + "  \"internshipPosition\": \"实习职位\",\n"
                 + "  \"internshipDuration\": \"实习时间（如2025.07-2025.12）\",\n"
                 + "  \"internshipDesc\": \"实习工作描述\",\n"
+                + "  \"projects\": [{\"name\": \"项目名称\", \"role\": \"担任角色\", \"duration\": \"项目时间（如2025.03-2025.06）\", \"description\": \"项目描述：使用技术、取得的成果等\"}],\n"
                 + "  \"selfEvaluation\": \"自我评价\"\n"
                 + "}\n"
                 + "字段缺失时用空字符串或空数组代替。只返回 JSON，不要包含其他文字。";
@@ -111,9 +116,11 @@ public class AiService {
                 + "请严格按以下 JSON 格式返回：\n"
                 + "{\n"
                 + "  \"title\": \"岗位名称\",\n"
+                + "  \"companyName\": \"公司/企业名称（从文本中提取的公司名，若无则填空字符串）\",\n"
                 + "  \"salaryRange\": \"薪资范围，如 8K-15K\",\n"
                 + "  \"education\": \"学历要求，如大专及以上、本科及以上\",\n"
                 + "  \"location\": \"工作地点\",\n"
+                + "  \"deadline\": \"截止日期，如2026-07-16（标准日期格式）\",\n"
                 + "  \"experience\": \"经验要求，如1-3年、3-5年、经验不限\",\n"
                 + "  \"description\": \"岗位职责描述（保留原文核心内容）\",\n"
                 + "  \"requirements\": \"任职要求（保留原文核心内容）\",\n"
@@ -227,6 +234,10 @@ public class AiService {
                 break;
             case "matchJob":
                 mock.put("matchScore", 82);
+                mock.put("skillMatch", 85);
+                mock.put("eduMatch", 80);
+                mock.put("expMatch", 72);
+                mock.put("majorFit", 78);
                 mock.put("matchReason", "技能和项目经验匹配度高");
                 break;
             case "parseResume":
@@ -243,13 +254,16 @@ public class AiService {
                 mock.put("internshipPosition", "");
                 mock.put("internshipDuration", "");
                 mock.put("internshipDesc", "");
+                mock.put("projects", new ArrayList<>());
                 mock.put("selfEvaluation", "");
                 break;
             case "parseJob":
                 mock.put("title", "前端开发工程师");
+                mock.put("companyName", "");
                 mock.put("salaryRange", "8K-15K");
                 mock.put("education", "大专及以上");
                 mock.put("location", "广州");
+                mock.put("deadline", "2026-08-15");
                 mock.put("experience", "1-3年");
                 mock.put("description", "负责公司核心产品的前端开发与维护，使用 Vue.js 框架进行组件化开发，与后端工程师协作完成功能联调");
                 mock.put("requirements", "1. 熟练掌握 HTML5、CSS3、JavaScript\n2. 熟练使用 Vue.js 框架\n3. 了解前端工程化\n4. 有良好的团队协作能力");

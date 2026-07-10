@@ -115,6 +115,12 @@ public class Job {
     private Integer deliveryCount;
 
     /**
+     * 所属公司名称（非数据库字段，查询时动态填充）
+     */
+    @TableField(exist = false)
+    private String companyName;
+
+    /**
      * 逻辑删除标志
      */
     @TableLogic

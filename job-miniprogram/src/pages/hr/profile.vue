@@ -4,11 +4,11 @@
 			<!-- 头部：左对齐布局，避让微信胶囊 -->
 			<view class="profile-header" :style="{ paddingTop: (statusBarHeight + 20) + 'px' }">
 				<view class="profile-main profile-main--safe">
-					<view class="profile-avatar">
+					<view class="profile-avatar" @click="goEditProfile">
 						<text>{{ avatarText }}</text>
 					</view>
 					<view class="profile-info-wrap">
-						<text class="profile-name">{{ userInfo.realName || 'HR用户' }}</text>
+						<text class="profile-name" @click="goEditProfile">{{ userInfo.realName || 'HR用户' }}</text>
 						<view class="role-badge">
 							<text class="role-text">企业招聘方</text>
 						</view>
@@ -102,6 +102,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { onShow } from '@/utils/page-lifecycle'
 import { hrAPI } from '@/utils/request'
 import HrTabBar from '@/components/HrTabBar.vue'
 
@@ -132,12 +133,18 @@ onMounted(() => {
 		} catch (e2) {}
 	}
 
+	loadUserInfo()
+	loadStats()
+})
+
+onShow(() => { loadUserInfo() })
+
+const loadUserInfo = () => {
 	try {
 		const stored = uni.getStorageSync('userInfo')
 		if (stored) userInfo.value = JSON.parse(stored)
 	} catch (e) {}
-	loadStats()
-})
+}
 
 const refreshing = ref(false)
 const onRefresh = async () => {
@@ -183,6 +190,10 @@ const goToSecurity = () => {
 
 const goToAbout = () => {
 	uni.navigateTo({ url: '/pages/common/about' })
+}
+
+const goEditProfile = () => {
+	uni.navigateTo({ url: '/pages/hr/edit-profile' })
 }
 
 const handleLogout = () => {

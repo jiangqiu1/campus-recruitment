@@ -1,7 +1,11 @@
 package com.recruit.controller;
 
+import com.recruit.entity.Company;
 import com.recruit.entity.Job;
+import com.recruit.service.CompanyService;
 import com.recruit.service.JobService;
+import com.recruit.service.UserService;
+import com.recruit.entity.SysUser;
 import com.recruit.utils.Result;
 import com.recruit.dto.PageResult;
 import com.recruit.annotation.LogOperation;
@@ -10,9 +14,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 岗位管理控制器
@@ -24,6 +31,12 @@ public class JobController extends BaseController {
     
     @Autowired
     private JobService jobService;
+
+    @Autowired
+    private CompanyService companyService;
+
+    @Autowired
+    private UserService userService;
     
     /**
      * 获取岗位列表（按角色过滤，支持分页）
@@ -31,23 +44,53 @@ public class JobController extends BaseController {
     @GetMapping
     public Result<PageResult<Job>> getAllJobs(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String keyword) {
         Integer role = getCurrentRole();
         com.baomidou.mybatisplus.core.metadata.IPage<Job> pageResult;
         com.baomidou.mybatisplus.extension.plugins.pagination.Page<Job> pageReq = new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(page, size);
         
+        var query = jobService.lambdaQuery();
+        
         if (Objects.equals(role, 2)) {
+            // HR：只看自己企业的岗位
             Long userId = getCurrentUserId();
-            pageResult = jobService.lambdaQuery()
-                    .eq(Job::getCreatedBy, userId)
-                    .orderByDesc(Job::getCreateTime)
-                    .page(pageReq);
-        } else {
-            pageResult = jobService.lambdaQuery()
-                    .eq(Job::getStatus, 1)
-                    .orderByDesc(Job::getCreateTime)
-                    .page(pageReq);
+            SysUser currentUser = userService.getById(userId);
+            if (currentUser != null && currentUser.getCompanyId() != null) {
+                query.eq(Job::getCompanyId, currentUser.getCompanyId());
+            } else {
+                query.eq(Job::getCreatedBy, userId);
+            }
+        } else if (!Objects.equals(role, 3)) {
+            // 非管理员非HR：只看已发布的
+            query.eq(Job::getStatus, 1);
         }
+        // 管理员（role=3）：无限制，查看所有岗位
+        
+        // 状态筛选
+        if (status != null) {
+            query.eq(Job::getStatus, status);
+        }
+        // 关键词筛选
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            query.like(Job::getTitle, keyword.trim());
+        }
+        
+        pageResult = query.orderByDesc(Job::getCreateTime).page(pageReq);
+
+        // 批量填充公司名称
+        List<Job> records = pageResult.getRecords();
+        if (!records.isEmpty()) {
+            Set<Long> companyIds = records.stream()
+                    .map(Job::getCompanyId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            Map<Long, String> companyNameMap = companyService.listByIds(new ArrayList<>(companyIds))
+                    .stream().collect(Collectors.toMap(Company::getId, c -> c.getName() != null ? c.getName() : ""));
+            records.forEach(job -> job.setCompanyName(companyNameMap.getOrDefault(job.getCompanyId(), "")));
+        }
+
         return Result.success(PageResult.of(pageResult));
     }
     
@@ -66,7 +109,13 @@ public class JobController extends BaseController {
         
         // 增加浏览次数
         jobService.incrementViewCount(id);
-        
+
+        // 填充公司名称
+        if (job.getCompanyId() != null) {
+            Company company = companyService.getById(job.getCompanyId());
+            job.setCompanyName(company != null && company.getName() != null ? company.getName() : "");
+        }
+
         return Result.success(job);
     }
     
@@ -86,11 +135,23 @@ public class JobController extends BaseController {
      * 根据发布者ID查询岗位
      * 
      * @param createdBy 发布者ID（教师或HR）
-     * @return 岗位列表
+     * @return 岗位列表，包含关联企业名称
      */
     @GetMapping("/by-creator/{createdBy}")
     public Result<List<Job>> getJobsByCreatedBy(@PathVariable Long createdBy) {
         List<Job> jobs = jobService.selectByCreatedBy(createdBy);
+        // 填充关联企业名称
+        if (!jobs.isEmpty()) {
+            Set<Long> companyIds = jobs.stream()
+                    .map(Job::getCompanyId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+            if (!companyIds.isEmpty()) {
+                Map<Long, String> companyNameMap = companyService.listByIds(new ArrayList<>(companyIds))
+                        .stream().collect(Collectors.toMap(Company::getId, c -> c.getName() != null ? c.getName() : ""));
+                jobs.forEach(job -> job.setCompanyName(companyNameMap.getOrDefault(job.getCompanyId(), "")));
+            }
+        }
         return Result.success(jobs);
     }
     
@@ -177,7 +238,7 @@ public class JobController extends BaseController {
     
     /**
      * 更新岗位
-     * 校验权限：HR只能编辑自己的岗位，教师不可编辑企业岗位
+     * 校验权限：HR可编辑自己或同企业HR的岗位，教师不可编辑企业岗位
      */
     @LogOperation("更新岗位")
     @PutMapping("/{id}")
@@ -191,9 +252,9 @@ public class JobController extends BaseController {
         Long userId = getCurrentUserId();
         
         if (Objects.equals(role, 2)) {
-            // HR只能编辑自己的岗位
-            if (!Objects.equals(existJob.getCreatedBy(), userId)) {
-                return Result.error(403, "无权编辑其他HR创建的岗位");
+            // HR可编辑自己或同企业其他HR创建的岗位
+            if (!isSameCompanyHr(userId, existJob.getCreatedBy())) {
+                return Result.error(403, "无权编辑其他企业HR创建的岗位");
             }
         } else if (Objects.equals(role, 1)) {
             // 教师不可编辑企业岗位内容（仅可标记问题或关闭）
@@ -201,7 +262,10 @@ public class JobController extends BaseController {
         }
         
         job.setId(id);
-        jobService.updateById(job);
+        boolean success = jobService.updateById(job);
+        if (!success) {
+            return Result.error("更新失败，请重试");
+        }
         
         return Result.success("岗位更新成功");
     }
@@ -234,9 +298,9 @@ public class JobController extends BaseController {
         Integer role = getCurrentRole();
         Long userId = getCurrentUserId();
         
-        // HR只能关闭自己的岗位（或者管理员创建的）
-        if (Objects.equals(role, 2) && !Objects.equals(job.getCreatedBy(), userId) && !Objects.equals(job.getCreatedBy(), 1L)) {
-            return Result.error(403, "无权关闭其他HR的岗位");
+        // HR只能关闭自己（或同企业HR）的岗位
+        if (Objects.equals(role, 2) && !isSameCompanyHr(userId, job.getCreatedBy())) {
+            return Result.error(403, "无权关闭其他企业HR的岗位");
         }
         // 教师可强制关闭任何岗位（监管干预）
         if (Objects.equals(role, 1)) {
@@ -263,8 +327,8 @@ public class JobController extends BaseController {
         Integer role = getCurrentRole();
         Long userId = getCurrentUserId();
         
-        if (Objects.equals(role, 2) && !Objects.equals(job.getCreatedBy(), userId)) {
-            return Result.error(403, "无权暂停其他HR的岗位");
+        if (Objects.equals(role, 2) && !isSameCompanyHr(userId, job.getCreatedBy())) {
+            return Result.error(403, "无权暂停其他企业HR的岗位");
         }
         
         boolean success = jobService.pauseJob(id);
@@ -276,7 +340,7 @@ public class JobController extends BaseController {
     
     /**
      * 删除岗位（软删除）
-     * 仅HR可删除自己的草稿/已关闭岗位，教师无删除权限
+     * HR可删除自己的草稿/已关闭岗位，教师可删除自己创建的岗位（草稿/已关闭状态）
      */
     @DeleteMapping("/{id}")
     public Result<String> deleteJob(@PathVariable Long id) {
@@ -288,28 +352,31 @@ public class JobController extends BaseController {
         Integer role = getCurrentRole();
         Long userId = getCurrentUserId();
         
-        // 教师无删除权限
+        // 教师可删除自己创建的岗位（仅允许草稿或已关闭状态）
         if (Objects.equals(role, 1)) {
-            return Result.error(403, "教师无岗位删除权限");
-        }
-        
-        // HR只能删除自己的岗位，且仅允许删除草稿或已关闭状态
-        if (Objects.equals(role, 2)) {
             if (!Objects.equals(job.getCreatedBy(), userId)) {
-                return Result.error(403, "无权删除其他HR的岗位");
+                return Result.error(403, "无权删除其他教师创建的岗位");
+            }
+            if (job.getStatus() != 0 && job.getStatus() != 2) {
+                return Result.error("仅允许删除草稿或已关闭的岗位");
+            }
+        }
+        // HR只能删除自己或同企业HR的岗位，且仅允许删除草稿或已关闭状态
+        else if (Objects.equals(role, 2)) {
+            if (!isSameCompanyHr(userId, job.getCreatedBy())) {
+                return Result.error(403, "无权删除其他企业HR的岗位");
             }
             if (job.getStatus() != 0 && job.getStatus() != 2) {
                 return Result.error("仅允许删除草稿或已关闭的岗位");
             }
         }
         
-        job.setDeleted(1);
-        jobService.updateById(job);
+        jobService.removeById(id);
         return Result.success("岗位删除成功");
     }
     
     /**
-     * 校验岗位所属权（仅创建者可操作发布/编辑）
+     * 校验岗位所属权（同企业HR可操作）
      */
     private void checkJobOwnership(Long jobId) {
         Job job = jobService.getById(jobId);
@@ -321,12 +388,28 @@ public class JobController extends BaseController {
         
         // 管理员可操作任何岗位
         if (Objects.equals(role, 3)) return;
-        // 教师和HR可操作自己创建或管理员创建的岗位
-        boolean isSelf = Objects.equals(job.getCreatedBy(), userId);
-        boolean isAdminCreated = Objects.equals(job.getCreatedBy(), 1L);
-        if ((Objects.equals(role, 1) || Objects.equals(role, 2)) && (isSelf || isAdminCreated)) return;
+        // 教师和HR可操作自己创建或同企业的岗位
+        if (Objects.equals(role, 1) || Objects.equals(role, 2)) {
+            if (isSameCompanyHr(userId, job.getCreatedBy())) return;
+        }
         
         throw new com.recruit.exception.BusinessException(403, "无权操作此岗位");
+    }
+    
+    /**
+     * 判断两个HR用户是否属于同一企业
+     */
+    private boolean isSameCompanyHr(Long userId1, Long userId2) {
+        if (Objects.equals(userId1, userId2)) return true;
+        try {
+            SysUser user1 = userService.getById(userId1);
+            SysUser user2 = userService.getById(userId2);
+            if (user1 == null || user2 == null) return false;
+            if (user1.getCompanyId() == null || user2.getCompanyId() == null) return false;
+            return Objects.equals(user1.getCompanyId(), user2.getCompanyId());
+        } catch (Exception e) {
+            return false;
+        }
     }
     
     /**

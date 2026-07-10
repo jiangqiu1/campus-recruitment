@@ -11,10 +11,12 @@ import com.recruit.service.CompanyService;
 import com.recruit.service.DeliveryService;
 import com.recruit.service.JobService;
 import com.recruit.service.ResumeService;
+import com.recruit.service.ResumeScoreLogService;
 import com.recruit.service.UserService;
 import com.recruit.dto.DeliveryStatusUpdateRequest;
 import com.recruit.dto.InterviewArrangeRequest;
 import com.recruit.utils.Result;
+import javax.servlet.http.HttpServletRequest;
 import com.recruit.dto.PageResult;
 import com.recruit.annotation.LogOperation;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -59,6 +61,9 @@ public class DeliveryController extends BaseController {
     
     @Autowired(required = false)
     private ClassService classService;
+
+    @Autowired(required = false)
+    private ResumeScoreLogService resumeScoreLogService;
 
     @GetMapping
     public Result<PageResult<DeliveryVO>> getAllDeliveries(
@@ -115,6 +120,22 @@ public class DeliveryController extends BaseController {
         return Result.success(enrichDeliveries(list));
     }
 
+    @GetMapping("/by-company/{companyId}")
+    public Result<List<DeliveryVO>> getDeliveriesByCompanyId(@PathVariable Long companyId) {
+        List<Job> jobs = jobService.lambdaQuery()
+                .eq(Job::getCompanyId, companyId)
+                .list();
+        if (jobs.isEmpty()) {
+            return Result.success(new ArrayList<>());
+        }
+        List<Long> jobIds = jobs.stream().map(Job::getId).collect(Collectors.toList());
+        List<Delivery> list = deliveryService.lambdaQuery()
+                .in(Delivery::getJobId, jobIds)
+                .orderByDesc(Delivery::getCreateTime)
+                .list();
+        return Result.success(enrichDeliveries(list));
+    }
+
     @GetMapping("/by-status/{status}")
     public Result<List<DeliveryVO>> getDeliveriesByStatus(@PathVariable Integer status) {
         List<Delivery> list = deliveryService.selectByStatus(status);
@@ -135,7 +156,9 @@ public class DeliveryController extends BaseController {
 
     @LogOperation("投递简历")
     @PostMapping("/deliver")
-    public Result<String> deliverResume(@RequestParam Long studentId, @RequestBody Map<String, Object> params) {
+    public Result<String> deliverResume(HttpServletRequest request, @RequestBody Map<String, Object> params) {
+        Long studentId = (Long) request.getAttribute("userId");
+        if (studentId == null) return Result.error("无法获取用户信息");
         Object jobIdObj = params.get("jobId");
         Object rvObj = params.get("resumeVersion");
         if (jobIdObj == null) return Result.error("缺少jobId参数");
@@ -188,6 +211,9 @@ public class DeliveryController extends BaseController {
         private String studentName;
         private String jobTitle;
         private String companyName;
+        private Integer score;
+        private String salaryText;
+        private String location;
 
         public DeliveryVO(Delivery d) {
             this.id = d.getId();
@@ -225,6 +251,12 @@ public class DeliveryController extends BaseController {
         public void setJobTitle(String jobTitle) { this.jobTitle = jobTitle; }
         public String getCompanyName() { return companyName; }
         public void setCompanyName(String companyName) { this.companyName = companyName; }
+        public Integer getScore() { return score; }
+        public void setScore(Integer score) { this.score = score; }
+        public String getSalaryText() { return salaryText; }
+        public void setSalaryText(String salaryText) { this.salaryText = salaryText; }
+        public String getLocation() { return location; }
+        public void setLocation(String location) { this.location = location; }
     }
 
     private DeliveryVO enrichDelivery(Delivery d) {
@@ -241,11 +273,20 @@ public class DeliveryController extends BaseController {
             Job job = jobService.getById(d.getJobId());
             if (job != null) {
                 vo.setJobTitle(job.getTitle());
+                vo.setSalaryText(job.getSalaryRange());
+                vo.setLocation(job.getLocation());
                 com.recruit.entity.Company company = companyService.getById(job.getCompanyId());
                 if (company != null) {
                     vo.setCompanyName(company.getName());
                 }
             }
+        }
+        // 查询 AI 评分
+        if (resumeScoreLogService != null) {
+            com.recruit.entity.ResumeScoreLog scoreLog = resumeScoreLogService.lambdaQuery()
+                    .eq(com.recruit.entity.ResumeScoreLog::getDeliveryId, d.getId())
+                    .one();
+            if (scoreLog != null) vo.setScore(scoreLog.getScore());
         }
         return vo;
     }
@@ -275,6 +316,18 @@ public class DeliveryController extends BaseController {
             }
         }
 
+        // 2.5 过滤：只保留学生角色（role=0）的投递记录，排除教师/HR等异常数据
+        Set<Long> validStudentIds = studentMap.entrySet().stream()
+                .filter(e -> Objects.equals(e.getValue().getRole(), 0))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+        list = list.stream()
+                .filter(d -> d.getStudentId() != null && validStudentIds.contains(d.getStudentId()))
+                .collect(Collectors.toList());
+        if (list.isEmpty()) return new ArrayList<>();
+        // 重新收集 studentIds（已过滤）
+        studentIds = list.stream().map(Delivery::getStudentId).collect(Collectors.toSet());
+
         // 3. 批量查询岗位信息
         Map<Long, Job> jobMap = new HashMap<>();
         Map<Long, Long> jobCompanyMap = new HashMap<>(); // jobId -> companyId
@@ -296,6 +349,18 @@ public class DeliveryController extends BaseController {
             }
         }
 
+        // 4.5 批量查询 AI 评分
+        Map<Long, Integer> scoreMap = new HashMap<>();
+        if (resumeScoreLogService != null && !list.isEmpty()) {
+            Set<Long> deliveryIds = list.stream().map(Delivery::getId).collect(Collectors.toSet());
+            List<com.recruit.entity.ResumeScoreLog> scoreLogs = resumeScoreLogService.lambdaQuery()
+                    .in(com.recruit.entity.ResumeScoreLog::getDeliveryId, deliveryIds)
+                    .list();
+            for (com.recruit.entity.ResumeScoreLog sl : scoreLogs) {
+                if (sl.getScore() != null) scoreMap.put(sl.getDeliveryId(), sl.getScore());
+            }
+        }
+
         // 5. 组装结果
         return list.stream().map(d -> {
             DeliveryVO vo = new DeliveryVO(d);
@@ -306,11 +371,14 @@ public class DeliveryController extends BaseController {
             Job job = jobMap.get(d.getJobId());
             if (job != null) {
                 vo.setJobTitle(job.getTitle());
+                vo.setSalaryText(job.getSalaryRange());
+                vo.setLocation(job.getLocation());
                 com.recruit.entity.Company company = companyMap.get(job.getCompanyId());
                 if (company != null) {
                     vo.setCompanyName(company.getName());
                 }
             }
+            vo.setScore(scoreMap.get(d.getId()));
             return vo;
         }).collect(Collectors.toList());
     }

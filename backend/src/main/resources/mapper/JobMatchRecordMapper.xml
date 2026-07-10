@@ -44,14 +44,14 @@
     <update id="updatePushedStatus">
         UPDATE job_match_record 
         SET is_pushed = 1, push_time = #{pushTime}
-        WHERE id = #{recordId}
+        WHERE id = #{id}
     </update>
 
     <!-- 更新点击状态 -->
     <update id="updateClickedStatus">
         UPDATE job_match_record 
         SET is_clicked = 1, click_time = NOW()
-        WHERE id = #{recordId}
+        WHERE id = #{id}
     </update>
 
     <!-- 根据岗位ID删除匹配记录 -->

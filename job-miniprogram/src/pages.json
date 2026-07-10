@@ -92,6 +92,18 @@
 				"navigationStyle": "custom"
 			}
 		},
+		{
+			"path": "pages/student/edit-profile",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/student/about",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
 		// 通用页面（登录、协议等）
 		{
 			"path": "pages/common/agreement",
@@ -109,6 +121,13 @@
 		},
 		{
 			"path": "pages/common/forget-pwd",
+			"style": {
+				"navigationStyle": "custom",
+				"backgroundColor": "#F8F9FE"
+			}
+		},
+		{
+			"path": "pages/common/about",
 			"style": {
 				"navigationStyle": "custom",
 				"backgroundColor": "#F8F9FE"
@@ -296,6 +315,18 @@
 			"style": {
 				"navigationStyle": "custom",
 				"enablePullDownRefresh": true
+			}
+		},
+		{
+			"path": "pages/teacher/edit-profile",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/hr/edit-profile",
+			"style": {
+				"navigationStyle": "custom"
 			}
 		}
 	],

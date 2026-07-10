@@ -4,10 +4,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.recruit.entity.Delivery;
 import com.recruit.entity.Job;
 import com.recruit.entity.Message;
+import com.recruit.entity.SysUser;
 import com.recruit.mapper.DeliveryMapper;
 import com.recruit.mapper.JobMapper;
 import com.recruit.service.DeliveryService;
 import com.recruit.service.MessageService;
+import com.recruit.service.UserMessageService;
+import com.recruit.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +21,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 投递记录表 服务实现类
@@ -35,6 +39,12 @@ public class DeliveryServiceImpl extends ServiceImpl<DeliveryMapper, Delivery> i
 
     @Autowired
     private MessageService messageService;
+
+    @Autowired
+    private UserMessageService userMessageService;
+
+    @Autowired
+    private UserService userService;
     
     @Override
     public List<Delivery> selectByStudentId(Long studentId) {
@@ -64,7 +74,12 @@ public class DeliveryServiceImpl extends ServiceImpl<DeliveryMapper, Delivery> i
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean deliverResume(Long studentId, Long jobId, String resumeVersion) {
-        // 1. 检查是否已投递
+        // 1. 校验学生身份
+        SysUser user = userService.getById(studentId);
+        if (user == null || !Objects.equals(user.getRole(), 0)) {
+            throw new RuntimeException("仅学生用户可以投递简历");
+        }
+        // 2. 检查是否已投递
         List<Delivery> existDeliveries = deliveryMapper.selectByStudentIdAndStatus(studentId, 0);
         boolean alreadyDelivered = existDeliveries.stream()
                 .anyMatch(d -> d.getJobId().equals(jobId));
@@ -116,9 +131,11 @@ public class DeliveryServiceImpl extends ServiceImpl<DeliveryMapper, Delivery> i
         
         boolean updated = updateById(delivery);
         
-        // 根据状态变化生成消息通知学生
+        // 根据状态变化生成消息通知学生 + HR
         if (updated && delivery.getStudentId() != null) {
             String jobTitle = getJobTitle(delivery.getJobId());
+            String studentName = getStudentName(delivery.getStudentId());
+            String hrMsg = "";
             switch (status) {
                 case 1:
                     createMessage(delivery.getStudentId(), "简历被查看",
@@ -129,17 +146,23 @@ public class DeliveryServiceImpl extends ServiceImpl<DeliveryMapper, Delivery> i
                     createMessage(delivery.getStudentId(), "面试邀请",
                             "恭喜！您投递的「" + jobTitle + "」已通过初筛，面试安排：" + delivery.getInterviewLocation(),
                             1, delivery.getJobId());
+                    hrMsg = studentName + " 投递「" + jobTitle + "」已进入面试阶段";
                     break;
                 case 3:
                     createMessage(delivery.getStudentId(), "录用通知",
                             "恭喜！您已被录用！岗位：「" + jobTitle + "」",
                             1, delivery.getJobId());
+                    hrMsg = studentName + " 已被「" + jobTitle + "」录用";
                     break;
                 case 4:
                     createMessage(delivery.getStudentId(), "未通过通知",
                             "很遗憾，您投递的「" + jobTitle + "」未通过筛选",
                             1, delivery.getJobId());
+                    hrMsg = studentName + " 投递「" + jobTitle + "」未通过筛选";
                     break;
+            }
+            if (!hrMsg.isEmpty()) {
+                notifyHrOfJob(delivery.getJobId(), "投递状态更新", hrMsg, delivery.getId());
             }
         }
         
@@ -156,7 +179,7 @@ public class DeliveryServiceImpl extends ServiceImpl<DeliveryMapper, Delivery> i
     }
 
     /**
-     * 创建消息通知
+     * 创建消息通知（学生端）
      */
     private void createMessage(Long studentId, String title, String content, Integer type, Long relatedId) {
         try {
@@ -171,6 +194,36 @@ public class DeliveryServiceImpl extends ServiceImpl<DeliveryMapper, Delivery> i
             messageService.save(msg);
         } catch (Exception e) {
             log.error("创建消息通知失败", e);
+        }
+    }
+
+    /**
+     * 通知岗位所属公司的 HR
+     */
+    private void notifyHrOfJob(Long jobId, String title, String content, Long relatedId) {
+        try {
+            Job job = jobMapper.selectById(jobId);
+            if (job == null || job.getCompanyId() == null) return;
+            userService.lambdaQuery()
+                    .eq(SysUser::getCompanyId, job.getCompanyId())
+                    .eq(SysUser::getRole, 2)
+                    .list()
+                    .forEach(hr -> userMessageService.sendMessage(
+                            hr.getId(), title, content, "delivery", relatedId));
+        } catch (Exception e) {
+            log.error("通知HR失败", e);
+        }
+    }
+
+    /**
+     * 获取学生姓名
+     */
+    private String getStudentName(Long studentId) {
+        try {
+            SysUser student = userService.getById(studentId);
+            return student != null && student.getRealName() != null ? student.getRealName() : "学生";
+        } catch (Exception e) {
+            return "学生";
         }
     }
     

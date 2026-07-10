@@ -22,6 +22,8 @@
 		</view>
 
 		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
+			<LoadingState type="skeleton" :rows="4" v-if="loading" />
+			<view v-if="!loading">
 			<view class="job-list">
 				<view v-for="(job, i) in filteredList" :key="i" class="job-card" @click="goToEdit(job)">
 					<view class="job-top">
@@ -44,6 +46,7 @@
 				</view>
 				<EmptyState v-if="!filteredList.length" icon="inbox" title="暂无岗位" desc="点击右下角+号新建" />
 			</view>
+</view>
 			<view style="height: calc(60px + env(safe-area-inset-bottom))" />
 		</scroll-view>
 
@@ -70,6 +73,7 @@
 </template>
 
 <script setup>
+import LoadingState from '@/components/LoadingState.vue'
 import { ref, computed, onMounted } from 'vue'
 import { onShow } from '@/utils/page-lifecycle'
 import { hrAPI, aiParseAPI } from '@/utils/request'
@@ -155,7 +159,7 @@ const loadJobs = async (cId) => {
 	} catch (e) {
 		console.error('加载岗位列表失败', e)
 		uni.showToast({ title: '加载失败', icon: 'none' })
-	}
+	} finally { loading.value = false }
 }
 
 const handlePublish = async (id) => {

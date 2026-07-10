@@ -14,7 +14,7 @@
 
 		<!-- 状态筛选标签 -->
 		<view class="status-tabs">
-			<text v-for="(tab, i) in statusTabs" :key="i" class="status-tab" :class="{ active: currentStatus === tab.value }" @click="currentStatus = tab.value">
+			<text v-for="(tab, i) in statusTabs" :key="i" class="status-tab" :class="{ active: currentStatus === tab.value }" @click="switchStatus(tab.value)">
 				{{ tab.label }}
 			</text>
 		</view>
@@ -55,8 +55,18 @@
 					<text class="modal-close" @click="showInterviewModal = false">✕</text>
 				</view>
 				<view class="modal-body">
-					<text class="form-label">面试时间</text>
-					<input class="form-input" v-model="interviewForm.time" type="text" placeholder="例：2026-07-04 14:00" />
+					<text class="form-label">面试日期</text>
+					<picker mode="date" :value="interviewDate" @change="onDateChange" fields="day">
+						<view class="picker-input" :class="{ 'picker-placeholder': !interviewDate }">
+							{{ interviewDate || '点击选择日期' }}
+						</view>
+					</picker>
+					<text class="form-label" style="margin-top:12px;">面试时间</text>
+					<picker mode="time" :value="interviewTime" @change="onTimeChange">
+						<view class="picker-input" :class="{ 'picker-placeholder': !interviewTime }">
+							{{ interviewTime || '点击选择时间' }}
+						</view>
+					</picker>
 					<text class="form-label" style="margin-top:12px;">面试地点</text>
 					<input class="form-input" v-model="interviewForm.location" type="text" placeholder="例：线上/公司地址" />
 					<text class="form-label" style="margin-top:12px;">备注（选填）</text>
@@ -70,53 +80,14 @@
 	</view>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import { onShow } from '@/utils/page-lifecycle'
+<script>
 import { hrAPI } from '@/utils/request'
 import HrTabBar from '@/components/HrTabBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import NavBar from '@/components/NavBar.vue'
 
-const jobs = ref([])
-const candidates = ref([])
-const selectedJobId = ref('all')
-const currentStatus = ref('all')
-const showInterviewModal = ref(false)
-
-const interviewForm = ref({ time: '', location: '', note: '' })
-const interviewCandidate = ref(null)
-
 const DELIVERY_STATUS = ['pending', 'viewed', 'interview', 'accepted', 'rejected']
 const DELIVERY_STATUS_TEXT = ['待查看', '已查看', '面试中', '已录用', '未通过']
-
-const statusTabs = [
-	{ label: '全部', value: 'all' },
-	{ label: '待查看', value: 'pending' },
-	{ label: '面试中', value: 'interview' },
-	{ label: '已录用', value: 'accepted' },
-	{ label: '未通过', value: 'rejected' }
-]
-
-const jobTags = computed(() => {
-	const tags = [{ id: 'all', label: '全部岗位', count: candidates.value.length }]
-	jobs.value.forEach(j => {
-		const count = candidates.value.filter(c => c.jobId === j.id).length
-		tags.push({ id: j.id, label: j.title || '岗位#' + j.id, count })
-	})
-	return tags
-})
-
-const filteredCandidates = computed(() => {
-	let list = candidates.value
-	if (selectedJobId.value !== 'all') {
-		list = list.filter(c => c.jobId === selectedJobId.value)
-	}
-	if (currentStatus.value !== 'all') {
-		list = list.filter(c => c.status === currentStatus.value)
-	}
-	return list
-})
 
 const mapDelivery = (d) => ({
 	id: d.id,
@@ -130,123 +101,172 @@ const mapDelivery = (d) => ({
 	score: d.score ?? d.matchScore ?? null
 })
 
-const scoreLevel = (s) => {
-	if (s >= 80) return 'high'
-	if (s >= 60) return 'mid'
-	return 'low'
-}
-
-const getCompanyId = () => {
-	try {
-		const raw = uni.getStorageSync('userInfo')
-		if (!raw) return null
-		const obj = JSON.parse(raw)
-		return obj.companyId || obj.id || null
-	} catch (e) {
-		console.error('获取公司ID失败', e)
-		return null
-	}
-}
-
-onMounted(async () => {
-	const cId = getCompanyId()
-	await loadData(cId)
-})
-
-onShow(() => {
-	if (jobs.value.length) loadAllCandidates()
-})
-
-const refreshing = ref(false)
-const onRefresh = async () => {
-	refreshing.value = true
-	const cId = getCompanyId()
-	if (cId) await loadData(cId)
-	refreshing.value = false
-}
-
-const loadData = async (cId) => {
-	await loadJobs(cId)
-	await loadAllCandidates()
-}
-
-const selectJob = (id) => {
-	selectedJobId.value = id
-}
-
-const loadJobs = async (cId) => {
-	try {
-		const res = await hrAPI.getHrJobs(cId)
-		jobs.value = res.data || []
-	} catch (e) { console.error('加载岗位失败', e) }
-}
-
-const loadAllCandidates = async () => {
-	try {
-		const all = []
-		for (const job of jobs.value) {
+export default {
+	components: { HrTabBar, EmptyState, NavBar },
+	data() {
+		return {
+			jobs: [],
+			candidates: [],
+			selectedJobId: 'all',
+			currentStatus: 'all',
+			showInterviewModal: false,
+			interviewDate: '',
+			interviewTime: '',
+			interviewForm: { location: '', note: '' },
+			interviewCandidate: null,
+			refreshing: false,
+			firstLoad: true
+		}
+	},
+	computed: {
+		statusTabs() {
+			return [
+				{ label: '全部', value: 'all' },
+				{ label: '待查看', value: 'pending' },
+				{ label: '面试中', value: 'interview' },
+				{ label: '已录用', value: 'accepted' },
+				{ label: '未通过', value: 'rejected' }
+			]
+		},
+		jobTags() {
+			const tags = [{ id: 'all', label: '全部岗位', count: this.candidates.length }]
+			this.jobs.forEach(j => {
+				const count = this.candidates.filter(c => c.jobId === j.id).length
+				tags.push({ id: j.id, label: j.title || '岗位#' + j.id, count })
+			})
+			return tags
+		},
+		filteredCandidates() {
+			let list = this.candidates
+			if (this.selectedJobId !== 'all') {
+				list = list.filter(c => c.jobId === this.selectedJobId)
+			}
+			if (this.currentStatus !== 'all') {
+				list = list.filter(c => c.status === this.currentStatus)
+			}
+			return list
+		}
+	},
+	mounted() {
+		const cId = this.getCompanyId()
+		this.loadData(cId)
+	},
+	methods: {
+		getCompanyId() {
 			try {
-				const res = await hrAPI.getCompanyDeliveries(job.id)
-				;(res.data || []).forEach(d => {
-					all.push(mapDelivery({ ...d, jobTitle: job.title }))
+				const raw = uni.getStorageSync('userInfo')
+				if (!raw) return null
+				const obj = JSON.parse(raw)
+				return obj.companyId || obj.id || null
+			} catch (e) {
+				console.error('获取公司ID失败', e)
+				return null
+			}
+		},
+		scoreLevel(s) {
+			if (s >= 80) return 'high'
+			if (s >= 60) return 'mid'
+			return 'low'
+		},
+		async loadData(cId) {
+			await this.loadJobs(cId)
+			await this.loadAllCandidates()
+		},
+		async loadJobs(cId) {
+			try {
+				const res = await hrAPI.getHrJobs(cId)
+				this.jobs = res.data || []
+			} catch (e) { console.error('加载岗位失败', e) }
+		},
+		async loadAllCandidates() {
+			try {
+				const cId = this.getCompanyId()
+				if (!cId) return
+				const res = await hrAPI.getDeliveriesByCompany(cId)
+				const data = res.data || []
+				const jobMap = {}
+				this.jobs.forEach(j => { jobMap[j.id] = j.title })
+				this.candidates = data.map(d => mapDelivery({ ...d, jobTitle: jobMap[d.jobId] || '未知岗位' }))
+			} catch (e) {
+				console.error('加载候选人失败', e)
+			}
+		},
+		selectJob(id) {
+			this.selectedJobId = id
+		},
+		switchStatus(val) {
+			this.currentStatus = val
+		},
+		onRefresh() {
+			this.refreshing = true
+			const cId = this.getCompanyId()
+			if (cId) this.loadData(cId).then(() => { this.refreshing = false })
+		},
+		handleInterview(c) {
+			this.interviewCandidate = c
+			this.interviewDate = ''
+			this.interviewTime = ''
+			this.interviewForm = { location: '', note: '' }
+			this.showInterviewModal = true
+		},
+		onDateChange(e) { this.interviewDate = e.detail.value },
+		onTimeChange(e) { this.interviewTime = e.detail.value },
+		async submitInterview() {
+			const dateStr = this.interviewDate
+			const timeStr = this.interviewTime
+			if (!dateStr || !timeStr) {
+				uni.showToast({ title: '请选择面试日期和时间', icon: 'none' })
+				return
+			}
+			if (!this.interviewForm.location || !this.interviewForm.location.trim()) {
+				uni.showToast({ title: '请填写面试地点', icon: 'none' })
+				return
+			}
+			try {
+				const dateTime = dateStr + 'T' + timeStr + ':00'
+				await hrAPI.arrangeInterview(this.interviewCandidate.id, {
+					interviewTime: dateTime,
+					interviewLocation: this.interviewForm.location.trim()
 				})
-			} catch (e) { console.error('加载候选人列表失败', e) }
-		}
-		candidates.value = all
-	} catch (e) {
-		console.error('加载候选人失败', e)
-	}
-}
-
-const handleInterview = (c) => {
-	interviewCandidate.value = c
-	interviewForm.value = { time: '', location: '', note: '' }
-	showInterviewModal.value = true
-}
-
-const submitInterview = async () => {
-	if (!interviewForm.value.time || !interviewForm.value.location) {
-		uni.showToast({ title: '请填写面试时间和地点', icon: 'none' })
-		return
-	}
-	try {
-		await hrAPI.updateDeliveryStatus(interviewCandidate.value.id, { status: 2 })
-		uni.showToast({ title: '已安排面试', icon: 'success' })
-		showInterviewModal.value = false
-		// 刷新状态
-		const idx = candidates.value.findIndex(c => c.id === interviewCandidate.value.id)
-		if (idx > -1) {
-			candidates.value[idx].status = 'interview'
-			candidates.value[idx].statusText = '面试中'
-		}
-	} catch (e) {
-		uni.showToast({ title: '操作失败', icon: 'none' })
-	}
-}
-
-const handleReject = async (c) => {
-	uni.showModal({
-		title: '确认标记',
-		content: '确定标记该候选人不合适吗？',
-		success: async (res) => {
-			if (!res.confirm) return
+				uni.showToast({ title: '已安排面试', icon: 'success' })
+				this.showInterviewModal = false
+				// Options API 直接赋值 — uni-app 原生响应式，100% 可渲染
+				const fresh = JSON.parse(JSON.stringify(this.candidates))
+				const idx = fresh.findIndex(c => c.id === this.interviewCandidate.id)
+				if (idx > -1) {
+					fresh[idx].status = 'interview'
+					fresh[idx].statusText = '面试中'
+				}
+				this.candidates = fresh
+				this.switchStatus('interview')
+			} catch (e) {
+				console.error('安排面试失败', e)
+				uni.showToast({ title: '操作失败', icon: 'none' })
+			}
+		},
+		async handleReject(c) {
+			const res = await new Promise(resolve => {
+				uni.showModal({
+					title: '确认标记',
+					content: '确定标记该候选人不合适吗？',
+					success: (r) => resolve(r.confirm)
+				})
+			})
+			if (!res) return
 			try {
 				await hrAPI.updateDeliveryStatus(c.id, { status: 4 })
 				uni.showToast({ title: '已标记', icon: 'success' })
-				const idx = candidates.value.findIndex(item => item.id === c.id)
-				if (idx > -1) {
-					candidates.value[idx].status = 'rejected'
-					candidates.value[idx].statusText = '未通过'
-				}
+				this.candidates = this.candidates.map(item =>
+					item.id === c.id ? { ...item, status: 'rejected', statusText: '未通过' } : item
+				)
 			} catch (e) {
 				uni.showToast({ title: '操作失败', icon: 'none' })
 			}
+		},
+		goToDetail(id) {
+			uni.navigateTo({ url: '/pages/hr/delivery-detail?id=' + id })
 		}
-	})
-}
-
-const goToDetail = (id) => {
-	uni.navigateTo({ url: '/pages/hr/delivery-detail?id=' + id })
+	}
 }
 </script>
 
@@ -442,6 +462,20 @@ const goToDetail = (id) => {
 .modal-close { font-size: 20px; color: #86909C; padding: 4px; }
 .modal-body { padding: 16px 20px 20px; }
 .form-label { font-size: 13px; color: #4E5969; font-weight: 500; margin-bottom: 6px; display: block; }
+.picker-input {
+	width: 100%;
+	height: 44px;
+	border: 1px solid #E5E6EB;
+	border-radius: 8px;
+	padding: 0 12px;
+	font-size: 14px;
+	color: #1D2129;
+	background: #F7F8FA;
+	box-sizing: border-box;
+	align-items: center;
+	line-height: 44px;
+}
+.picker-placeholder { color: #C9CDD4; }
 .form-input {
 	width: 100%;
 	height: 44px;

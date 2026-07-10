@@ -1,13 +1,16 @@
 package com.recruit.controller;
 
+import com.recruit.entity.Delivery;
 import com.recruit.entity.ResumeScoreLog;
+import com.recruit.entity.SysUser;
+import com.recruit.service.DeliveryService;
 import com.recruit.service.ResumeScoreLogService;
+import com.recruit.service.UserService;
 import com.recruit.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/resume-scores")
@@ -15,6 +18,12 @@ public class ResumeScoreController {
 
     @Autowired
     private ResumeScoreLogService resumeScoreLogService;
+
+    @Autowired
+    private DeliveryService deliveryService;
+
+    @Autowired
+    private UserService userService;
 
     @GetMapping
     public Result<List<ResumeScoreLog>> getAllScores() {
@@ -29,8 +38,32 @@ public class ResumeScoreController {
     }
 
     @GetMapping("/by-job/{jobId}")
-    public Result<List<ResumeScoreLog>> getScoresByJobId(@PathVariable Long jobId) {
-        return Result.success(resumeScoreLogService.selectByJobIdOrderByScore(jobId));
+    public Result<List<Map<String, Object>>> getScoresByJobId(@PathVariable Long jobId) {
+        List<ResumeScoreLog> logs = resumeScoreLogService.selectByJobIdOrderByScore(jobId);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (ResumeScoreLog log : logs) {
+            Map<String, Object> item = new HashMap<>();
+            item.put("id", log.getId());
+            item.put("jobId", log.getJobId());
+            item.put("deliveryId", log.getDeliveryId());
+            item.put("score", log.getScore());
+            item.put("scoreDetail", log.getScoreDetail());
+            item.put("createTime", log.getCreateTime());
+            // 查询学生姓名
+            String studentName = "未知";
+            if (log.getDeliveryId() != null) {
+                Delivery delivery = deliveryService.getById(log.getDeliveryId());
+                if (delivery != null && delivery.getStudentId() != null) {
+                    SysUser student = userService.getById(delivery.getStudentId());
+                    if (student != null && student.getRealName() != null) {
+                        studentName = student.getRealName();
+                    }
+                }
+            }
+            item.put("studentName", studentName);
+            result.add(item);
+        }
+        return Result.success(result);
     }
 
     @GetMapping("/by-delivery/{deliveryId}")
@@ -115,5 +148,10 @@ public class ResumeScoreController {
         ResumeScoreLog lowest = resumeScoreLogService.selectLowestScoreByJobId(jobId);
         if (lowest == null) return Result.error(404, "该岗位暂无评分记录");
         return Result.success(lowest);
+    }
+
+    @GetMapping("/dimensions/{jobId}")
+    public Result<Map<String, Object>> getDimensionScores(@PathVariable Long jobId) {
+        return Result.success(resumeScoreLogService.getDimensionScores(jobId));
     }
 }

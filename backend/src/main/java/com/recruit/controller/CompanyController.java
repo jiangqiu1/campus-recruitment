@@ -3,6 +3,7 @@ package com.recruit.controller;
 import com.recruit.entity.Company;
 import com.recruit.entity.SysUser;
 import com.recruit.service.CompanyService;
+import com.recruit.service.UserMessageService;
 import com.recruit.service.UserService;
 import com.recruit.utils.AESUtil;
 import com.recruit.utils.Result;
@@ -30,6 +31,9 @@ public class CompanyController extends BaseController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserMessageService userMessageService;
     
     /**
      * 获取企业列表（可选按状态筛选）
@@ -76,6 +80,8 @@ public class CompanyController extends BaseController {
         }
         company.setStatus(1);
         companyService.updateById(company);
+        // 通知该企业的 HR
+        notifyCompanyHr(id, "企业审核通过", "您名下的企业「" + company.getName() + "」已通过审核，现在可以发布岗位了");
         return Result.success("企业审核通过");
     }
 
@@ -95,6 +101,8 @@ public class CompanyController extends BaseController {
         }
         company.setStatus(2);
         companyService.updateById(company);
+        // 通知该企业的 HR
+        notifyCompanyHr(id, "企业审核未通过", "您名下的企业「" + company.getName() + "」未通过审核，请联系管理员了解详情");
         return Result.success("企业审核拒绝");
     }
     
@@ -180,6 +188,17 @@ public class CompanyController extends BaseController {
         }
         
         companyService.save(company);
+        // 通知管理员有新的企业入驻待审核
+        try {
+            userService.lambdaQuery()
+                    .eq(SysUser::getRole, 3)
+                    .list()
+                    .forEach(admin -> userMessageService.sendMessage(
+                            admin.getId(),
+                            "新企业入驻待审核",
+                            "企业「" + company.getName() + "」已完成注册，请前往审核",
+                            "audit", company.getId()));
+        } catch (Exception e) { /* ignore */ }
         return Result.success("企业创建成功");
     }
     
@@ -206,13 +225,46 @@ public class CompanyController extends BaseController {
             return Result.error(404, "企业不存在");
         }
         
+        // 过滤空字符串字段，避免覆盖已有数据
+        if (company.getName() != null && company.getName().trim().isEmpty()) {
+            company.setName(null);
+        }
+        if (company.getIndustry() != null && company.getIndustry().trim().isEmpty()) {
+            company.setIndustry(null);
+        }
+        if (company.getSize() != null && company.getSize().trim().isEmpty()) {
+            company.setSize(null);
+        }
+        if (company.getCity() != null && company.getCity().trim().isEmpty()) {
+            company.setCity(null);
+        }
+        if (company.getAddress() != null && company.getAddress().trim().isEmpty()) {
+            company.setAddress(null);
+        }
+        if (company.getDescription() != null && company.getDescription().trim().isEmpty()) {
+            company.setDescription(null);
+        }
+        if (company.getContactPerson() != null && company.getContactPerson().trim().isEmpty()) {
+            company.setContactPerson(null);
+        }
+        if (company.getContactEmail() != null && company.getContactEmail().trim().isEmpty()) {
+            company.setContactEmail(null);
+        }
+        
         // AES加密敏感字段（联系电话）
-        if (company.getContactPhone() != null && !company.getContactPhone().isEmpty()) {
-            company.setContactPhone(aesUtil.encrypt(company.getContactPhone()));
+        if (company.getContactPhone() != null) {
+            if (company.getContactPhone().trim().isEmpty()) {
+                company.setContactPhone(null);
+            } else {
+                company.setContactPhone(aesUtil.encrypt(company.getContactPhone()));
+            }
         }
         
         company.setId(id);
-        companyService.updateById(company);
+        boolean success = companyService.updateById(company);
+        if (!success) {
+            return Result.error("企业信息更新失败，请重试");
+        }
         
         return Result.success("企业更新成功");
     }
@@ -231,10 +283,7 @@ public class CompanyController extends BaseController {
             return Result.error(404, "企业不存在");
         }
         
-        // 软删除（设置deleted=1）
-        company.setDeleted(1);
-        companyService.updateById(company);
-        
+        companyService.removeById(company.getId());
         return Result.success("企业删除成功");
     }
     
@@ -283,5 +332,19 @@ public class CompanyController extends BaseController {
         }
         
         return Result.success(companies);
+    }
+
+    /**
+     * 通知企业所属的 HR 用户
+     */
+    private void notifyCompanyHr(Long companyId, String title, String content) {
+        try {
+            userService.lambdaQuery()
+                    .eq(SysUser::getCompanyId, companyId)
+                    .eq(SysUser::getRole, 2)
+                    .list()
+                    .forEach(hr -> userMessageService.sendMessage(
+                            hr.getId(), title, content, "audit", companyId));
+        } catch (Exception e) { /* ignore */ }
     }
 }

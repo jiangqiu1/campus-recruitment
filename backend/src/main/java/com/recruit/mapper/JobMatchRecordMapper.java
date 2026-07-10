@@ -77,4 +77,12 @@ public interface JobMatchRecordMapper extends BaseMapper<JobMatchRecord> {
      * @return 影响行数
      */
     int updateClickedStatus(@Param("id") Long id);
+    
+    /**
+     * 根据岗位ID删除所有匹配记录
+     * 
+     * @param jobId 岗位ID
+     * @return 删除数量
+     */
+    int deleteByJobId(@Param("jobId") Long jobId);
 }

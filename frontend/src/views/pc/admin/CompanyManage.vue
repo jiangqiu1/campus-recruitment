@@ -1,6 +1,9 @@
 <template>
-  <div class="company-manage">
-    <h2>企业管理</h2>
+  <div class="company-manage fade-in">
+    <div class="page-header">
+      <h2>企业管理</h2>
+      <p>查看和管理注册企业信息</p>
+    </div>
     
     <!-- 操作栏 -->
     <el-row class="operation-row">
@@ -9,7 +12,7 @@
         <el-button type="danger" @click="batchDelete" :disabled="selectedIds.length === 0">批量删除</el-button>
       </el-col>
       <el-col :span="12" style="text-align: right;">
-        <el-input v-model="searchKeyword" placeholder="搜索企业名称" style="width: 300px;" clearable>
+        <el-input v-model="searchKeyword" placeholder="搜索企业名称" style="width: 300px;" clearable @keyup.enter="loadCompanies">
           <template #append>
             <el-button @click="loadCompanies"><el-icon><Search /></el-icon></el-button>
           </template>
@@ -56,7 +59,7 @@
     />
 
     <!-- 添加/编辑对话框 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px" :append-to-body="true">
       <el-form :model="companyForm" :rules="rules" ref="companyFormRef" label-width="120px">
         <el-form-item label="企业名称" prop="name">
           <el-input v-model="companyForm.name" />
@@ -145,6 +148,14 @@ const loadCompanies = async () => {
     if (res.code === 200) {
       let data = res.data || []
       if (Array.isArray(data)) {
+        // 客户端过滤（后端未实现 keyword）
+        if (searchKeyword.value) {
+          const kw = searchKeyword.value.toLowerCase()
+          data = data.filter(c =>
+            (c.name || '').toLowerCase().includes(kw) ||
+            (c.shortName || '').toLowerCase().includes(kw)
+          )
+        }
         total.value = data.length
         const start = (currentPage.value - 1) * pageSize.value
         companyList.value = data.slice(start, start + pageSize.value)

@@ -1,6 +1,6 @@
 <template>
-	<view class="nav-bar" :style="{ paddingTop: statusBarHeight + 'px' }">
-		<view class="nav-content">
+	<view class="nav-bar" :style="{ paddingTop: (statusBarHeight + topExtra) + 'px' }">
+		<view class="nav-content" :style="{ paddingRight: (12 + safeAreaRight) + 'px' }">
 			<view class="nav-left" @click="handleBack">
 				<uni-icons v-if="showBack" type="left" size="22" color="#1D2129" />
 			</view>
@@ -23,12 +23,19 @@ const props = defineProps({
 })
 const emit = defineEmits(['back', 'rightClick'])
 const statusBarHeight = ref(20)
+const safeAreaRight = ref(0)
+const topExtra = ref(4)
 const getStatusBar = () => {
 	try {
 		const info = uni.getWindowInfo ? uni.getWindowInfo() : uni.getSystemInfoSync()
 		statusBarHeight.value = info.statusBarHeight || 20
+		safeAreaRight.value = info.safeAreaInsets?.right || 0
+		// 非刘海屏状态栏高度通常为20，不需要额外下沉；刘海屏/灵动岛需要额外4px避免文字被圆角遮挡
+		topExtra.value = (info.statusBarHeight || 20) > 20 ? 4 : 0
 	} catch (e) {
 		statusBarHeight.value = 20
+		safeAreaRight.value = 0
+		topExtra.value = 0
 	}
 }
 getStatusBar()

@@ -126,6 +126,7 @@ public class ResumeController extends BaseController {
         }
         if (body.get("education") != null) resume.setEducation(body.get("education").toString());
         if (body.get("internship") != null) resume.setInternship(body.get("internship").toString());
+        if (body.get("project") != null) resume.setProject(body.get("project").toString());
         if (body.get("skills") != null) resume.setSkills(body.get("skills").toString());
         if (body.get("selfEvaluation") != null) resume.setSelfEvaluation(body.get("selfEvaluation").toString());
         if (body.get("jobTarget") != null) resume.setJobTarget(body.get("jobTarget").toString());
@@ -280,10 +281,7 @@ public class ResumeController extends BaseController {
             return Result.error(404, "简历不存在");
         }
         
-        // 软删除（设置deleted=1）
-        resume.setDeleted(1);
-        resumeService.updateById(resume);
-        
+        resumeService.removeById(resume.getId());
         return Result.success("简历删除成功");
     }
     

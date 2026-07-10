@@ -27,13 +27,21 @@
           <el-icon><OfficeBuilding /></el-icon>
           <template #title>企业管理</template>
         </el-menu-item>
-        <el-menu-item index="/admin/classes">
-          <el-icon><Reading /></el-icon>
-          <template #title>班级管理</template>
+        <el-menu-item index="/admin/jobs">
+          <el-icon><Briefcase /></el-icon>
+          <template #title>岗位监管</template>
         </el-menu-item>
         <el-menu-item index="/admin/audit">
           <el-icon><Checked /></el-icon>
           <template #title>企业审核</template>
+        </el-menu-item>
+        <el-menu-item index="/admin/classes">
+          <el-icon><Reading /></el-icon>
+          <template #title>班级管理</template>
+        </el-menu-item>
+        <el-menu-item index="/admin/ai-stats">
+          <el-icon><MagicStick /></el-icon>
+          <template #title>AI使用统计</template>
         </el-menu-item>
         <el-menu-item index="/admin/logs">
           <el-icon><Document /></el-icon>
@@ -62,6 +70,7 @@
           <Breadcrumb />
         </div>
         <div class="navbar-right">
+          <NotificationBell />
           <el-dropdown @command="handleCommand">
             <span class="user-badge">
               <el-avatar :size="28" style="background: #165DFF; color: white; flex-shrink: 0;">
@@ -98,7 +107,8 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import Breadcrumb from '@/components/Breadcrumb.vue'
-import { Fold, Expand, DataLine, User, OfficeBuilding, Reading, Checked, Document, Download, Setting } from '@element-plus/icons-vue'
+import NotificationBell from '@/components/NotificationBell.vue'
+import { Fold, Expand, DataLine, User, OfficeBuilding, Reading, Checked, Document, Download, Setting, Briefcase, MagicStick } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -112,8 +122,12 @@ function toggleSidebar() {
 
 function handleCommand(command) {
   switch (command) {
-    case 'profile': break
-    case 'password': break
+    case 'profile':
+      router.push('/admin/profile')
+      break
+    case 'password':
+      router.push('/admin/password')
+      break
     case 'logout':
       userStore.logout()
       break
@@ -130,7 +144,7 @@ function handleCommand(command) {
   z-index: 999;
   transition: width 0.3s ease;
   overflow: hidden;
-  box-shadow: 2px 0 15px rgba(0,0,0,0.12);
+  box-shadow: 2px 0 20px rgba(0,0,0,0.15);
 }
 
 .sidebar-logo {
@@ -139,7 +153,7 @@ function handleCommand(command) {
   font-weight: bold;
   text-align: center;
   border-bottom: 1px solid var(--sidebar-border);
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   background: linear-gradient(90deg, #165DFF, #2563EB);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -160,8 +174,9 @@ function handleCommand(command) {
 }
 
 .navbar {
-  background: var(--header-bg);
-  backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   padding: 18px 35px;
   box-shadow: 0 3px 15px rgba(0,0,0,0.06);
   display: flex;

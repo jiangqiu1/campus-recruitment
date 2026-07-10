@@ -111,4 +111,12 @@ public interface JobMatchRecordService extends IService<JobMatchRecord> {
      * @return 平均匹配度
      */
     BigDecimal calculateAverageMatchScore(Long jobId);
+
+    /**
+     * 根据岗位ID删除所有匹配记录
+     *
+     * @param jobId 岗位ID
+     * @return 删除数量
+     */
+    int deleteByJobId(Long jobId);
 }

@@ -1,19 +1,19 @@
 ﻿<template>
-  <div class="account-management">
-    <h2>子账号管理</h2>
+  <div class="account-management fade-in">
+    <div class="page-header">
+      <h2>子账号管理</h2>
+      <p>管理本企业下的 HR 操作账号</p>
+    </div>
 
     <div class="operation-row">
       <el-button type="primary" @click="showCreateDialog">+ 新建子账号</el-button>
-      <span style="margin-left: 12px; color: #86909C; font-size: 13px;">
-        管理本企业下的 HR 操作账号
-      </span>
     </div>
 
     <el-table :data="accountList" stripe v-loading="loading" style="width: 100%" table-layout="auto">
       <el-table-column prop="id" label="ID" width="60" />
-      <el-table-column prop="username" label="用户名" min-width="120" />
-      <el-table-column prop="realName" label="姓名" min-width="100" />
-      <el-table-column prop="phone" label="手机号" min-width="130" />
+      <el-table-column prop="username" label="用户名" min-width="120" show-overflow-tooltip />
+      <el-table-column prop="realName" label="姓名" min-width="100" show-overflow-tooltip />
+      <el-table-column prop="phone" label="手机号" min-width="130" show-overflow-tooltip />
       <el-table-column prop="status" label="状态" width="80">
         <template #default="{ row }">
           <el-tag :type="row.status === 1 ? 'success' : 'danger'">
@@ -21,7 +21,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="createTime" label="创建时间" min-width="160">
+      <el-table-column prop="createTime" label="创建时间" min-width="160" show-overflow-tooltip>
         <template #default="{ row }">
           {{ formatTime(row.createTime) }}
         </template>
@@ -44,12 +44,16 @@
         </template>
       </el-table-column>
     </el-table>
+    <div v-if="!loading && accountList.length === 0" class="empty-state">
+      <el-empty :image-size="100" description="暂无子账号，请点击上方新建" />
+    </div>
 
     <!-- 创建/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
       :title="isEdit ? '编辑子账号' : '新建子账号'"
       width="500px"
+      :append-to-body="true"
     >
       <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
         <el-form-item label="用户名" prop="username">
@@ -81,6 +85,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useUserStore } from '@/stores/user.js'
 import { companyAccountAPI } from '@/api/index.js'
+import { formatDate } from '@/utils/formatDate'
 import { ElMessage } from 'element-plus'
 
 const userStore = useUserStore()
@@ -203,16 +208,14 @@ const deleteAccount = async (row) => {
   }
 }
 
-const formatTime = (t) => {
-  if (!t) return ''
-  return t.substring(0, 19).replace('T', ' ')
-}
+const formatTime = (t) => formatDate(t, { showSeconds: true })
 </script>
 
 <style scoped>
 .account-management { padding: 20px; width: 100%; max-width: 100%; box-sizing: border-box; }
 .account-management :deep(.el-table) { width: 100% !important; }
 .operation-row { margin-bottom: 20px; display: flex; align-items: center; }
+.empty-state { padding: 40px 0; display: flex; justify-content: center; }
 
 
 </style>

@@ -77,9 +77,27 @@
 					</view>
 					<input class="form-input mb-8" v-model="job.company" placeholder="公司名称" />
 					<input class="form-input mb-8" v-model="job.position" placeholder="职位" />
-					<input class="form-input" v-model="job.duration" placeholder="时间段" />
+					<input class="form-input" v-model="job.duration" placeholder="时间段（如 2025-07 至 2025-12）" />
 				</view>
 				<text v-if="form.internship.length === 0" class="empty-hint">点击上方「+ 添加」添加实习经历</text>
+			</view>
+
+			<view class="form-section">
+				<view class="form-section-header">
+					<text class="form-section-title">项目经历</text>
+					<text class="form-section-action" @click="addProject">+ 添加</text>
+				</view>
+				<view v-for="(proj, i) in form.project" :key="i" class="json-item">
+					<view class="json-item-header">
+						<text class="json-item-title">项目经历 {{ i + 1 }}</text>
+						<text class="json-item-remove" @click="form.project.splice(i, 1)">删除</text>
+					</view>
+					<input class="form-input mb-8" v-model="proj.name" placeholder="项目名称" />
+					<input class="form-input mb-8" v-model="proj.role" placeholder="担任角色" />
+					<input class="form-input mb-8" v-model="proj.duration" placeholder="时间段（如 2025-03 至 2025-06）" />
+					<textarea class="form-textarea" v-model="proj.description" placeholder="项目描述：介绍项目背景、你的职责、使用的技术/工具、取得的成果等" />
+				</view>
+				<text v-if="form.project.length === 0" class="empty-hint">点击上方「+ 添加」添加项目经历（如课程设计、竞赛项目等）</text>
 			</view>
 
 			<view class="form-section">
@@ -116,6 +134,7 @@ const form = ref({
 	jobTarget: '',
 	education: [],
 	internship: [],
+	project: [],
 	skillsList: [],
 	skills: '',
 	selfEvaluation: ''
@@ -186,6 +205,7 @@ async function loadExisting() {
 				jobTarget: data.jobTarget || '',
 				education: parseJsonArray(data.education),
 				internship: parseJsonArray(data.internship),
+				project: parseJsonArray(data.project),
 				skillsList: data.skills ? data.skills.split(',').map(s => s.trim()).filter(Boolean) : [],
 				skills: data.skills || '',
 				selfEvaluation: data.selfEvaluation || ''
@@ -212,6 +232,9 @@ const addEducation = () => {
 }
 const addInternship = () => {
 	form.value.internship.push({ company: '', position: '', duration: '' })
+}
+const addProject = () => {
+	form.value.project.push({ name: '', role: '', duration: '', description: '' })
 }
 
 const handleImportPdf = () => {
@@ -274,6 +297,15 @@ const uploadAndParse = async (filePath) => {
 					description: data.internshipDesc || ''
 				}]
 			}
+			// 项目经历
+			if (data.projects && Array.isArray(data.projects) && data.projects.length > 0) {
+				form.value.project = data.projects.map(p => ({
+					name: p.name || '',
+					role: p.role || '',
+					duration: p.duration || '',
+					description: p.description || ''
+				}))
+			}
 			// 自我评价
 			if (data.selfEvaluation) {
 				form.value.selfEvaluation = data.selfEvaluation
@@ -318,6 +350,7 @@ const handleSave = async () => {
 			jobTarget: form.value.jobTarget,
 			education: JSON.stringify(form.value.education),
 			internship: JSON.stringify(form.value.internship),
+			project: JSON.stringify(form.value.project),
 			skills: form.value.skillsList.join(','),
 			selfEvaluation: form.value.selfEvaluation
 		}

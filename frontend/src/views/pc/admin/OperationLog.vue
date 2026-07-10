@@ -1,17 +1,16 @@
 ﻿<template>
-  <div class="operation-log">
-    <h2>操作日志</h2>
+  <div class="operation-log fade-in">
+    <div class="page-header">
+      <h2>操作日志</h2>
+      <p>查看系统操作记录</p>
+    </div>
     
     <!-- 筛选栏 -->
     <el-card shadow="never" class="filter-card">
       <el-form :inline="true" :model="filters" label-width="auto" size="default">
         <el-form-item label="操作类型">
-          <el-select v-model="filters.operationType" placeholder="全部类型" clearable style="width: 140px;">
-            <el-option label="登录" value="LOGIN" />
-            <el-option label="创建" value="CREATE" />
-            <el-option label="更新" value="UPDATE" />
-            <el-option label="删除" value="DELETE" />
-            <el-option label="查询" value="QUERY" />
+          <el-select v-model="filters.operationType" placeholder="全部类型" clearable style="width: 180px;">
+            <el-option v-for="opt in operationTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="用户ID">
@@ -58,17 +57,19 @@
         empty-text="暂无操作日志"
       >
         <el-table-column prop="id" label="ID" width="70" sortable="custom" />
-        <el-table-column prop="userId" label="用户ID" min-width="90" sortable="custom" />
-        <el-table-column prop="operationType" label="操作类型" width="110" sortable="custom">
+        <el-table-column prop="userId" label="用户ID" min-width="90" show-overflow-tooltip sortable="custom" />
+        <el-table-column prop="operationType" label="操作类型" width="200" sortable="custom">
           <template #default="{ row }">
             <el-tag :type="operationTypeTag(row.operationType)" size="small" effect="plain">
-              {{ operationTypeText(row.operationType) }}
+              {{ (row.operationType || '').includes(':') ? row.operationType.split(':')[1] : row.operationType }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="targetId" label="目标ID/对象" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="ipAddress" label="IP地址" min-width="140" />
-        <el-table-column prop="createTime" label="操作时间" min-width="170" sortable="custom" />
+        <el-table-column prop="ipAddress" label="IP地址" min-width="140" show-overflow-tooltip />
+        <el-table-column prop="createTime" label="操作时间" min-width="170" show-overflow-tooltip sortable="custom">
+          <template #default="{ row }">{{ (row.createTime || '').replace('T', ' ') || '-' }}</template>
+        </el-table-column>
         <el-table-column label="操作" width="80" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="danger" link @click="deleteLog(row)">删除</el-button>
@@ -112,6 +113,15 @@ const total = ref(0)
 const sortField = ref('')
 const sortOrder = ref('')
 
+const operationTypeOptions = [
+  { label: '登录', value: '登录' },
+  { label: '创建', value: '创建' },
+  { label: '更新', value: '更新' },
+  { label: '删除', value: '删除' },
+  { label: '审核', value: '审核' },
+  { label: '安排面试', value: '面试' }
+]
+
 onMounted(() => {
   loadLogs()
 })
@@ -141,10 +151,40 @@ const loadLogs = async () => {
     const params = buildParams()
     const res = await operationLogAPI.getLogs(params)
     if (res.code === 200) {
-      const data = res.data || []
+      let data = res.data || []
       if (Array.isArray(data)) {
-        logList.value = data
+        // 客户端过滤（后端未实现查询参数）
+        if (filters.operationType) {
+          data = data.filter(r => (r.operationType || '').includes(filters.operationType))
+        }
+        if (filters.userId) {
+          data = data.filter(r => String(r.userId) === String(filters.userId))
+        }
+        if (filters.ipAddress) {
+          const ip = filters.ipAddress.toLowerCase()
+          data = data.filter(r => (r.ipAddress || '').toLowerCase().includes(ip))
+        }
+        if (timeRange.value && timeRange.value.length === 2) {
+          const start = new Date(timeRange.value[0]).getTime()
+          const end = new Date(timeRange.value[1]).getTime()
+          data = data.filter(r => {
+            const t = new Date(r.createTime).getTime()
+            return t >= start && t <= end
+          })
+        }
+        // 排序
+        if (sortField.value && sortOrder.value) {
+          data.sort((a, b) => {
+            const va = a[sortField.value] || ''
+            const vb = b[sortField.value] || ''
+            const cmp = typeof va === 'number' ? va - vb : String(va).localeCompare(String(vb))
+            return sortOrder.value === 'asc' ? cmp : -cmp
+          })
+        }
         total.value = data.length
+        // 分页
+        const start = (currentPage.value - 1) * pageSize.value
+        logList.value = data.slice(start, start + pageSize.value)
       } else if (data.records) {
         logList.value = data.records
         total.value = data.total || data.records.length
@@ -200,13 +240,19 @@ const deleteLog = async (row) => {
 }
 
 const operationTypeTag = (type) => {
-  const map = { 'LOGIN': 'info', 'CREATE': 'success', 'UPDATE': 'warning', 'DELETE': 'danger', 'QUERY': 'info' }
-  return map[type] || 'info'
+  const desc = (type || '').includes(':') ? type.split(':')[1] : type
+  if (desc.includes('登录')) return 'info'
+  if (desc.includes('创建')) return 'success'
+  if (desc.includes('更新')) return 'warning'
+  if (desc.includes('删除')) return 'danger'
+  if (desc.includes('审核')) return 'warning'
+  if (desc.includes('面试')) return 'primary'
+  return 'info'
 }
 
 const operationTypeText = (type) => {
-  const map = { 'LOGIN': '登录', 'CREATE': '创建', 'UPDATE': '更新', 'DELETE': '删除', 'QUERY': '查询' }
-  return map[type] || '未知'
+  const desc = (type || '').includes(':') ? type.split(':')[1] : type
+  return desc || '未知'
 }
 </script>
 

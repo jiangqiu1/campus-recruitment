@@ -1,6 +1,9 @@
 <template>
-  <div class="user-manage">
-    <h2>用户管理</h2>
+  <div class="user-manage fade-in">
+    <div class="page-header">
+      <h2>用户管理</h2>
+      <p>管理系统用户 · 分配角色权限</p>
+    </div>
     
     <!-- 操作栏 -->
     <el-row class="operation-row">
@@ -56,7 +59,7 @@
     />
 
     <!-- 添加/编辑对话框 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" :append-to-body="true">
       <el-form :model="userForm" :rules="rules" ref="userFormRef" label-width="100px">
         <el-form-item label="用户名" prop="username">
           <el-input v-model="userForm.username" :disabled="isEdit" />
@@ -145,6 +148,15 @@ const loadUsers = async () => {
     if (res.code === 200) {
       let data = res.data || []
       if (Array.isArray(data)) {
+        // 客户端搜索过滤（后端未实现 keyword 参数）
+        if (searchKeyword.value) {
+          const kw = searchKeyword.value.toLowerCase()
+          data = data.filter(u =>
+            (u.username || '').toLowerCase().includes(kw) ||
+            (u.realName || '').toLowerCase().includes(kw) ||
+            (u.phone || '').toLowerCase().includes(kw)
+          )
+        }
         total.value = data.length
         const start = (currentPage.value - 1) * pageSize.value
         userList.value = data.slice(start, start + pageSize.value)
@@ -177,7 +189,10 @@ const saveUser = async () => {
     if (valid) {
       try {
         if (isEdit.value) {
-          await userAPI.updateUser(userForm.value.id, userForm.value)
+          // 编辑时不要把空密码发过去，避免覆盖数据库中的加密密码
+          const payload = { ...userForm.value }
+          if (!payload.password) delete payload.password
+          await userAPI.updateUser(userForm.value.id, payload)
           ElMessage.success('更新成功')
         } else {
           await userAPI.createUser(userForm.value)
@@ -195,12 +210,12 @@ const saveUser = async () => {
 const deleteUser = async (row) => {
   try {
     await ElMessageBox.confirm('确定删除该用户吗？', '提示', { type: 'warning' })
-    await userAPI.deleteUser(row.id)
-    ElMessage.success('删除成功')
+    const res = await userAPI.deleteUser(row.id)
+    ElMessage.success(res.message || '删除成功')
     loadUsers()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除失败')
+      ElMessage.error(error?.message || '删除失败')
     }
   }
 }
@@ -218,7 +233,7 @@ const batchDelete = async () => {
     loadUsers()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('批量删除失败')
+      ElMessage.error(error?.message || '批量删除失败')
     }
   }
 }
@@ -229,7 +244,7 @@ const handleSelectionChange = (selection) => {
 
 const toggleStatus = async (row) => {
   try {
-    await userAPI.updateStatus(row.id, { status: row.status })
+    await userAPI.updateUserStatus(row.id, { status: row.status })
   } catch (error) {
     ElMessage.error('状态更新失败')
     row.status = row.status === 1 ? 0 : 1

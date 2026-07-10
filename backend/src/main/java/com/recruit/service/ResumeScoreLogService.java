@@ -97,4 +97,12 @@ public interface ResumeScoreLogService extends IService<ResumeScoreLog> {
      * 对企业所有岗位的简历批量评分
      */
     int batchScoreByCompany(Long companyId);
+
+    /**
+     * 获取岗位的维度评分（用于雷达图）
+     *
+     * @param jobId 岗位ID
+     * @return 包含6个维度平均分的Map
+     */
+    Map<String, Object> getDimensionScores(Long jobId);
 }

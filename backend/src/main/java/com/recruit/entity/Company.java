@@ -52,9 +52,34 @@ public class Company {
     private String contactPerson;
     
     /**
+     * 联系邮箱
+     */
+    private String contactEmail;
+    
+    /**
      * 联系电话（加密）
      */
     private String contactPhone;
+    
+    /**
+     * 企业规模（如：50-150人）
+     */
+    private String size;
+    
+    /**
+     * 所在城市
+     */
+    private String city;
+    
+    /**
+     * 公司简介
+     */
+    private String description;
+    
+    /**
+     * 企业Logo地址
+     */
+    private String logo;
     
     /**
      * 审核状态：0=待审核，1=通过，2=拒绝

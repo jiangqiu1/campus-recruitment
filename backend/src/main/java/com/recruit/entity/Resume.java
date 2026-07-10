@@ -37,6 +37,11 @@ public class Resume {
     private String internship;
     
     /**
+     * 项目经历（JSON，与 internship 结构一致）
+     */
+    private String project;
+    
+    /**
      * 技能证书
      */
     private String skills;

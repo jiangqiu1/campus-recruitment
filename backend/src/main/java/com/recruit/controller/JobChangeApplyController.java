@@ -3,11 +3,13 @@ package com.recruit.controller;
 import com.recruit.entity.JobChangeApply;
 import com.recruit.entity.Job;
 import com.recruit.entity.Company;
+import com.recruit.entity.SysUser;
 import com.recruit.annotation.LogOperation;
 import com.recruit.dto.JobChangeSubmitRequest;
 import com.recruit.service.JobChangeApplyService;
 import com.recruit.service.JobService;
 import com.recruit.service.CompanyService;
+import com.recruit.service.UserService;
 import com.recruit.utils.Result;
 
 import javax.validation.Valid;
@@ -32,6 +34,9 @@ public class JobChangeApplyController extends BaseController {
 
     @Autowired
     private CompanyService companyService;
+
+    @Autowired
+    private UserService userService;
 
     /**
      * 获取岗位变更申请列表
@@ -59,6 +64,15 @@ public class JobChangeApplyController extends BaseController {
             item.put("applyTime", apply.getCreateTime() != null ? apply.getCreateTime().toString().replace("T", " ") : "");
             item.put("jobId", apply.getJobId());
             item.put("hrId", apply.getHrId());
+            // 查询申请人姓名
+            String applyUserName = "未知用户";
+            if (apply.getHrId() != null) {
+                SysUser hrUser = userService.getById(apply.getHrId());
+                if (hrUser != null) {
+                    applyUserName = hrUser.getRealName() != null ? hrUser.getRealName() : hrUser.getUsername();
+                }
+            }
+            item.put("applyUser", applyUserName);
             item.put("status", apply.getStatus());
             item.put("changeContent", apply.getChangeContent());
 

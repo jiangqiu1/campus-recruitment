@@ -48,6 +48,17 @@
 						<text v-else class="value-empty">未填写</text>
 					</view>
 					<view class="section-block">
+						<text class="section-label">项目经历</text>
+					<view v-if="parsedProject.length" class="exp-list">
+						<view v-for="(proj, i) in parsedProject" :key="i" class="exp-item">
+							<text class="exp-title">{{ proj.name }}</text>
+							<text class="exp-sub">{{ proj.role || '' }}{{ proj.duration ? ' · ' + proj.duration : '' }}</text>
+							<text v-if="proj.description" class="section-value" style="margin-top:6px;font-size:13px;color:#4E5969;line-height:1.6;">{{ proj.description }}</text>
+						</view>
+					</view>
+						<text v-else class="value-empty">未填写</text>
+					</view>
+					<view class="section-block">
 						<text class="section-label">技能证书</text>
 						<view v-if="resume.skills" class="skill-tags">
 							<text v-for="(s, i) in resume.skills.split(/[,，]/).map(v => v.trim()).filter(Boolean)" :key="i" class="skill-tag">{{ s }}</text>
@@ -138,6 +149,14 @@ const parsedInternship = computed(() => {
 	try {
 		const arr = typeof resume.value.internship === 'string' ? JSON.parse(resume.value.internship) : resume.value.internship
 		return Array.isArray(arr) ? arr : []
+	} catch { return []
+	}
+})
+const parsedProject = computed(() => {
+	if (!resume.value?.project) return []
+	try {
+		const arr = typeof resume.value.project === 'string' ? JSON.parse(resume.value.project) : resume.value.project
+		return Array.isArray(arr) ? arr : []
 	} catch { return [] }
 })
 
@@ -179,7 +198,19 @@ const loadResume = async () => {
 const calcCompleteness = () => {
 	const r = resume.value
 	if (!r) return
-	const fields = [r.name || r.realName, r.phone, r.email, r.jobTarget, r.education, r.internship, r.skills, r.selfEvaluation]
+	// Resume 实体没有 name/phone/email 字段，从 userInfo（localStorage）获取
+	const { realName, phone, email } = userInfo.value
+	const fields = [
+		realName || r.realName || r.name,
+		phone,
+		email,
+		r.jobTarget,
+		r.education,
+		r.internship,
+		r.project,
+		r.skills,
+		r.selfEvaluation
+	]
 	const filled = fields.filter(Boolean).length
 	completeness.value = Math.round((filled / fields.length) * 100)
 }

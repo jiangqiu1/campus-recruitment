@@ -19,6 +19,10 @@ request.interceptors.request.use(
 
 request.interceptors.response.use(
   response => {
+    // 文件下载（blob）直接返回，不检查 code
+    if (response.config.responseType === 'blob') {
+      return response.data
+    }
     const res = response.data
     if (res.code !== 200) {
       ElMessage.error(res.message || '请求失败')
@@ -29,6 +33,8 @@ request.interceptors.response.use(
   error => {
     if (error.response) {
       if (error.response.status === 401) {
+        // 退出登录时，不弹窗不跳转（由 logout 流程处理）
+        if (window.__isLoggingOut) return Promise.reject(error)
         ElMessage.error('登录已过期，请重新登录')
         localStorage.clear()
         window.location.href = '/login'
@@ -48,21 +54,28 @@ request.interceptors.response.use(
 export const authAPI = {
   login: (data) => request.post('/auth/login', data),
   register: (data) => request.post('/auth/register', data),
-  logout: () => request.post('/auth/logout', {}),
-  changePassword: (data) => request.post('/auth/change-password', data),
-  checkToken: () => request.get('/auth/check')
+  logout: () => {
+    const token = localStorage.getItem('token')
+    return request.post('/auth/logout', { token: token ? 'Bearer ' + token : '' })
+  },
+  changePassword: (data) => request.put('/auth/update-password', data),
+  checkToken: () => request.get('/auth/check'),
+  // 个人信息
+  getProfile: () => request.get('/auth/userinfo'),
+  updateProfile: (data) => request.put('/auth/profile', data)
 }
 
 // ==================== 用户管理模块 ====================
 export const userAPI = {
   getUsers: (params) => request.get('/admin/users', { params }),
+  getUsersByRole: (role) => request.get('/admin/users/by-role/' + role),
   createUser: (data) => request.post('/admin/users', data),
   updateUser: (id, data) => request.put('/admin/users/' + id, data),
   deleteUser: (id) => request.delete('/admin/users/' + id),
   batchDeleteUsers: (ids) => request.post('/admin/users/batch-delete', ids),
   updateUserStatus: (id, status) => request.put('/admin/users/' + id + '/status', status),
-  getUserInfo: () => request.get('/user/info'),
-  updateUserInfo: (data) => request.put('/user/info', data)
+  getUserInfo: () => request.get('/auth/userinfo'),
+  updateUserInfo: (data) => request.put('/auth/profile', data)
 }
 
 // ==================== 企业管理模块 ====================
@@ -133,6 +146,7 @@ export const deliveryAPI = {
   updateDeliveryStatus: (id, status) => request.put('/deliveries/' + id + '/status', { status }),
   deleteDelivery: (id) => request.delete('/deliveries/' + id),
   getDeliveriesByJob: (jobId) => request.get('/deliveries/by-job/' + jobId),
+  getDeliveriesByCompany: (companyId) => request.get('/deliveries/by-company/' + companyId),
   getDeliveryStatsByJob: (jobId) => request.get('/deliveries/statistics/by-job/' + jobId),
   getDeliveriesByStudent: (studentId) => request.get('/deliveries/by-student/' + studentId),
   arrangeInterview: (id, data) => request.put('/deliveries/' + id + '/arrange-interview', data)
@@ -147,16 +161,28 @@ export const classAPI = {
   batchDeleteClasses: (ids) => request.post('/classes/batch-delete', ids),
   getClassStudents: (classId) => request.get('/classes/' + classId + '/students'),
   getClassesByTeacher: (teacherId) => request.get('/classes/by-teacher/' + teacherId),
-  getAllClasses: (params) => request.get('/classes', { params })
+  getAllClasses: (params) => request.get('/classes', { params }),
+  // 学生关联管理
+  addStudentToClass: (classId, studentId) => request.post('/classes/' + classId + '/students', { studentId }),
+  removeStudentFromClass: (classId, studentId) => request.delete('/classes/' + classId + '/students/' + studentId),
+  batchAddStudentsToClass: (classId, studentIds) => request.post('/classes/' + classId + '/students/batch', { studentIds }),
+  batchRemoveStudentsFromClass: (classId, studentIds) => request.delete('/classes/' + classId + '/students/batch', { data: { studentIds } })
 }
 
 // ==================== 人岗匹配模块 ====================
 export const jobMatchAPI = {
   getMatches: (params) => request.get('/job-matches', { params }),
+  getMatchesByJob: (jobId) => request.get('/job-matches/by-job/' + jobId),
+  getMatchesByStudent: (studentId) => request.get('/job-matches/by-student/' + studentId),
   generateMatch: (data) => request.post('/job-matches/generate', data),
-  batchGenerateMatches: (jobId) => request.post('/job-matches/batch-generate/' + jobId),
+  batchGenerateMatches: (jobId, classId) => {
+    const config = { timeout: 120000 } // 批量匹配可能串行调用多次AI，需要较长超时
+    if (classId) config.params = { classId }
+    return request.post('/job-matches/batch-generate/' + jobId, null, config)
+  },
   pushMatch: (id) => request.put('/job-matches/' + id + '/push'),
-  deleteMatch: (id) => request.delete('/job-matches/' + id)
+  deleteMatch: (id) => request.delete('/job-matches/' + id),
+  deleteMatchesByJob: (jobId) => request.delete('/job-matches/by-job/' + jobId)
 }
 
 // ==================== 简历智能评分模块 ====================
@@ -166,15 +192,21 @@ export const resumeScoreAPI = {
   batchScoreResumes: (jobId) => request.post('/resume-scores/batch-score/' + jobId),
   batchScoreByCompany: (companyId) => request.post('/resume-scores/batch-score-by-company/' + companyId),
   getScoreDetail: (id) => request.get('/resume-scores/' + id),
+  getByDelivery: (deliveryId) => request.get('/resume-scores/by-delivery/' + deliveryId),
   deleteScore: (id) => request.delete('/resume-scores/' + id),
   getMatchDistribution: (jobId) => request.get('/resume-scores/statistics/match-distribution/' + jobId),
-  getAverageScoreByJobId: (jobId) => request.get('/resume-scores/statistics/average-score/' + jobId)
+  getAverageScoreByJobId: (jobId) => request.get('/resume-scores/statistics/average-score/' + jobId),
+  getDimensionScores: (jobId) => request.get('/resume-scores/dimensions/' + jobId),
+  getScoresByJobId: (jobId) => request.get('/resume-scores/by-job/' + jobId),
+  rescoreResume: (scoreLogId) => request.put('/resume-scores/' + scoreLogId + '/rescore')
 }
 
 // ==================== AI 解析日志模块 ====================
 export const aiParseAPI = {
-  getParseLogs: (params) => request.get('/ai-parse-logs', { params }),
-  deleteParseLog: (id) => request.delete('/ai-parse-logs/' + id)
+  getParseLogs: (params) => request.get('/ai-parse/logs', { params }),
+  deleteParseLog: (id) => request.delete('/ai-parse/logs/' + id),
+  analyzeResume: (studentId) => request.post('/ai-parse/analyze-resume', { studentId }),
+  parseJob: (rawMessage) => request.post('/ai-parse/parse-job', { rawMessage })
 }
 
 // ==================== 操作日志模块 ====================
@@ -217,6 +249,14 @@ export const dataExportAPI = {
   export: (data) => request.post('/export', data, { responseType: 'blob' })
 }
 
+// ==================== 通用消息通知模块 ====================
+export const userMessageAPI = {
+  getMessages: () => request.get('/user-messages'),
+  getUnreadCount: () => request.get('/user-messages/unread-count'),
+  markAsRead: (id) => request.put('/user-messages/' + id + '/read'),
+  markAllRead: () => request.put('/user-messages/read-all')
+}
+
 export default {
   auth: authAPI,
   user: userAPI,
@@ -233,5 +273,6 @@ export default {
   settings: settingsAPI,
   statistics: statisticsAPI,
   jobChange: jobChangeAPI,
-  dataExport: dataExportAPI
+  dataExport: dataExportAPI,
+  userMessage: userMessageAPI
 }

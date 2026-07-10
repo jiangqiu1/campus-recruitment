@@ -1,6 +1,6 @@
 <template>
 	<view class="page-wrapper">
-		<NavBar title="班级管理" :showBack="false" right-text="添加" @rightClick="showAddModal = true" />
+		<NavBar title="班级管理" :showBack="false" />
 		<!-- 搜索栏 -->
 		<view class="search-box">
 			<uni-icons type="search" size="16" color="#86909C" />
@@ -9,7 +9,8 @@
 		</view>
 
 		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
-			<view class="class-list">
+			<LoadingState type="skeleton" :rows="4" v-if="loading" />
+			<view v-if="!loading" class="class-list">
 				<view v-for="(cls, i) in filteredClasses" :key="i" class="class-card" @click="goToStudents(cls.id, cls.name)">
 					<view class="class-card-top">
 						<view class="class-icon">
@@ -38,10 +39,15 @@
 						</view>
 					</view>
 				</view>
-				<EmptyState v-if="!filteredClasses.length" icon="staff" title="暂无班级" desc="点击右上角「添加」创建班级" />
+				<EmptyState v-if="!filteredClasses.length" icon="staff" title="暂无班级" desc="点击右下角+号创建班级" />
 			</view>
 			<view style="height: calc(60px + env(safe-area-inset-bottom))" />
 		</scroll-view>
+
+		<!-- 底部浮动添加按钮 -->
+		<view class="fab-btn" @click="showAddModal = true">
+			<text class="fab-icon">+</text>
+		</view>
 
 		<!-- 添加班级弹出层 -->
 		<PopupDrawer :show="showAddModal" @update:show="showAddModal = $event" title="添加班级">
@@ -65,9 +71,12 @@ import NavBar from '@/components/NavBar.vue'
 import TabBar from '@/components/TabBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import PopupDrawer from '@/components/PopupDrawer.vue'
+import LoadingState from '@/components/LoadingState.vue'
 import { checkRole } from '@/utils/auth'
 
 checkRole(1)
+
+const loading = ref(true)
 
 const teacherTabs = [
 	{ page: 'home', icon: 'home', activeIcon: 'home-filled', label: '首页' },
@@ -90,7 +99,7 @@ const filteredClasses = computed(() => {
 	return classes.value.filter(c => (c.name || '').toLowerCase().includes(kw))
 })
 
-onShow(() => { loadClasses() })
+onShow(() => { loading.value = true; loadClasses() })
 
 const onRefresh = async () => {
 	refreshing.value = true
@@ -103,6 +112,7 @@ const loadClasses = async () => {
 		const res = await teacherAPI.getClasses()
 		classes.value = res.data || []
 	} catch (e) { console.log('加载班级失败', e) }
+	finally { loading.value = false }
 }
 
 const handleAddClass = async () => {
@@ -244,5 +254,26 @@ const goToResumes = () => uni.navigateTo({ url: '/pages/teacher/resumes' })
 	font-weight: 600;
 	border: none;
 	margin-top: 8px;
+}
+
+/* ===== 浮动添加按钮 ===== */
+.fab-btn {
+	position: fixed;
+	right: 24px;
+	bottom: 90px;
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	background: linear-gradient(135deg, #165DFF, #2563EB);
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 4px 16px rgba(22,93,255,0.4);
+	z-index: 100;
+}
+.fab-icon {
+	font-size: 32px;
+	color: white;
+	font-weight: 300;
+	margin-top: -2px;
 }
 </style>

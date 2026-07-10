@@ -2,6 +2,7 @@ package com.recruit.controller;
 
 import com.recruit.entity.Class;
 import com.recruit.entity.Resume;
+import com.recruit.entity.StudentClass;
 import com.recruit.entity.SysUser;
 import com.recruit.service.ClassService;
 import com.recruit.service.StudentClassService;
@@ -9,11 +10,13 @@ import com.recruit.service.DeliveryService;
 import com.recruit.service.ResumeService;
 import com.recruit.service.UserService;
 import com.recruit.utils.Result;
+import com.recruit.utils.AESUtil;
 import com.recruit.annotation.LogOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,6 +47,9 @@ public class ClassController extends BaseController {
     
     @Autowired
     private ResumeService resumeService;
+
+    @Autowired
+    private AESUtil aesUtil;
     
     /**
      * 获取班级列表（按角色过滤数据范围）
@@ -54,17 +60,22 @@ public class ClassController extends BaseController {
     public Result<List<Class>> getAllClasses() {
         Integer role = getCurrentRole();
         List<Class> classes;
-        
         if (Objects.equals(role, 1)) {
             // 教师：仅返回自己管辖的班级
-            Long teacherId = getCurrentUserId();
-            classes = classService.selectByTeacherId(teacherId);
+            classes = classService.selectByTeacherId(getCurrentUserId());
         } else {
             // 管理员或其他角色：返回全部
             classes = classService.list();
         }
-        // 为每个班级填充统计信息（批量查询消除 N+1）
-        // 1. 收集所有班级的学生ID
+        fillClassStatistics(classes);
+        return Result.success(classes);
+    }
+
+    /**
+     * 为班级列表填充学生数、投递数、就业率等统计字段
+     */
+    private void fillClassStatistics(List<Class> classes) {
+        if (classes == null || classes.isEmpty()) return;
         Map<Long, List<Long>> classStudentIds = new HashMap<>();
         Set<Long> allStudentIds = new HashSet<>();
         for (Class clazz : classes) {
@@ -72,8 +83,6 @@ public class ClassController extends BaseController {
             classStudentIds.put(clazz.getId(), ids);
             if (ids != null) allStudentIds.addAll(ids);
         }
-
-        // 2. 批量查询所有相关学生的投递记录
         Map<Long, List<com.recruit.entity.Delivery>> studentDeliveries = new HashMap<>();
         if (!allStudentIds.isEmpty()) {
             List<com.recruit.entity.Delivery> allDeliveries = deliveryService.lambdaQuery()
@@ -83,12 +92,9 @@ public class ClassController extends BaseController {
                 studentDeliveries.computeIfAbsent(d.getStudentId(), k -> new ArrayList<>()).add(d);
             }
         }
-
-        // 3. 计算每个班级的统计
         for (Class clazz : classes) {
             List<Long> studentIds = classStudentIds.getOrDefault(clazz.getId(), new ArrayList<>());
             clazz.setStudentCount(studentIds.size());
-
             int deliveryCount = 0;
             int employedCount = 0;
             for (Long sid : studentIds) {
@@ -100,9 +106,43 @@ public class ClassController extends BaseController {
             clazz.setDeliveryCount(deliveryCount);
             clazz.setEmploymentRate(studentIds.size() > 0 ? (int) Math.round(employedCount * 100.0 / studentIds.size()) : 0);
         }
-        return Result.success(classes);
     }
     
+    /**
+     * 获取当前学生的班级
+     */
+    @GetMapping("/student/my-class")
+    public Result<Map<String, Object>> getMyClass() {
+        Long userId = getCurrentUserId();
+        if (userId == null) {
+            return Result.error(401, "未登录");
+        }
+        List<StudentClass> relations = studentClassService.selectByStudentId(userId);
+        if (relations == null || relations.isEmpty()) {
+            return Result.error(404, "您尚未加入任何班级");
+        }
+        Long classId = relations.get(0).getClassId();
+        Class clazz = classService.getById(classId);
+        if (clazz == null) {
+            return Result.error(404, "班级不存在");
+        }
+        // 查询教师姓名
+        Map<String, Object> result = new HashMap<>();
+        result.put("id", clazz.getId());
+        result.put("name", clazz.getName());
+        result.put("major", clazz.getMajor());
+        result.put("grade", clazz.getGrade());
+        if (clazz.getTeacherId() != null) {
+            SysUser teacher = userService.getById(clazz.getTeacherId());
+            result.put("teacherName", teacher != null ? teacher.getRealName() : "");
+            result.put("teacherId", clazz.getTeacherId());
+        }
+        // 学生数
+        List<StudentClass> classmates = studentClassService.selectByClassId(classId);
+        result.put("studentCount", classmates != null ? classmates.size() : 0);
+        return Result.success(result);
+    }
+
     /**
      * 根据ID获取班级
      */
@@ -126,6 +166,7 @@ public class ClassController extends BaseController {
             return Result.error(403, "无权限访问该数据");
         }
         List<Class> classes = classService.selectByTeacherId(teacherId);
+        fillClassStatistics(classes);
         return Result.success(classes);
     }
     
@@ -254,7 +295,12 @@ public class ClassController extends BaseController {
                     map.put("id", user.getId());
                     map.put("username", user.getUsername());
                     map.put("realName", user.getRealName());
-                    map.put("phone", user.getPhone() != null ? user.getPhone() : "");
+                    // 解密手机号
+                    String phone = user.getPhone();
+                    if (phone != null && !phone.isEmpty()) {
+                        try { phone = aesUtil.decrypt(phone); } catch (Exception ignored) { }
+                    }
+                    map.put("phone", phone != null ? phone : "");
                     // 计算简历完整度
                     Resume resume = resumeService.selectByStudentId(studentId);
                     int resumeComplete = 0;
@@ -264,6 +310,21 @@ public class ClassController extends BaseController {
                         if (resume.getSelfEvaluation() != null && !resume.getSelfEvaluation().isEmpty()) resumeComplete += 30;
                     }
                     map.put("resumeComplete", resumeComplete);
+                    // 提取AI评分（从 resume.aiAnalysis JSON 中读取 overallScore）
+                    Integer aiScore = null;
+                    if (resume != null && resume.getAiAnalysis() != null && !resume.getAiAnalysis().isEmpty()) {
+                        try {
+                            ObjectMapper mapper = new ObjectMapper();
+                            Map<String, Object> analysis = mapper.readValue(resume.getAiAnalysis(), Map.class);
+                            Object score = analysis.get("overallScore");
+                            if (score instanceof Number) {
+                                aiScore = ((Number) score).intValue();
+                            } else if (score instanceof String) {
+                                aiScore = Integer.parseInt((String) score);
+                            }
+                        } catch (Exception ignored) { }
+                    }
+                    map.put("aiScore", aiScore);
                     // 计算投递数
                     Integer deliveryCount = deliveryService.countByStudentId(studentId);
                     map.put("deliveryCount", deliveryCount != null ? deliveryCount : 0);

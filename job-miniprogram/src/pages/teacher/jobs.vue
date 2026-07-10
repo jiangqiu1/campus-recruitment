@@ -25,7 +25,8 @@
 		</view>
 
 		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
-			<view class="job-list">
+			<LoadingState type="skeleton" :rows="4" v-if="loading" />
+			<view v-if="!loading" class="job-list">
 				<view v-for="(job, i) in filteredJobs" :key="i" class="job-card" @click="goToEdit(job)">
 					<view class="job-card-top">
 						<view class="job-info">
@@ -73,6 +74,8 @@
 </template>
 
 <script setup>
+const loading = ref(true)
+import LoadingState from '@/components/LoadingState.vue'
 import { ref, computed } from 'vue'
 import { onShow } from '@/utils/page-lifecycle'
 import { teacherAPI, jobAPI, aiParseAPI } from '@/utils/request'
@@ -173,7 +176,7 @@ const getTeacherId = () => {
 }
 
 // 页面显示时刷新数据（含首次加载 + 返回刷新）
-onShow(() => { loadJobs() })
+onShow(() => { loading.value = true; loadJobs() })
 
 const onRefresh = async () => {
 	refreshing.value = true
@@ -198,7 +201,7 @@ const loadJobs = async () => {
 	} catch (e) {
 		console.error('加载岗位列表失败', e)
 		uni.showToast({ title: '加载失败', icon: 'none' })
-	}
+	} finally { loading.value = false }
 }
 
 const handlePublish = async (job) => {

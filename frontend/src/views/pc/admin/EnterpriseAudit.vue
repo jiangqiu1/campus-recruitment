@@ -1,6 +1,9 @@
 <template>
-  <div class="enterprise-audit">
-    <h2>企业审核</h2>
+  <div class="enterprise-audit fade-in">
+    <div class="page-header">
+      <h2>企业审核</h2>
+      <p>审核企业注册 · 管理企业资质</p>
+    </div>
     
     <!-- 选项卡 -->
     <div class="tabs">
@@ -42,13 +45,13 @@
 
         <el-table v-if="enterpriseList.length > 0" :data="enterpriseList" stripe style="width: 100%" table-layout="auto">
           <el-table-column type="selection" width="40" />
-          <el-table-column prop="createTime" label="申请时间" min-width="170">
+          <el-table-column prop="createTime" label="申请时间" min-width="170" show-overflow-tooltip>
             <template #default="{ row }">{{ formatTime(row.createTime) }}</template>
           </el-table-column>
-          <el-table-column prop="name" label="企业名称" min-width="130" />
-          <el-table-column prop="industry" label="行业" min-width="110" />
-          <el-table-column prop="contactPerson" label="联系人" min-width="100" />
-          <el-table-column prop="contactPhone" label="联系电话" min-width="130" />
+          <el-table-column prop="name" label="企业名称" min-width="130" show-overflow-tooltip />
+          <el-table-column prop="industry" label="行业" min-width="110" show-overflow-tooltip />
+          <el-table-column prop="contactPerson" label="联系人" min-width="100" show-overflow-tooltip />
+          <el-table-column prop="contactPhone" label="联系电话" min-width="130" show-overflow-tooltip />
           <el-table-column label="操作" width="220" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" size="small" @click="openAuditModal(row)">审核</el-button>
@@ -74,9 +77,9 @@
         <el-empty v-if="!loadingJobChange && jobChangeList.length === 0" description="暂无待审核岗位变更" :image-size="120" />
         
         <el-table v-if="jobChangeList.length > 0" :data="jobChangeList" stripe style="width: 100%" table-layout="auto">
-          <el-table-column prop="applyTime" label="申请时间" min-width="170" />
-          <el-table-column prop="companyName" label="企业名称" min-width="130" />
-          <el-table-column prop="jobTitle" label="岗位名称" min-width="120" />
+          <el-table-column prop="applyTime" label="申请时间" min-width="170" show-overflow-tooltip />
+          <el-table-column prop="companyName" label="企业名称" min-width="130" show-overflow-tooltip />
+          <el-table-column prop="jobTitle" label="岗位名称" min-width="120" show-overflow-tooltip />
           <el-table-column prop="changeContent" label="变更内容" min-width="200" show-overflow-tooltip />
           <el-table-column label="操作" width="220" fixed="right">
             <template #default="{ row }">
@@ -89,7 +92,7 @@
     </div>
 
     <!-- ===== 审核详情对话框（带拒绝理由） ===== -->
-    <el-dialog v-model="auditDialogVisible" title="企业审核详情" width="640px">
+    <el-dialog v-model="auditDialogVisible" title="企业审核详情" width="640px" :append-to-body="true">
       <el-descriptions :column="2" border style="margin-bottom: 20px;">
         <el-descriptions-item label="企业名称" :span="2">{{ currentEnterprise.name }}</el-descriptions-item>
         <el-descriptions-item label="简称">{{ currentEnterprise.shortName || '未设置' }}</el-descriptions-item>
@@ -134,6 +137,7 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import { companyAPI, jobChangeAPI } from '@/api'
+import { formatDate } from '@/utils/formatDate'
 
 const activeTab = ref('enterprise')
 const auditDialogVisible = ref(false)
@@ -151,10 +155,7 @@ onMounted(async () => {
   await loadPendingJobChanges()
 })
 
-const formatTime = (t) => {
-  if (!t) return ''
-  return t.replace('T', ' ').substring(0, 19)
-}
+const formatTime = (t) => formatDate(t, { showSeconds: true })
 
 // 加载待审核企业
 const loadPendingCompanies = async () => {

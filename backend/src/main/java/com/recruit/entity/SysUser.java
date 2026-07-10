@@ -1,6 +1,6 @@
 package com.recruit.entity;  import com.baomidou.mybatisplus.annotation.IdType; import com.baomidou.mybatisplus.annotation.TableId; import com.baomidou.mybatisplus.annotation.TableLogic; import com.baomidou.mybatisplus.annotation.TableName; import lombok.Data;  import java.time.LocalDateTime;  /**  * 用户表实体类  */ @Data @TableName("sys_user") public class SysUser {          /**      * 主键自增 - 用户ID      */     @TableId(type = IdType.AUTO)     private Long id;          /**      * 用户名（学号/工号）- 唯一      */     private String username;          /**      * 密码 - 加密存储      */     private String password;          /**      * 真实姓名      */     private String realName;          /**      * 角色：0=学生，1=教师，2=企业HR，3=管理员      */     private Integer role;          /**      * 手机号（加密）      */     private String phone;
     
-    /**      * 邮箱      */     private String email;          /**      * 性别：0=未知，1=男，2=女      */     private Integer gender;          /**      * 微信OpenID - 唯一      */     private String wechatOpenid;          /**      * 头像URL      */         private String avatarUrl;
+    /**      * 邮箱      */     private String email;          /**      * 性别：0=未知，1=男，2=女      */     private Integer gender;          /**      * 微信OpenID - 唯一      */     private String wechatOpenid;          /**      * 学校名称      */     private String school;          /**      * 专业名称      */     private String major;          /**      * 头像URL      */         private String avatarUrl;
     
     /**
      * 所属企业ID（HR角色使用，关联 company 表）

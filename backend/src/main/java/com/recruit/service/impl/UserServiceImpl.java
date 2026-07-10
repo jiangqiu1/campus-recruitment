@@ -5,7 +5,7 @@ import com.recruit.entity.SysUser;
 import com.recruit.mapper.SysUserMapper;
 import com.recruit.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,8 +17,9 @@ public class UserServiceImpl extends ServiceImpl<SysUserMapper, SysUser> impleme
     
     @Autowired
     private SysUserMapper userMapper;
-    
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     
     @Override
     public SysUser selectByUsername(String username) {

@@ -1,11 +1,10 @@
 <template>
-  <div class="data-export">
+  <div class="data-export fade-in">
+    <div class="page-header">
+      <h2>数据导出</h2>
+      <p>导出系统数据 · 下载报表</p>
+    </div>
     <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>数据导出</span>
-        </div>
-      </template>
       
       <el-form :model="exportForm" label-width="120px">
         <el-form-item label="导出类型">
@@ -19,7 +18,7 @@
         </el-form-item>
         
         <el-form-item label="筛选条件">
-          <el-input v-model="exportForm.filter" placeholder="可选：输入筛选条件" />
+          <el-input v-model="exportForm.filter" :placeholder="filterPlaceholder" clearable />
         </el-form-item>
         
         <el-form-item label="导出格式">
@@ -41,7 +40,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { dataExportAPI } from '@/api'
 
@@ -50,6 +49,17 @@ const exportForm = ref({
   type: 'student',
   filter: '',
   format: 'xlsx'
+})
+
+const filterPlaceholder = computed(() => {
+  const tips = {
+    student: '按姓名 / 用户名 / 手机号筛选',
+    company: '按企业名称 / 行业 / 联系人筛选',
+    job: '按岗位名称 / 学历要求 / 工作地点筛选',
+    delivery: '按学生ID / 岗位ID筛选',
+    resume: '按学生ID / 学历 / 求职意向筛选'
+  }
+  return tips[exportForm.value.type] || '输入筛选条件（可选）'
 })
 
 async function handleExport() {

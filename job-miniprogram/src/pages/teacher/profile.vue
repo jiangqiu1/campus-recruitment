@@ -11,11 +11,11 @@
 			<!-- 个人资料头部：对齐登录页渐变风格 + 横向紧凑布局 -->
 			<view class="profile-header" :class="{ 'profile-header--shrink': isHeaderShrink }" :style="{ paddingTop: (statusBarHeight + 16) + 'px' }">
 				<view class="profile-header__left">
-					<view class="profile-avatar">
+					<view class="profile-avatar" @click="goEditProfile">
 						<text>{{ avatarText }}</text>
 					</view>
 					<view class="profile-user">
-						<text class="profile-name">{{ userInfo.realName || '教师用户' }}</text>
+						<text class="profile-name" @click="goEditProfile">{{ userInfo.realName || '教师用户' }}</text>
 						<text class="profile-info">{{ userInfo.department || '就业指导老师' }}</text>
 					</view>
 				</view>
@@ -133,6 +133,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { onShow } from '@/utils/page-lifecycle'
 import { teacherAPI } from '@/utils/request'
 import TabBar from '@/components/TabBar.vue'
 import { checkRole } from '@/utils/auth'
@@ -164,12 +165,19 @@ onMounted(() => {
 			statusBarHeight.value = sysInfo.statusBarHeight || 0
 		} catch (e2) { console.error('获取状态栏高度失败', e2) }
 	}
+	loadUserInfo()
+	loadDashboard()
+})
+
+// 编辑资料返回后刷新数据
+onShow(() => { loadUserInfo() })
+
+const loadUserInfo = () => {
 	try {
 		const stored = uni.getStorageSync('userInfo')
 		if (stored) userInfo.value = JSON.parse(stored)
 	} catch (e) { console.error('获取用户信息失败', e) }
-	loadDashboard()
-})
+}
 
 // 监听滚动，控制头部收缩
 const onScroll = (e) => {
@@ -203,6 +211,10 @@ const gotoFunc = (path) => {
 	} else {
 		uni.showToast({ title: '功能开发中', icon: 'none' })
 	}
+}
+
+const goEditProfile = () => {
+	uni.navigateTo({ url: '/pages/teacher/edit-profile' })
 }
 
 const handleLogout = () => {

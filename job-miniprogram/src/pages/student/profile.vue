@@ -11,6 +11,7 @@
 					<view class="profile-info-wrap">
 						<text class="profile-name" @click="editProfile">{{ userInfo.realName || '学生用户' }}</text>
 						<text class="profile-desc">{{ userInfo.school || '职业院校' }} · {{ userInfo.major || '未设置专业' }}</text>
+						<text v-if="classInfo" class="profile-class" @click="editProfile">{{ classInfo.name }}{{ classInfo.teacherName ? ' · ' + classInfo.teacherName + '老师' : '' }}</text>
 					</view>
 				</view>
 
@@ -122,7 +123,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { statisticsAPI, resumeAPI } from '@/utils/request'
+import { onShow } from '@/utils/page-lifecycle'
+import { statisticsAPI, resumeAPI, classAPI } from '@/utils/request'
 import TabBar from '@/components/TabBar.vue'
 
 const stats = ref({})
@@ -130,6 +132,7 @@ const refreshing = ref(false)
 const userInfo = ref({})
 const completeness = ref(0)
 const aiScore = ref(0)
+const classInfo = ref(null) // {id, name, major, grade, teacherName, studentCount}
 const statusBarHeight = ref(0)
 
 const avatarText = computed(() => (userInfo.value.realName || '学').charAt(0))
@@ -145,12 +148,22 @@ onMounted(() => {
 		} catch (e2) { console.error('获取状态栏高度失败', e2) }
 	}
 
+	loadUserInfo()
+	loadStats()
+	loadMyClass()
+})
+
+// 每次页面显示时重新加载用户信息（编辑资料返回后刷新数据）
+onShow(() => {
+	loadUserInfo()
+})
+
+const loadUserInfo = () => {
 	try {
 		const stored = uni.getStorageSync('userInfo')
 		if (stored) userInfo.value = JSON.parse(stored)
 	} catch (e) { console.error('获取用户信息失败', e) }
-	loadStats()
-})
+}
 
 const onRefresh = async () => {
 	refreshing.value = true
@@ -158,7 +171,7 @@ const onRefresh = async () => {
 		const stored = uni.getStorageSync('userInfo')
 		if (stored) userInfo.value = JSON.parse(stored)
 	} catch (e) { console.error('获取用户信息失败', e) }
-	await loadStats()
+	await Promise.all([loadStats(), loadMyClass()])
 	refreshing.value = false
 }
 
@@ -192,15 +205,28 @@ const loadStats = async () => {
 	}
 }
 
+const loadMyClass = async () => {
+	try {
+		const res = await classAPI.getMyClass()
+		if (res.code === 200 && res.data) {
+			classInfo.value = res.data
+		} else {
+			classInfo.value = null
+		}
+	} catch (e) {
+		classInfo.value = null
+	}
+}
+
 const gotoFunc = (path) => {
 	if (path) {
 		uni.navigateTo({ url: path })
 	} else {
-		uni.showToast({ title: '功能开发中', icon: 'none' })
+		uni.navigateTo({ url: '/pages/student/about' })
 	}
 }
 
-const editProfile = () => uni.showToast({ title: '编辑资料', icon: 'none' })
+const editProfile = () => uni.navigateTo({ url: '/pages/student/edit-profile' })
 const goToAIDiagnosis = () => uni.navigateTo({ url: '/pages/student/ai-matches' })
 
 const handleLogout = () => {
@@ -276,6 +302,11 @@ const handleLogout = () => {
 .profile-desc {
 	font-size: $uni-font-size-sm;
 	opacity: 0.85;
+}
+.profile-class {
+	font-size: 12px;
+	opacity: 0.7;
+	margin-top: 2px;
 }
 
 /* 工具区：左右边距和下方卡片对齐，不再整体右缩 */

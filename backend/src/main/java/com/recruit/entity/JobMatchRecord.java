@@ -37,6 +37,12 @@ public class JobMatchRecord {
     private BigDecimal matchScore;
     
     /**
+     * 子维度分数 JSON（技能/学历/经验/专业等）
+     * 格式示例：{"skillMatch":85,"eduMatch":80,"expMatch":72,"majorFit":78}
+     */
+    private String scoreDetail;
+    
+    /**
      * 匹配理由（如"技能匹配：Java,Spring"）
      */
     private String matchReason;

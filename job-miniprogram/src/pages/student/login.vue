@@ -124,6 +124,11 @@ const handleLogin = async () => {
 			id: ui.userId || ui.id || body.userId || body.id,
 			username: ui.username || body.username || username.value,
 			realName: ui.realName || body.realName,
+			phone: ui.phone || body.phone || '',
+			email: ui.email || body.email || '',
+			gender: ui.gender ?? body.gender ?? 0,
+			school: ui.school || body.school || '',
+			major: ui.major || body.major || '',
 			role: ui.role ?? body.role ?? role.value,
 			avatarUrl: ui.avatarUrl || body.avatarUrl || '',
 			companyId: ui.companyId || body.companyId

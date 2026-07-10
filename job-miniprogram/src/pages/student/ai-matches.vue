@@ -192,7 +192,14 @@ const formatTime = (t) => {
 	return t.substring(0, 10)
 }
 const showMatchDetail = (item) => {
-	detailItem.value = item
+	// 从 scoreDetail 中提取维度分数
+	const sd = item.scoreDetail || {}
+	detailItem.value = {
+		...item,
+		skillScore: sd.skillMatch != null ? sd.skillMatch / 100 : null,
+		expScore: sd.expMatch != null ? sd.expMatch / 100 : null,
+		eduScore: sd.eduMatch != null ? sd.eduMatch / 100 : null
+	}
 	showDetail.value = true
 }
 const dimPercent = (dim) => {

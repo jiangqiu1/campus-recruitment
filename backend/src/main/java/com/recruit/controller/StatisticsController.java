@@ -459,14 +459,25 @@ public class StatisticsController extends BaseController {
         List<Map<String, Object>> hotJobs = new ArrayList<>();
         List<Job> jobs = jobService.lambdaQuery()
                 .eq(Job::getStatus, 1)
-                .last("LIMIT 9")
+                .last("LIMIT 10")
                 .list();
-        for (int i = 0; i < jobs.size() && i < 9; i++) {
+        for (int i = 0; i < jobs.size() && i < 10; i++) {
             Map<String, Object> item = new HashMap<>();
-            item.put("name", jobs.get(i).getTitle());
-            item.put("size", 14 + (9 - i) * 2);
+            Job job = jobs.get(i);
+            // 统计该岗位的投递量
+            long deliveryCount = deliveryService.lambdaQuery()
+                    .eq(Delivery::getJobId, job.getId())
+                    .count();
+            item.put("name", job.getTitle());
+            item.put("count", deliveryCount);
+            item.put("size", 14 + (10 - i) * 2);
             hotJobs.add(item);
         }
+        // 按投递量降序排列
+        hotJobs.sort((a, b) -> Long.compare(
+                ((Number) b.getOrDefault("count", 0L)).longValue(),
+                ((Number) a.getOrDefault("count", 0L)).longValue()
+        ));
         return Result.success(hotJobs);
     }
 
@@ -486,7 +497,12 @@ public class StatisticsController extends BaseController {
                 for (OperationLog log : logs) {
                     Map<String, Object> item = new HashMap<>();
                     item.put("time", log.getCreateTime() != null ? log.getCreateTime().toString().replace("T", " ") : "");
-                    item.put("user", "UID:" + (log.getUserId() != null ? log.getUserId() : "?"));
+                    Long uid = log.getUserId();
+                    String userName = uid != null ? 
+                        (userService.getById(uid) != null ? 
+                            userService.getById(uid).getRealName() + "(" + userService.getById(uid).getUsername() + ")" : 
+                            "用户#" + uid) : "?";
+                    item.put("user", userName);
                     item.put("action", log.getOperationType() != null ? log.getOperationType() : "操作");
                     item.put("status", "成功");
                     activities.add(item);
@@ -502,7 +518,8 @@ public class StatisticsController extends BaseController {
             for (Delivery d : deliveries) {
                 Map<String, Object> item = new HashMap<>();
                 item.put("time", d.getCreateTime() != null ? d.getCreateTime().toString().replace("T", " ") : "");
-                item.put("user", "学生 #" + d.getStudentId());
+                String stuName = userService.getById(d.getStudentId()) != null ? userService.getById(d.getStudentId()).getRealName() : ("学生#" + d.getStudentId());
+                item.put("user", stuName);
                 item.put("action", "投递简历（岗位ID: " + d.getJobId() + "）");
                 item.put("status", d.getStatus() != null && d.getStatus() == 1 ? "已查看" : "待查看");
                 activities.add(item);

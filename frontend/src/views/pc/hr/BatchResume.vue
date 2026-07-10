@@ -1,10 +1,10 @@
 ﻿<template>
-  <div class="hr-resume-manage">
+  <div class="hr-resume-manage fade-in">
+    <div class="page-header">
+      <h2>简历管理</h2>
+      <p>查看学生简历 · AI 评分分析</p>
+    </div>
     <div class="card">
-      <div class="card-header">
-        <h2>简历管理</h2>
-      </div>
-
       <!-- 操作栏 -->
       <el-row class="operation-row" :gutter="12">
         <el-col :span="10">
@@ -21,7 +21,6 @@
           <el-button type="primary" @click="loadDeliveries">查询</el-button>
         </el-col>
         <el-col :span="14" style="text-align: right;">
-          <el-button type="success" @click="batchScore" :loading="batchScoring">批量AI评分</el-button>
           <el-button type="primary" @click="exportToExcel">导出CSV</el-button>
         </el-col>
       </el-row>
@@ -37,13 +36,13 @@
             <el-tag v-else type="info">未评分</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100">
+        <el-table-column label="状态" width="120" align="center">
           <template #default="{ row }">
-            <el-tag :type="statusTagType(row.status)">{{ statusText(row.status) }}</el-tag>
+            <el-tag :type="statusTagType(row.status)" size="small">{{ statusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="投递时间" width="170">
-          <template #default="{ row }">{{ row.createTime ? row.createTime.substring(0,19).replace('T', ' ') : '-' }}</template>
+          <template #default="{ row }">{{ formatDate(row.createTime, { showSeconds: true }) }}</template>
         </el-table-column>
         <el-table-column label="操作" width="260">
           <template #default="{ row }">
@@ -62,40 +61,71 @@
     </div>
 
     <!-- 简历详情对话框 -->
-    <el-dialog v-model="viewDialogVisible" title="简历详情" width="800px" :close-on-click-modal="false">
-      <div v-if="currentResume">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="姓名">{{ currentResume.name || currentResume.realName }}</el-descriptions-item>
-          <el-descriptions-item label="电话">{{ currentResume.phone }}</el-descriptions-item>
-          <el-descriptions-item label="邮箱">{{ currentResume.email }}</el-descriptions-item>
-          <el-descriptions-item label="学历">{{ currentResume.education }}</el-descriptions-item>
-          <el-descriptions-item label="求职意向" :span="2">{{ currentResume.jobTarget }}</el-descriptions-item>
-          <el-descriptions-item label="技能标签" :span="2">
-            <el-tag v-for="tag in resumeTags" :key="tag" style="margin-right: 5px; margin-bottom: 3px;">{{ tag }}</el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="自我评价" :span="2">{{ currentResume.selfEvaluation || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="工作经历" :span="2">{{ currentResume.workExperience || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="项目经历" :span="2">{{ currentResume.projectExperience || '-' }}</el-descriptions-item>
-        </el-descriptions>
-      </div>
-    </el-dialog>
+    <ResumeDetailDialog
+      v-model:visible="viewDialogVisible"
+      :student-id="viewStudentId"
+      mode="hr"
+      :hr-score="currentHrScore"
+      :hr-level="currentHrLevel"
+      :hr-comment="currentHrComment"
+      :hr-dims="currentHrDims"
+    />
 
     <!-- 评分对话框 -->
-    <el-dialog v-model="scoreDialogVisible" title="简历评分" width="500px">
-      <el-form :model="scoreForm" label-width="100px">
-        <el-form-item label="岗位">
-          <el-input :value="scoreForm.jobTitle" disabled />
-        </el-form-item>
-        <el-form-item label="AI评分">
-          <el-slider v-model="scoreForm.score" :min="0" :max="100" show-input />
-        </el-form-item>
-        <el-form-item label="评价">
-          <el-input v-model="scoreForm.analysis" type="textarea" :rows="4" placeholder="AI自动生成评价或手动输入" />
-        </el-form-item>
-      </el-form>
+    <el-dialog v-model="scoreDialogVisible" title="简历评分" width="520px"
+      append-to-body modal-class="batch-score-overlay">
+      <div v-if="scoreData.loading" style="text-align:center;padding:40px 0;color:#86909C;">
+        <el-icon class="is-loading" style="font-size:28px;margin-bottom:12px;"><i class="el-icon-loading" /></el-icon>
+        <p style="margin:0;font-size:14px;">AI 分析中，请稍候...</p>
+      </div>
+      <div v-else>
+        <!-- 岗位信息 -->
+        <div style="margin-bottom:18px;">
+          <span style="font-size:13px;color:#86909C;">岗位：</span>
+          <span style="font-weight:600;font-size:14px;color:#1D2129;">{{ scoreData.jobTitle }}</span>
+        </div>
+
+        <!-- AI 综合评分 -->
+        <div class="score-summary-card">
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div class="score-big-circle" :style="{ borderColor: scoreColor(scoreData.total) }">
+              <span class="score-big-num" :style="{ color: scoreColor(scoreData.total) }">{{ scoreData.total }}</span>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:15px;font-weight:700;color:#1D2129;margin-bottom:4px;">
+                AI 综合评分
+                <span v-if="scoreData.isAiGenerated" style="font-size:11px;color:#86909C;font-weight:400;margin-left:6px;">(AI 生成)</span>
+              </div>
+              <el-progress :percentage="scoreData.total" :stroke-width="10"
+                :color="scoreColor(scoreData.total)" :show-text="false" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 三维度评分 -->
+        <div class="dims-section">
+          <div class="dim-row" v-for="dim in scoreData.dims" :key="dim.key">
+            <div class="dim-label">{{ dim.label }}</div>
+            <el-progress :percentage="dim.score" :stroke-width="8"
+              :color="scoreColor(dim.score)" :show-text="false" />
+            <span class="dim-val" :style="{ color: scoreColor(dim.score) }">{{ dim.score }}</span>
+          </div>
+        </div>
+
+        <!-- 评语 -->
+        <div v-if="scoreData.comment" class="comment-box">
+          <div style="font-size:13px;font-weight:600;color:#4E5969;margin-bottom:6px;">评语</div>
+          <p style="margin:0;font-size:13px;color:#86909C;line-height:1.6;">{{ scoreData.comment }}</p>
+        </div>
+        <div v-else class="comment-box comment-box--empty">
+          <p style="margin:0;font-size:13px;color:#C9CDD4;">暂无评语</p>
+        </div>
+      </div>
       <template #footer>
-        <el-button @click="scoreDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitScore">确定</el-button>
+        <el-button @click="scoreDialogVisible = false">关闭</el-button>
+        <el-button v-if="!scoreData.loading" type="primary" :loading="scoreData.scoring" @click="handleRescore">
+          重新 AI 评分
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -104,7 +134,9 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useUserStore } from '@/stores/user.js'
-import { deliveryAPI, resumeAPI, resumeScoreAPI, jobAPI } from '@/api/index.js'
+import { deliveryAPI, resumeScoreAPI, jobAPI } from '@/api/index.js'
+import ResumeDetailDialog from '@/components/ResumeDetailDialog.vue'
+import { formatDate } from '@/utils/formatDate'
 import { ElMessage } from 'element-plus'
 
 const userStore = useUserStore()
@@ -118,19 +150,29 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const jobOptions = ref([])
-const batchScoring = ref(false)
 
 const viewDialogVisible = ref(false)
 const scoreDialogVisible = ref(false)
-const currentResume = ref(null)
+const viewStudentId = ref(null)
 const currentDelivery = ref(null)
 
-const scoreForm = ref({ jobId: null, jobTitle: '', score: 0, analysis: '' })
+const currentHrScore = ref(null)
+const currentHrLevel = ref('')
+const currentHrComment = ref('')
+const currentHrDims = ref([])
 
-const resumeTags = computed(() => {
-  if (!currentResume.value) return []
-  const tags = currentResume.value.skillTags || currentResume.value.skills || ''
-  return tags.split(/[,，\/]/).map(t => t.trim()).filter(Boolean)
+// 评分弹窗数据
+const scoreData = ref({
+  jobTitle: '',
+  total: 0,
+  dims: [],
+  comment: '',
+  deliveryId: null,
+  jobId: null,
+  scoreLogId: null,
+  isAiGenerated: false,
+  loading: false,
+  scoring: false
 })
 
 onMounted(() => {
@@ -185,37 +227,153 @@ const loadDeliveries = async () => {
 
 const viewResume = async (row) => {
   if (!row.studentId) { ElMessage.warning('缺少学生信息'); return }
-  try {
-    const res = await resumeAPI.getResumeByStudent(row.studentId)
-    if (res.code === 200) {
-      currentResume.value = res.data
-      viewDialogVisible.value = true
-    } else {
-      ElMessage.info('该学生暂无简历')
+  viewStudentId.value = row.studentId
+  // 重置 HR 评分数据
+  currentHrScore.value = null
+  currentHrLevel.value = ''
+  currentHrComment.value = ''
+  currentHrDims.value = []
+  // 尝试加载评分维度
+  if (row.id) {
+    try {
+      const sr = await resumeScoreAPI.getByDelivery(row.id)
+      if (sr.code === 200 && sr.data) {
+        fillHrScoreData(sr.data)
+      }
+    } catch (e) {
+      // 没有评分 → 自动触发单条 AI 评分（1 token）
+      if (row.jobId && row.id) {
+        try {
+          const scoreRes = await resumeScoreAPI.scoreResume({ jobId: row.jobId, deliveryId: row.id })
+          if (scoreRes.code === 200) {
+            // 评分成功后重新加载
+            const sr2 = await resumeScoreAPI.getByDelivery(row.id)
+            if (sr2.code === 200 && sr2.data) {
+              fillHrScoreData(sr2.data)
+            }
+          }
+        } catch (e2) { /* auto score failed */ }
+      }
     }
-  } catch (e) { ElMessage.error('加载简历失败: ' + (e.message || '网络错误')) }
+  }
+  // 投递记录行中已有的 score 作为兜底
+  if (currentHrScore.value === null && row.score) {
+    currentHrScore.value = Math.round(row.score)
+  }
+  viewDialogVisible.value = true
 }
 
-const showScoreDialog = (row) => {
-  scoreForm.value = { jobId: row.jobId, jobTitle: row.jobTitle, score: row.score || 60, analysis: row.analysis || '' }
+// 填充 HR 评分数据到 dialog 状态和维度数据
+const fillHrScoreData = (data) => {
+  let sd = data.scoreDetail || data
+  if (typeof sd === 'string') {
+    try { sd = JSON.parse(sd) } catch (e) { sd = {} }
+  }
+  if (sd && typeof sd === 'object') {
+    currentHrScore.value = data.score || sd.总分 || sd.totalScore || null
+    currentHrComment.value = sd.评语 || sd.comment || data.analysis || ''
+    const dims = []
+    const dimMap = { 技能得分: '技能匹配', 经验得分: '经验匹配', 教育得分: '学历匹配' }
+    for (const key of Object.keys(dimMap)) {
+      if (sd[key] !== undefined && sd[key] !== null) {
+        dims.push({ label: dimMap[key], score: Math.round(sd[key]) })
+      }
+    }
+    if (dims.length) currentHrDims.value = dims
+  }
+}
+
+const showScoreDialog = async (row) => {
   currentDelivery.value = row
+  // 显示 loading，准备数据
+  scoreData.value = {
+    jobTitle: row.jobTitle || '',
+    total: 0,
+    dims: [],
+    comment: '',
+    deliveryId: row.id,
+    jobId: row.jobId,
+    scoreLogId: null,
+    isAiGenerated: false,
+    loading: true,
+    scoring: false
+  }
   scoreDialogVisible.value = true
+  // 加载现有评分
+  if (row.id) {
+    try {
+      const sr = await resumeScoreAPI.getByDelivery(row.id)
+      if (sr.code === 200 && sr.data) {
+        const data = sr.data
+        let sd = data.scoreDetail || data
+        if (typeof sd === 'string') {
+          try { sd = JSON.parse(sd) } catch (e) { sd = {} }
+        }
+        const dims = []
+        const dimMap = { 技能得分: '技能匹配', 经验得分: '经验匹配', 教育得分: '学历匹配' }
+        for (const key of Object.keys(dimMap)) {
+          if (sd[key] !== undefined && sd[key] !== null) {
+            dims.push({ key, label: dimMap[key], score: Math.round(sd[key]) })
+          }
+        }
+        scoreData.value.total = data.score || 0
+        scoreData.value.dims = dims
+        scoreData.value.comment = sd.评语 || sd.comment || data.analysis || ''
+        scoreData.value.scoreLogId = data.id || null
+        scoreData.value.isAiGenerated = true
+      }
+    } catch (e) { /* no existing score */ }
+  }
+  scoreData.value.loading = false
 }
 
-const submitScore = async () => {
+const handleRescore = async () => {
+  if (!scoreData.value.scoreLogId) {
+    // 还没有评分记录 → 直接调用评分
+    if (!scoreData.value.jobId || !scoreData.value.deliveryId) {
+      ElMessage.warning('缺少评分信息')
+      return
+    }
+    scoreData.value.scoring = true
+    try {
+      const res = await resumeScoreAPI.scoreResume({
+        jobId: scoreData.value.jobId,
+        deliveryId: scoreData.value.deliveryId
+      })
+      if (res.code === 200) {
+        ElMessage.success('AI 评分完成')
+        // 重新加载数据
+        await showScoreDialog(currentDelivery.value)
+        // 刷新表格
+        loadDeliveries()
+      } else {
+        ElMessage.error(res.message || '评分失败')
+      }
+    } catch (e) {
+      ElMessage.error('评分失败: ' + (e.message || '网络错误'))
+    } finally {
+      scoreData.value.scoring = false
+    }
+    return
+  }
+  // 已有评分记录 → 重新评分
+  scoreData.value.scoring = true
   try {
-    const res = await resumeScoreAPI.scoreResume({
-      jobId: scoreForm.value.jobId,
-      deliveryId: currentDelivery.value.id,
-      score: scoreForm.value.score,
-      analysis: scoreForm.value.analysis
-    })
+    const res = await resumeScoreAPI.rescoreResume(scoreData.value.scoreLogId)
     if (res.code === 200) {
-      ElMessage.success('评分成功')
-      scoreDialogVisible.value = false
+      ElMessage.success('重新评分完成')
+      // 重新加载数据
+      await showScoreDialog(currentDelivery.value)
+      // 刷新表格
       loadDeliveries()
-    } else { ElMessage.error(res.message || '评分失败') }
-  } catch (e) { ElMessage.error('评分失败: ' + (e.message || '网络错误')) }
+    } else {
+      ElMessage.error(res.message || '重新评分失败')
+    }
+  } catch (e) {
+    ElMessage.error('重新评分失败: ' + (e.message || '网络错误'))
+  } finally {
+    scoreData.value.scoring = false
+  }
 }
 
 const updateStatus = async (row, status) => {
@@ -226,30 +384,6 @@ const updateStatus = async (row, status) => {
       loadDeliveries()
     } else { ElMessage.error(res.message || '状态更新失败') }
   } catch (e) { ElMessage.error('状态更新失败: ' + (e.message || '网络错误')) }
-}
-
-const batchScore = async () => {
-  if (!companyId.value) { ElMessage.warning('未关联企业信息'); return }
-  batchScoring.value = true
-  try {
-    const res = await resumeScoreAPI.batchScoreByCompany(companyId.value)
-    if (res.code === 200) {
-      ElMessage.success('批量AI评分完成')
-      loadDeliveries()
-    } else { ElMessage.error(res.message || '批量评分失败') }
-  } catch (e) {
-    // Fallback: score per job
-    try {
-      const jobsRes = await jobAPI.getJobsByCompany(companyId.value, {})
-      if (jobsRes.code === 200 && Array.isArray(jobsRes.data)) {
-        for (const job of jobsRes.data) {
-          await resumeScoreAPI.batchScoreResumes(job.id)
-        }
-        ElMessage.success('批量评分完成')
-        loadDeliveries()
-      }
-    } catch (e2) { ElMessage.error('批量评分失败: ' + (e2.message || '网络错误')) }
-  } finally { batchScoring.value = false }
 }
 
 const exportToExcel = () => {
@@ -281,4 +415,74 @@ const scoreColor = (s) => s >= 90 ? '#67C23A' : (s >= 75 ? '#E6A23C' : '#F56C6C'
 .card h2 { font-size: 19px; font-weight: 600; padding-bottom: 12px; border-bottom: 1px solid #F2F3F5; position: relative; }
 .card h2::after { content: ''; width: 50px; height: 3px; background: #165DFF; border-radius: 3px; position: absolute; left: 0; bottom: -1px; }
 .operation-row { margin-bottom: 20px; }
+
+/* 评分弹窗样式 */
+.score-summary-card {
+  background: #F9FAFB;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.score-big-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.score-big-num {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1;
+}
+.dims-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  border: 1px solid #F2F3F5;
+}
+.dims-section .dim-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.dims-section .dim-row:last-child { margin-bottom: 0; }
+.dims-section .dim-label {
+  font-size: 13px;
+  color: #4E5969;
+  width: 72px;
+  flex-shrink: 0;
+}
+.dims-section .el-progress { flex: 1; }
+.dims-section .dim-val {
+  font-size: 13px;
+  font-weight: 700;
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.comment-box {
+  background: #F9FAFB;
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 8px;
+}
+.comment-box--empty { border: 1px dashed #E5E6EB; }
+</style>
+
+<style>
+.batch-score-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  background: rgba(0, 0, 0, 0.45) !important;
+  z-index: 9999 !important;
+}
 </style>

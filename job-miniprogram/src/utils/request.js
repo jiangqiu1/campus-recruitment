@@ -102,7 +102,8 @@ export const authAPI = {
   login: (data) => request({ url: '/auth/login', method: 'POST', data }),
   register: (data) => request({ url: '/auth/register', method: 'POST', data }),
   getUserInfo: () => request({ url: '/auth/userinfo' }),
-  updatePassword: (data) => request({ url: '/auth/update-password', method: 'PUT', data })
+  updatePassword: (data) => request({ url: '/auth/update-password', method: 'PUT', data }),
+  updateProfile: (data) => request({ url: '/auth/profile', method: 'PUT', data })
 }
 
 /* ======================== 岗位模块 ======================== */
@@ -184,6 +185,11 @@ export const statisticsAPI = {
   getStudentOverview: (studentId) => request({ url: '/statistics/student/overview' })
 }
 
+/* ======================== 班级模块 ======================== */
+export const classAPI = {
+  getMyClass: () => request({ url: '/classes/student/my-class' })
+}
+
 /* ======================== 教师端模块 ======================== */
 export const teacherAPI = {
   getDashboard: () => request({ url: '/statistics/teacher/dashboard' }),
@@ -221,7 +227,9 @@ export const hrAPI = {
   closeJob: (id) => request({ url: '/jobs/' + id + '/close', method: 'PUT' }),
   deleteJob: (id) => request({ url: '/jobs/' + id, method: 'DELETE' }),
   getCompanyDeliveries: (jobId) => request({ url: '/deliveries/by-job/' + jobId }),
+  getDeliveriesByCompany: (companyId) => request({ url: '/deliveries/by-company/' + companyId }),
   updateDeliveryStatus: (id, data) => request({ url: '/deliveries/' + id + '/status', method: 'PUT', data }),
+  arrangeInterview: (id, data) => request({ url: '/deliveries/' + id + '/arrange-interview', method: 'PUT', data }),
   getCompanyProfile: (id) => request({ url: '/companies/' + id }),
   updateCompany: (id, data) => request({ url: '/companies/' + id, method: 'PUT', data }),
   getCompanyName: (companyId) => request({ url: '/companies/' + companyId }),

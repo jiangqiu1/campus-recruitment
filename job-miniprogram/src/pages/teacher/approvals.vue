@@ -28,15 +28,20 @@
 							{{ statusLabel(item.status) }}
 						</text>
 					</view>
-					<view class="card-meta">
-						<text><uni-icons type="person" size="12" color="#C9CDD4" /> 申请 #{{ item.id }}</text>
-						<text><uni-icons type="calendar" size="12" color="#C9CDD4" /> {{ item.applyTime || '—' }}</text>
-						<text><uni-icons type="person" size="12" color="#C9CDD4" /> {{ item.applicantName || '教师' }}</text>
+				<view class="card-meta">
+					<text><uni-icons type="person" size="12" color="#C9CDD4" /> 申请人：{{ item.applyUser || '未知' }}</text>
+					<text><uni-icons type="calendar" size="12" color="#C9CDD4" /> {{ item.applyTime || '—' }}</text>
+					<text><uni-icons type="info" size="12" color="#C9CDD4" /> 申请 #{{ item.id }}</text>
+				</view>
+				<view v-if="item.changeContent" class="change-content">
+					<text class="change-label">变更内容</text>
+					<view class="change-rows">
+						<view v-for="(row, idx) in parseChangeContent(item.changeContent)" :key="idx" class="change-row">
+							<text class="change-key">{{ row.label }}</text>
+							<text class="change-value">{{ row.value }}</text>
+						</view>
 					</view>
-					<view v-if="item.changeContent" class="change-content">
-						<text class="change-label">变更内容：</text>
-						<text class="change-text">{{ item.changeContent }}</text>
-					</view>
+				</view>
 					<view v-if="item.status === 0" class="card-actions">
 						<button class="action-btn reject" @click="handleReject(item)">拒绝</button>
 						<button class="action-btn approve" @click="handleApprove(item)">通过</button>
@@ -77,6 +82,47 @@ const statusClass = (s) => {
 const statusLabel = (s) => {
 	const map = { 0: '待审核', 1: '已通过', 2: '已拒绝' }
 	return map[s] || '未知'
+}
+
+const fieldLabelMap = {
+	title: '岗位名称',
+	salaryRange: '薪资范围',
+	salary: '薪资',
+	salaryMin: '最低薪资',
+	salaryMax: '最高薪资',
+	type: '岗位类型',
+	location: '工作地点',
+	city: '工作城市',
+	address: '详细地址',
+	education: '学历要求',
+	headcount: '招聘人数',
+	description: '岗位描述',
+	requirements: '任职要求',
+	duties: '岗位职责',
+	deadline: '截止日期'
+}
+
+const parseChangeContent = (content) => {
+	if (!content || typeof content !== 'string') return []
+	// 处理乱码 / 非法字符占位
+	const trimmed = content.trim()
+	if (!trimmed || /^[?？]+$/.test(trimmed)) return []
+	let parsed = null
+	try {
+		parsed = JSON.parse(trimmed)
+	} catch (e) {
+		// 可能后端做了 JSON.stringify 的 JSON，或中文引号问题，尝试二次处理
+		return [{ label: '原始内容', value: trimmed }]
+	}
+	if (parsed && typeof parsed === 'object') {
+		return Object.entries(parsed)
+			.filter(([, value]) => value !== '' && value !== null && value !== undefined)
+			.map(([key, value]) => ({
+				label: fieldLabelMap[key] || key,
+				value: String(value)
+			}))
+	}
+	return [{ label: '原始内容', value: String(parsed) }]
 }
 
 {
@@ -216,10 +262,13 @@ const loadMore = () => {}
 .status-tag.approved { background: rgba(0,180,42,0.08); color: #00B42A; }
 .status-tag.rejected { background: rgba(239,68,68,0.08); color: #EF4444; }
 
-.card-meta { flex-direction: row; gap: 16px; margin-bottom: 12px; font-size: 12px; color: #86909C; }
+.card-meta { flex-direction: row; flex-wrap: wrap; gap: 12px 16px; margin-bottom: 12px; font-size: 12px; color: #86909C; }
 .change-content { background: #F7F8FA; border-radius: 8px; padding: 12px; margin-bottom: 14px; }
-.change-label { font-size: 12px; font-weight: 600; color: #4E5969; display: block; margin-bottom: 4px; }
-.change-text { font-size: 13px; color: #1D2129; line-height: 1.5; }
+.change-label { font-size: 12px; font-weight: 600; color: #4E5969; display: block; margin-bottom: 8px; }
+.change-rows { display: flex; flex-direction: column; gap: 6px; }
+.change-row { flex-direction: row; align-items: flex-start; gap: 8px; }
+.change-key { font-size: 12px; color: #86909C; flex-shrink: 0; min-width: 70px; }
+.change-value { font-size: 13px; color: #1D2129; line-height: 1.5; flex: 1; word-break: break-word; }
 
 .card-actions { flex-direction: row; gap: 12px; }
 .action-btn {

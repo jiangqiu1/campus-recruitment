@@ -19,6 +19,7 @@ public class PasswordEncoderConfig {
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        // strength=8：校内系统够安全，匹配速度约15ms（默认strength=10约70ms）
+        return new BCryptPasswordEncoder(8);
     }
 }

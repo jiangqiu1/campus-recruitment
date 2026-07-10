@@ -26,6 +26,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Map;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Service
 public class JobMatchRecordServiceImpl extends ServiceImpl<JobMatchRecordMapper, JobMatchRecord> implements JobMatchRecordService {
 
@@ -77,6 +80,11 @@ public class JobMatchRecordServiceImpl extends ServiceImpl<JobMatchRecordMapper,
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean generateMatchRecord(Long jobId, Long studentId) {
+        // 如果存在旧记录则先删除（支持重新匹配）
+        this.remove(Wrappers.<JobMatchRecord>lambdaQuery()
+                .eq(JobMatchRecord::getJobId, jobId)
+                .eq(JobMatchRecord::getStudentId, studentId));
+
         Job job = jobMapper.selectById(jobId);
         Resume resume = resumeMapper.selectByStudentId(studentId);
         SysUser student = studentId != null ? userService.getById(studentId) : null;
@@ -93,11 +101,27 @@ public class JobMatchRecordServiceImpl extends ServiceImpl<JobMatchRecordMapper,
         BigDecimal matchScore = new BigDecimal(matchScoreInt).divide(new BigDecimal(100), 2, RoundingMode.HALF_UP);
         String matchReason = result.getOrDefault("matchReason", "").toString();
 
+        // 构建子维度 JSON
+        String scoreDetail = null;
+        try {
+            Map<String, Object> detail = new java.util.LinkedHashMap<>();
+            if (result.containsKey("skillMatch")) detail.put("skillMatch", toInt(result.get("skillMatch")));
+            if (result.containsKey("eduMatch")) detail.put("eduMatch", toInt(result.get("eduMatch")));
+            if (result.containsKey("expMatch")) detail.put("expMatch", toInt(result.get("expMatch")));
+            if (result.containsKey("majorFit")) detail.put("majorFit", toInt(result.get("majorFit")));
+            if (!detail.isEmpty()) {
+                scoreDetail = new ObjectMapper().writeValueAsString(detail);
+            }
+        } catch (Exception e) {
+            log.warn("序列化 scoreDetail 失败", e);
+        }
+
         JobMatchRecord record = new JobMatchRecord();
         record.setJobId(jobId);
         record.setStudentId(studentId);
         record.setMatchScore(matchScore);
         record.setMatchReason(matchReason);
+        record.setScoreDetail(scoreDetail);
         record.setIsPushed(0);
         record.setIsClicked(0);
         record.setCreateTime(LocalDateTime.now());
@@ -182,6 +206,11 @@ public class JobMatchRecordServiceImpl extends ServiceImpl<JobMatchRecordMapper,
     }
 
     // ========== 工具方法 ==========
+
+    @Override
+    public int deleteByJobId(Long jobId) {
+        return jobMatchRecordMapper.deleteByJobId(jobId);
+    }
 
     private String buildResumeText(Resume resume, SysUser student) {
         if (resume == null) return "暂无简历数据";

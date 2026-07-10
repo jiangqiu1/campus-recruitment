@@ -2,6 +2,8 @@
 	<view class="page-wrapper">
 		<NavBar :title="className" show-back />
 		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
+			<LoadingState type="skeleton" :rows="4" v-if="loading" />
+			<view v-if="!loading">
 			<view class="student-list">
 				<view v-for="(stu, i) in students" :key="i" class="student-card" @click="goToResume(stu.id, stu.realName)">
 					<view class="student-avatar">
@@ -23,11 +25,13 @@
 				</view>
 				<EmptyState v-if="!students.length" icon="person" title="暂无学生" desc="该班级暂无学生数据" />
 			</view>
+			</view>
 		</scroll-view>
 	</view>
 </template>
 
 <script setup>
+import LoadingState from '@/components/LoadingState.vue'
 import { ref, onMounted } from 'vue'
 import { teacherAPI } from '@/utils/request'
 import NavBar from '@/components/NavBar.vue'
@@ -75,6 +79,7 @@ const loadStudents = async () => {
 		console.error('加载学生列表失败', e)
 		uni.showToast({ title: '加载失败', icon: 'none' })
 	}
+	finally { loading.value = false }
 }
 
 const goToResume = (studentId, realName) => {

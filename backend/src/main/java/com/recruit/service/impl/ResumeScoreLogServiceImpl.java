@@ -12,6 +12,7 @@ import com.recruit.mapper.JobMapper;
 import com.recruit.mapper.ResumeMapper;
 import com.recruit.mapper.ResumeScoreLogMapper;
 import com.recruit.service.ResumeScoreLogService;
+import com.recruit.service.UserMessageService;
 import com.recruit.service.UserService;
 import com.recruit.utils.AiService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ResumeScoreLogServiceImpl extends ServiceImpl<ResumeScoreLogMapper, ResumeScoreLog> implements ResumeScoreLogService {
@@ -48,6 +50,9 @@ public class ResumeScoreLogServiceImpl extends ServiceImpl<ResumeScoreLogMapper,
 
     @Autowired
     private AiService aiService;
+
+    @Autowired
+    private UserMessageService userMessageService;
     
     @Override
     public List<ResumeScoreLog> selectByJobIdOrderByScore(Long jobId) {
@@ -106,8 +111,39 @@ public class ResumeScoreLogServiceImpl extends ServiceImpl<ResumeScoreLogMapper,
         scoreLog.setScore(totalScore);
         scoreLog.setScoreDetail(scoreDetail);
         scoreLog.setCreateTime(LocalDateTime.now());
-        
-        return save(scoreLog);
+
+        boolean saved = save(scoreLog);
+
+        // 评分完成后通知学生和 HR
+        if (saved) {
+            String jobTitle = job != null ? job.getTitle() : "该岗位";
+            // 通知学生
+            if (delivery != null && delivery.getStudentId() != null) {
+                try {
+                    userMessageService.sendMessage(
+                            delivery.getStudentId(),
+                            "简历评分完成",
+                            "您投递的「" + jobTitle + "」简历已完成 AI 评分，当前得分：" + totalScore,
+                            "system", deliveryId);
+                } catch (Exception e) { log.error("通知学生评分结果失败", e); }
+            }
+            // 通知该岗位所属公司的 HR
+            if (job != null && job.getCompanyId() != null) {
+                try {
+                    userService.lambdaQuery()
+                            .eq(SysUser::getCompanyId, job.getCompanyId())
+                            .eq(SysUser::getRole, 2)
+                            .list()
+                            .forEach(hr -> userMessageService.sendMessage(
+                                    hr.getId(),
+                                    "新简历评分",
+                                    "岗位「" + jobTitle + "」有新简历完成评分，得分：" + totalScore,
+                                    "system", deliveryId));
+                } catch (Exception e) { log.error("通知HR评分结果失败", e); }
+            }
+        }
+
+        return saved;
     }
     
     @Override
@@ -189,6 +225,76 @@ public class ResumeScoreLogServiceImpl extends ServiceImpl<ResumeScoreLogMapper,
             total += batchScoreResumes(job.getId());
         }
         return total;
+    }
+
+    // ========== 维度评分（雷达图） ==========
+
+    @Override
+    public Map<String, Object> getDimensionScores(Long jobId) {
+        List<ResumeScoreLog> logs = resumeScoreLogMapper.selectByJobIdOrderByScore(jobId);
+        Map<String, Object> result = new HashMap<>();
+
+        if (logs.isEmpty()) {
+            result.put("skills", 0);
+            result.put("experience", 0);
+            result.put("education", 0);
+            result.put("salary", 0);
+            result.put("stability", 0);
+            result.put("overall", 0);
+            return result;
+        }
+
+        double sumSkills = 0, sumExp = 0, sumEdu = 0, sumSalary = 0, sumStability = 0, sumOverall = 0;
+
+        for (ResumeScoreLog scoreLog : logs) {
+            int overall = scoreLog.getScore() != null ? scoreLog.getScore() : 0;
+            sumOverall += overall;
+
+            // 尝试从 scoreDetail 解析维度数据
+            String detail = scoreLog.getScoreDetail();
+            if (detail != null && detail.startsWith("{")) {
+                try {
+                    ObjectMapper mapper = new ObjectMapper();
+                    Map<String, Object> dims = mapper.readValue(detail, Map.class);
+                    sumSkills += toInt(dims.getOrDefault("技能得分", 0));
+                    sumExp += toInt(dims.getOrDefault("经验得分", 0));
+                    sumEdu += toInt(dims.getOrDefault("教育得分", 0));
+                    // 如果没有薪资/稳定性维度，从总分估算
+                    sumSalary += toInt(dims.getOrDefault("薪资匹配", overall * 0.7));
+                    sumStability += toInt(dims.getOrDefault("稳定性", overall * 0.8));
+                } catch (Exception e) {
+                    // 解析失败，从总分估算
+                    double base = overall;
+                    sumSkills += base * 0.85;
+                    sumExp += base * 0.75;
+                    sumEdu += base * 0.90;
+                    sumSalary += base * 0.70;
+                    sumStability += base * 0.80;
+                }
+            } else {
+                // scoreDetail 为空，从总分估算各维度
+                double base = overall;
+                sumSkills += clamp(base * 0.85);
+                sumExp += clamp(base * 0.75);
+                sumEdu += clamp(base * 0.90);
+                sumSalary += clamp(base * 0.70);
+                sumStability += clamp(base * 0.80);
+            }
+        }
+
+        int n = logs.size();
+        result.put("skills", (int) Math.round(sumSkills / n));
+        result.put("experience", (int) Math.round(sumExp / n));
+        result.put("education", (int) Math.round(sumEdu / n));
+        result.put("salary", (int) Math.round(sumSalary / n));
+        result.put("stability", (int) Math.round(sumStability / n));
+        result.put("overall", (int) Math.round(sumOverall / n));
+
+        return result;
+    }
+
+    private double clamp(double val) {
+        return Math.min(100, Math.max(0, val));
     }
 
     // ========== 工具方法 ==========

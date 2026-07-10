@@ -54,7 +54,18 @@ memory/
 
 # 前端开发测试文件
 job-miniprogram/scripts/
-frontend/
 
 # SQL 备份（防止误提交敏感数据）
 full_database.sql
+# 测试/演示数据（含真实姓名、手机号等敏感信息）
+backend/sql/demo-*.sql
+backend/sql/cleanup-*.sql
+backend/sql/fix-*.sql
+backend/sql/final-*.sql
+backend/sql/add-*.sql
+backend/sql/detailed-*.sql
+backend/sql/update-*.sql
+scripts/seed_*.sql
+
+# 日志文件
+*.log.err

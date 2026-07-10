@@ -1,6 +1,9 @@
 <template>
-  <div class="hr-job-analysis">
-    <h2>岗位分析</h2>
+  <div class="hr-job-analysis fade-in">
+    <div class="page-header">
+      <h2>岗位分析</h2>
+      <p>能力维度匹配 · 岗位评分概况</p>
+    </div>
     
     <div class="chart-grid">
       <!-- 雷达图 -->
@@ -34,13 +37,58 @@
         </el-table-column>
       </el-table>
     </div>
+
+    <!-- 岗位详情对话框 -->
+    <el-dialog v-model="detailVisible" :title="detailTitle" width="800px" destroy-on-close>
+      <div v-loading="detailLoading">
+        <!-- 概览统计 -->
+        <div class="detail-stats" v-if="detailData.length > 0">
+          <div class="detail-stat-item">
+            <span class="stat-label">投递人数</span>
+            <span class="stat-value">{{ detailData.length }}</span>
+          </div>
+          <div class="detail-stat-item">
+            <span class="stat-label">最高分</span>
+            <span class="stat-value" :style="{ color: scoreColor(detailMax) }">{{ detailMax }}</span>
+          </div>
+          <div class="detail-stat-item">
+            <span class="stat-label">最低分</span>
+            <span class="stat-value" :style="{ color: scoreColor(detailMin) }">{{ detailMin }}</span>
+          </div>
+          <div class="detail-stat-item">
+            <span class="stat-label">平均分</span>
+            <span class="stat-value" :style="{ color: scoreColor(detailAvg) }">{{ detailAvg }}</span>
+          </div>
+        </div>
+
+        <!-- 评分详情表格 -->
+        <el-table :data="detailData" stripe style="width: 100%;" empty-text="暂无评分数据">
+          <el-table-column label="序号" type="index" width="60" />
+          <el-table-column prop="studentName" label="学生" width="100" />
+          <el-table-column prop="score" label="综合评分" width="100">
+            <template #default="{ row }">
+              <el-tag :type="scoreTag(row.score)" effect="plain">{{ row.score }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="skillScore" label="专业技能" width="90" align="center" />
+          <el-table-column prop="expScore" label="项目经验" width="90" align="center" />
+          <el-table-column prop="eduScore" label="学历匹配" width="90" align="center" />
+          <el-table-column prop="salaryScore" label="薪资匹配" width="90" align="center" />
+          <el-table-column label="评分时间" width="100">
+            <template #default="{ row }">
+              <span class="time-text">{{ row.createTime ? row.createTime.slice(5, 16) : '--' }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useUserStore } from '@/stores/user.js'
-import { jobAPI, resumeScoreAPI, jobMatchAPI } from '@/api/index.js'
+import { jobAPI, resumeScoreAPI } from '@/api/index.js'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 
@@ -55,6 +103,18 @@ const jobScores = ref([])
 const radarData = ref({
   indicator: ['专业技能', '项目经验', '学历匹配', '期望薪资', '稳定性', '综合素质'],
   value: [0, 0, 0, 0, 0, 0]
+})
+
+// 详情对话框
+const detailVisible = ref(false)
+const detailLoading = ref(false)
+const detailTitle = ref('')
+const detailData = ref([])
+const detailMax = computed(() => Math.max(...detailData.value.map(d => d.score || 0), 0))
+const detailMin = computed(() => Math.min(...detailData.value.map(d => d.score || 100), 100))
+const detailAvg = computed(() => {
+  const scores = detailData.value.map(d => d.score || 0)
+  return scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
 })
 
 onMounted(async () => {
@@ -75,6 +135,8 @@ const loadJobScores = async () => {
     if (res.code !== 200 || !Array.isArray(res.data)) return
 
     const data = []
+    let dimensionAvg = null
+
     for (const job of res.data) {
       try {
         const avgRes = await resumeScoreAPI.getAverageScoreByJobId(job.id)
@@ -98,14 +160,32 @@ const loadJobScores = async () => {
           scored: scored,
           avgScore: avgScore
         })
+
+        if (!dimensionAvg && job.id) {
+          const dimRes = await resumeScoreAPI.getDimensionScores(job.id)
+          if (dimRes.code === 200 && dimRes.data) {
+            const d = dimRes.data
+            if (d.overall > 0) {
+              dimensionAvg = d
+            }
+          }
+        }
       } catch {
         data.push({ id: job.id, title: job.title, total: 0, scored: 0, avgScore: 0 })
       }
     }
     jobScores.value = data
 
-    // 计算雷达图平均值
-    if (data.length > 0) {
+    if (dimensionAvg) {
+      radarData.value.value = [
+        dimensionAvg.skills || 0,
+        dimensionAvg.experience || 0,
+        dimensionAvg.education || 0,
+        dimensionAvg.salary || 0,
+        dimensionAvg.stability || 0,
+        dimensionAvg.overall || 0
+      ]
+    } else if (data.length > 0) {
       const avg = data.reduce((s, d) => s + d.avgScore, 0) / data.length
       radarData.value.value = [
         Math.min(100, avg + 15),
@@ -121,8 +201,41 @@ const loadJobScores = async () => {
   }
 }
 
-const viewJobDetail = (row) => {
-  ElMessage.info(`查看 ${row.title} 详情（功能开发中）`)
+const viewJobDetail = async (row) => {
+  detailTitle.value = `${row.title} - 评分详情`
+  detailVisible.value = true
+  detailLoading.value = true
+  detailData.value = []
+  try {
+    const res = await resumeScoreAPI.getScoresByJobId(row.id)
+    if (res.code === 200 && Array.isArray(res.data)) {
+      detailData.value = res.data.map(log => {
+        let skillScore = '-', expScore = '-', eduScore = '-', salaryScore = '-'
+        if (log.scoreDetail) {
+          try {
+            const dims = JSON.parse(log.scoreDetail)
+            skillScore = dims['技能得分'] ?? dims.skills ?? '-'
+            expScore = dims['经验得分'] ?? dims.experience ?? '-'
+            eduScore = dims['教育得分'] ?? dims.education ?? '-'
+            salaryScore = dims['薪资匹配'] ?? dims.salary ?? '-'
+          } catch {}
+        }
+        return {
+          studentName: log.studentName || '学生 #' + (log.deliveryId || log.id),
+          score: log.score,
+          skillScore,
+          expScore,
+          eduScore,
+          salaryScore,
+          createTime: log.createTime
+        }
+      })
+    }
+  } catch (e) {
+    ElMessage.error('加载评分详情失败')
+  } finally {
+    detailLoading.value = false
+  }
 }
 
 const scoreColor = (score) => {
@@ -131,8 +244,13 @@ const scoreColor = (score) => {
   return '#F56C6C'
 }
 
+const scoreTag = (score) => {
+  if (score >= 90) return 'success'
+  if (score >= 75) return 'warning'
+  return 'danger'
+}
+
 const renderCharts = () => {
-  // 雷达图
   if (radarChart.value) {
     radarInstance = echarts.init(radarChart.value)
     radarInstance.setOption({
@@ -152,7 +270,6 @@ const renderCharts = () => {
     })
   }
 
-  // 排名柱状图
   if (rankBarChart.value) {
     rankBarInstance = echarts.init(rankBarChart.value)
     const sorted = [...jobScores.value].sort((a, b) => b.avgScore - a.avgScore)
@@ -191,4 +308,10 @@ const renderCharts = () => {
 .chart-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg,#165DFF,#2563EB,transparent); }
 .chart-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1D2129; }
 .full-width { grid-column: 1 / -1; }
+
+.detail-stats { display: flex; gap: 24px; margin-bottom: 20px; }
+.detail-stat-item { flex: 1; background: #F8F9FC; border-radius: 10px; padding: 16px; text-align: center; }
+.detail-stat-item .stat-label { display: block; font-size: 13px; color: #86909C; margin-bottom: 6px; }
+.detail-stat-item .stat-value { font-size: 24px; font-weight: 700; color: #1D2129; }
+.time-text { font-size: 13px; color: #86909C; }
 </style>

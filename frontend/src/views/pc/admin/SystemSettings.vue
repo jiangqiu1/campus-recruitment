@@ -1,11 +1,10 @@
 <template>
-  <div class="system-settings">
+  <div class="system-settings fade-in">
+    <div class="page-header">
+      <h2>系统设置</h2>
+      <p>配置系统参数 · 管理全局设置</p>
+    </div>
     <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>系统设置</span>
-        </div>
-      </template>
       
       <el-tabs v-model="activeTab">
         <!-- 基础设置 -->

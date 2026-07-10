@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import com.recruit.utils.AESUtil;
+
 /**
  * 认证控制器
  * 处理登录、注册、登出等认证相关请求
@@ -37,6 +39,9 @@ public class AuthController {
     @Autowired
     private RedisUtil redisUtil;
 
+    @Autowired
+    private AESUtil aesUtil;
+
     @Value("${jwt.prefix}")
     private String prefix;
 
@@ -48,17 +53,16 @@ public class AuthController {
                 request.getRole()
         );
 
-        String token = jwtUtil.generateToken(
-                user.getId(),
-                user.getUsername(),
-                user.getRole().toString()
-        );
-
         // 生成 Token 版本号（用于密码修改后失效）
         String tokenVersion = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         String versionKey = "token:version:" + user.getId();
         redisUtil.setWithExpire(versionKey, tokenVersion, 7 * 24 * 60 * 60, TimeUnit.SECONDS);
-        token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole().toString(), tokenVersion);
+
+        // 直接生成带版本号的Token，避免两次生成
+        String token = jwtUtil.generateToken(
+                user.getId(), user.getUsername(),
+                user.getRole().toString(), tokenVersion
+        );
 
         String redisKey = "token:" + user.getId();
         redisUtil.setWithExpire(redisKey, token, 7 * 24 * 60 * 60, TimeUnit.SECONDS);
@@ -117,6 +121,53 @@ public class AuthController {
         if (user == null) {
             return Result.error(404, "用户不存在");
         }
+        // 解密手机号
+        if (user.getPhone() != null && !user.getPhone().isEmpty()) {
+            try { user.setPhone(aesUtil.decrypt(user.getPhone())); } catch (Exception ignored) { }
+        }
+        return Result.success(user);
+    }
+
+    @LogOperation("更新个人信息")
+    @PutMapping("/profile")
+    public Result<SysUser> updateProfile(HttpServletRequest request, @RequestBody SysUser profile) {
+        Long userId = (Long) request.getAttribute("userId");
+        if (userId == null) {
+            return Result.error(401, "未授权");
+        }
+        SysUser user = userService.getById(userId);
+        if (user == null) {
+            return Result.error(404, "用户不存在");
+        }
+
+        // 只允许更新以下字段
+        if (profile.getRealName() != null && !profile.getRealName().isEmpty()) {
+            user.setRealName(profile.getRealName());
+        }
+        if (profile.getPhone() != null) {
+            user.setPhone(aesUtil.encrypt(profile.getPhone()));
+        }
+        if (profile.getEmail() != null) {
+            user.setEmail(profile.getEmail());
+        }
+        if (profile.getGender() != null) {
+            user.setGender(profile.getGender());
+        }
+        if (profile.getAvatarUrl() != null) {
+            user.setAvatarUrl(profile.getAvatarUrl());
+        }
+        if (profile.getSchool() != null) {
+            user.setSchool(profile.getSchool());
+        }
+        if (profile.getMajor() != null) {
+            user.setMajor(profile.getMajor());
+        }
+
+        userService.updateById(user);
+        // 返回时解密手机号
+        if (user.getPhone() != null && !user.getPhone().isEmpty()) {
+            user.setPhone(aesUtil.decrypt(user.getPhone()));
+        }
         return Result.success(user);
     }
 
@@ -139,36 +190,16 @@ public class AuthController {
 
     @LogOperation("修改密码")
     @PutMapping("/update-password")
-    public Result<String> updatePassword(@RequestBody Map<String, String> params) {
-        String token = params.get("token");
+    public Result<String> updatePassword(HttpServletRequest request, @RequestBody Map<String, String> params) {
+        Long userId = (Long) request.getAttribute("userId");
+        if (userId == null) {
+            return Result.error(401, "未授权");
+        }
         String oldPassword = params.get("oldPassword");
         String newPassword = params.get("newPassword");
 
-        if (token == null || token.isEmpty()) {
-            return Result.error(401, "Token不能为空");
-        }
         if (oldPassword == null || newPassword == null || newPassword.isEmpty()) {
             return Result.error("旧密码和新密码不能为空");
-        }
-
-        if (token.startsWith(prefix)) {
-            token = token.substring(prefix.length());
-        }
-
-        Long userId = jwtUtil.getUserIdFromToken(token);
-        if (userId == null) {
-            return Result.error(401, "Token无效");
-        }
-
-        String blacklistKey = "blacklist:" + token;
-        Object blacklisted = redisUtil.get(blacklistKey);
-        if (blacklisted != null) {
-            return Result.error(401, "Token已失效");
-        }
-
-        SysUser user = userService.getById(userId);
-        if (user == null) {
-            return Result.error(404, "用户不存在");
         }
 
         try {
