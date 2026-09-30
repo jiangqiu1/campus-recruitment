@@ -280,7 +280,7 @@ import { MagicStick } from '@element-plus/icons-vue'
 import { jobAPI, classAPI, jobMatchAPI, userAPI } from '@/api'
 import { formatDate } from '@/utils/formatDate'
 import { matchScoreToPercent as matchPercent, dimLabel, scoreColor } from '@/utils/score'
-import * as echarts from 'echarts'
+import echarts from '@/utils/echarts'
 
 const loading = ref(false)
 const generating = ref(false)

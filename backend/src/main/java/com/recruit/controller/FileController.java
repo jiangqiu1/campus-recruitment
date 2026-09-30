@@ -1,6 +1,8 @@
 package com.recruit.controller;
 
 import com.recruit.utils.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +22,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/files")
 public class FileController {
+
+    private static final Logger log = LoggerFactory.getLogger(FileController.class);
 
     @Value("${file.upload-path:uploads/}")
     private String uploadPath;
@@ -97,7 +101,7 @@ public class FileController {
             return Result.success("上传成功", result);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("文件上传失败: {}", e.getMessage(), e);
             return Result.error(500, "文件上传失败：" + e.getMessage());
         }
     }

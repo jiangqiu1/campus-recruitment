@@ -27,6 +27,8 @@ public class JobMatchController extends BaseController {
 
     private static final Logger log = LoggerFactory.getLogger(JobMatchController.class);
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     @Autowired
     private JobMatchRecordService jobMatchRecordService;
 
@@ -273,7 +275,7 @@ public class JobMatchController extends BaseController {
         Map<Long, SysUser> studentMap = userService.listByIds(new ArrayList<>(studentIds))
                 .stream().collect(Collectors.toMap(SysUser::getId, s -> s));
 
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = OBJECT_MAPPER;
 
         return records.stream().map(r -> {
             Map<String, Object> map = new HashMap<>();

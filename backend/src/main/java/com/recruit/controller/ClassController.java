@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/classes")
 public class ClassController extends BaseController {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     
     @Autowired
     private ClassService classService;
@@ -367,8 +369,7 @@ public class ClassController extends BaseController {
                     Integer aiScore = null;
                     if (resume != null && resume.getAiAnalysis() != null && !resume.getAiAnalysis().isEmpty()) {
                         try {
-                            ObjectMapper mapper = new ObjectMapper();
-                            Map<String, Object> analysis = mapper.readValue(resume.getAiAnalysis(), Map.class);
+                            Map<String, Object> analysis = OBJECT_MAPPER.readValue(resume.getAiAnalysis(), Map.class);
                             Object score = analysis.get("overallScore");
                             if (score instanceof Number) {
                                 aiScore = ((Number) score).intValue();

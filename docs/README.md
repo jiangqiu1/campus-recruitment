@@ -1,47 +1,57 @@
 # 校企招聘与就业管理平台 - 项目文档
 
 > 基于 Spring Boot 2.7.18 + Vue 3 + Element Plus 的全栈校园招聘系统
+> 本目录是项目唯一的文档基线（2026-09-30 收敛：原 `backend/docs/`、`frontend/docs/` 旧树已并入）
 
 ## 项目结构
 
 ```
 校企项目/
 ├── backend/         # Spring Boot 后端（端口 8080，context-path: /api）
-│   └── docs/        # 后端文档
 ├── frontend/        # Vue 3 前端（端口 5173，Vite 代理 /api → 8080）
-│   └── docs/        # 前端文档
-└── docs/            # 项目汇总文档（本目录）
+├── job-miniprogram/ # uni-app 微信小程序（学生/教师/HR 三端）
+└── docs/            # 项目文档（本目录）
 ```
 
 ## 📖 文档索引
 
-### 后端文档（详见 `backend/docs/`）
+### 后端文档（docs/backend/）
 
 | 文档 | 说明 |
 |------|------|
-| [总览](../backend/docs/overview.md) | 后端技术栈、目录结构、模块总览 |
-| [数据库设计](../backend/docs/config/database.md) | 13张表完整结构 + ER关系 + MyBatis-Plus配置 |
-| [安全配置](../backend/docs/config/security.md) | JWT / Redis / CORS / 文件上传 / 异常处理 |
-| 用户管理 | [概览](../backend/docs/modules/auth-module.md) · [管理接口](../backend/docs/modules/user-module.md) |
-| [企业管理](../backend/docs/modules/company-module.md) | 企业CRUD + 审核 |
-| [岗位管理](../backend/docs/modules/job-module.md) | 岗位CRUD + 搜索 + 统计 |
-| [班级管理](../backend/docs/modules/class-module.md) | 班级CRUD + 学生管理 |
-| [简历管理](../backend/docs/modules/resume-module.md) | 简历CRUD + 上传 |
-| [投递管理](../backend/docs/modules/delivery-module.md) | 状态流转：投递→查看→面试→录用 |
-| [操作日志](../backend/docs/modules/operation-log-module.md) | 日志记录 + 清理 |
-| [AI智能模块](../backend/docs/modules/ai-module.md) | 简历解析 / 智能评分 / 人岗匹配 |
+| [00-后端总览](backend/00-后端总览.md) | 技术栈、目录结构、模块总览 |
+| [01-认证模块](backend/01-认证模块/) | JWT 认证 · 原理/实现/认证流程详解 |
+| [02-AI模块](backend/02-AI模块/) | DeepSeek + 智谱双模型 · Prompt 规范 · 学生 AI 助手 |
+| [03-用户管理](backend/03-用户管理/) | 用户 CRUD 与角色 |
+| [04-企业管理](backend/04-企业管理/) | 企业 CRUD 与审核 |
+| [05-岗位管理](backend/05-岗位管理/) | 岗位 CRUD · 三层权限详解 |
+| [06-简历管理](backend/06-简历管理/) | 简历 CRUD · 简历与 AI 解析详解 |
+| [07-投递管理](backend/07-投递管理/) | 状态流转 · 状态机与消息联动 |
+| [08-班级管理](backend/08-班级管理/) | 班级 CRUD · 权限链路详解 |
+| [09-消息通知](backend/09-消息通知/) | 站内消息 |
+| [10-统计看板](backend/10-统计看板/) | 三角色 Dashboard · 看板详解 |
+| [11-系统支撑](backend/11-系统支撑/) | 文件上传、数据导出、操作日志、异常处理 |
+| [12-数据库设计](backend/12-数据库设计.md) | 13 张表完整结构 + ER 关系（自旧文档树迁入） |
+| [13-安全配置](backend/13-安全配置.md) | JWT/Redis/CORS/文件上传/异常（自旧文档树迁入） |
 
-### 前端文档（详见 `frontend/docs/`）
+### 前端文档（docs/frontend/）
 
 | 文档 | 说明 |
 |------|------|
-| [总览](../frontend/docs/overview.md) | 前端技术栈、目录结构 |
-| [路由与布局](../frontend/docs/config/router.md) | 3个Layout + 路由守卫 + 权限控制 |
-| [API与Store](../frontend/docs/config/api-and-store.md) | Axios封装 + Pinia状态管理 |
-| [管理员模块](../frontend/docs/modules/admin-module.md) | 8个PC页面（仪表盘/用户/企业/班级/审核/日志/导出/设置） |
-| [教师模块](../frontend/docs/modules/teacher-module.md) | 4个PC页面（工作台/班级/岗位/投递看板） |
-| [HR模块](../frontend/docs/modules/hr-module.md) | 4个PC页面（简历/统计/分析/账号） |
-| [小程序模块](../frontend/docs/modules/miniprogram-module.md) | 11个小程序页面 |
+| [00-前端总览](frontend/00-前端总览.md) | 技术栈、目录结构 |
+| [01-路由与权限守卫](frontend/01-路由与权限守卫.md) | 3 个 Layout + 路由守卫 + 权限控制 |
+| [02-API请求层](frontend/02-API请求层.md) | Axios 封装 |
+| [03-状态管理](frontend/03-状态管理.md) | Pinia |
+| [04-布局与组件](frontend/04-布局与组件.md) | 布局与通用组件 |
+| [05-业务页面](frontend/05-业务页面.md) | 三角色业务页面 |
+| [06-Dashboard数据大屏详解](frontend/06-Dashboard数据大屏详解.md) | 图表页面实现 |
+| [07-AI相关页面详解](frontend/07-AI相关页面详解.md) | AI 功能页面实现 |
+
+### 其他
+
+- [CHANGELOG](CHANGELOG.md) — 变更日志
+- [系统体检报告](系统体检报告.md) — 全栈代码体检与修复记录
+- [AI功能扩展方案-智谱接入](AI功能扩展方案-智谱接入.md) — 双模型接入方案（已实施，见 CHANGELOG 2026-09-30）
 
 ## 🚀 启动说明
 
@@ -65,6 +75,8 @@ mvn spring-boot:run
 cd frontend
 npm run dev
 # → http://localhost:5173
+
+# 4. 小程序：HBuilderX 打开 job-miniprogram/ 运行到微信开发者工具
 ```
 
 ### 测试账号（密码均为 `123456`）

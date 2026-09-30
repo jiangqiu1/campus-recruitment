@@ -58,7 +58,7 @@
 import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue'
 import { statisticsAPI } from '@/api'
 import { formatDate } from '@/utils/formatDate'
-import * as echarts from 'echarts'
+import echarts from '@/utils/echarts'
 
 const stats = ref({ classCount: 0, studentCount: 0, jobCount: 0, deliveryCount: 0 })
 const deliveryData = ref([])

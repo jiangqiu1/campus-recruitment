@@ -9,6 +9,8 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -20,6 +22,7 @@ import java.time.LocalDateTime;
 /**
  * 操作日志 AOP 切面
  * 标注了 @LogOperation 的 Controller 方法执行后，自动记录操作日志
+ * 写库提交到 logExecutor 线程池异步执行，不占用请求线程
  */
 @Slf4j
 @Aspect
@@ -28,6 +31,10 @@ public class LogOperationAspect {
 
     @Autowired(required = false)
     private OperationLogService operationLogService;
+
+    @Autowired
+    @Qualifier("logExecutor")
+    private ThreadPoolTaskExecutor logExecutor;
 
     @Around("@annotation(com.recruit.annotation.LogOperation)")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -86,7 +93,14 @@ public class LogOperationAspect {
                 logEntry.setIpAddress(ip);
                 logEntry.setCreateTime(LocalDateTime.now());
 
-                operationLogService.save(logEntry);
+                // 请求上下文数据已在此线程取完，落库提交到日志线程池异步执行
+                logExecutor.execute(() -> {
+                    try {
+                        operationLogService.save(logEntry);
+                    } catch (Exception ex) {
+                        log.warn("操作日志异步写入失败: {}", ex.getMessage());
+                    }
+                });
             }
         } catch (Exception e) {
             log.warn("操作日志记录失败: {}", e.getMessage());

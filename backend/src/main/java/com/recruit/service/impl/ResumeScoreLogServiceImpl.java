@@ -32,6 +32,8 @@ import java.util.stream.Collectors;
 public class ResumeScoreLogServiceImpl extends ServiceImpl<ResumeScoreLogMapper, ResumeScoreLog> implements ResumeScoreLogService {
 
     private static final Logger log = LoggerFactory.getLogger(ResumeScoreLogServiceImpl.class);
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     
     @Autowired
     private ResumeScoreLogMapper resumeScoreLogMapper;
@@ -254,8 +256,7 @@ public class ResumeScoreLogServiceImpl extends ServiceImpl<ResumeScoreLogMapper,
             String detail = scoreLog.getScoreDetail();
             if (detail != null && detail.startsWith("{")) {
                 try {
-                    ObjectMapper mapper = new ObjectMapper();
-                    Map<String, Object> dims = mapper.readValue(detail, Map.class);
+                    Map<String, Object> dims = OBJECT_MAPPER.readValue(detail, Map.class);
                     sumSkills += toInt(dims.getOrDefault("技能得分", 0));
                     sumExp += toInt(dims.getOrDefault("经验得分", 0));
                     sumEdu += toInt(dims.getOrDefault("教育得分", 0));
@@ -315,8 +316,7 @@ public class ResumeScoreLogServiceImpl extends ServiceImpl<ResumeScoreLogMapper,
         // 教育经历（JSON 数组）
         if (resume.getEducation() != null) {
             try {
-                ObjectMapper mapper = new ObjectMapper();
-                List<Map> eduList = mapper.readValue(resume.getEducation(), List.class);
+                List<Map> eduList = OBJECT_MAPPER.readValue(resume.getEducation(), List.class);
                 for (Map edu : eduList) {
                     if (edu.get("school") != null) sb.append("学校：").append(edu.get("school")).append("\n");
                     if (edu.get("major") != null) sb.append("专业：").append(edu.get("major")).append("\n");

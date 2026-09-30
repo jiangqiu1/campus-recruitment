@@ -61,7 +61,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { statisticsAPI } from '@/api'
-import * as echarts from 'echarts'
+import echarts from '@/utils/echarts'
 
 const loading = ref(false)
 const overview = ref({})

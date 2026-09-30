@@ -6,7 +6,7 @@ import com.recruit.entity.AiParseLog;
 import com.recruit.service.AiParseLogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
@@ -33,13 +33,16 @@ public class AiService {
     private static final Logger log = LoggerFactory.getLogger(AiService.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    @Autowired
-    private AiProperties aiProperties;
+    private final AiProperties aiProperties;
 
-    @Autowired
-    private AiParseLogService aiParseLogService;
+    private final AiParseLogService aiParseLogService;
 
     private final RestTemplate restTemplate = buildRestTemplate();
+
+    public AiService(AiProperties aiProperties, AiParseLogService aiParseLogService) {
+        this.aiProperties = aiProperties;
+        this.aiParseLogService = aiParseLogService;
+    }
 
     /**
      * 构建带连接/读取超时的 RestTemplate（AI 生成最长可达 30s+，读取超时需放宽到 60s）
@@ -233,6 +236,8 @@ public class AiService {
      *
      * @param providerName 提供方名称（deepseek/glm），null 时用 ai.default-provider
      */
+    @SuppressWarnings("unchecked")
+    // Jackson 把响应反序列化为 Map 后，嵌套的 choices/message 结构只能运行时强转
     private Map<String, Object> callAI(String prompt, String taskName, String providerName, int maxTokens) {
         String name = (providerName == null || providerName.isEmpty())
                 ? aiProperties.getDefaultProvider() : providerName;
@@ -267,11 +272,13 @@ public class AiService {
         String content = null;
         try {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-            ResponseEntity<Map> response = restTemplate.postForEntity(provider.getUrl(), request, Map.class);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    provider.getUrl(), HttpMethod.POST, request, new ParameterizedTypeReference<Map<String, Object>>() {});
 
-            if (response.getBody() != null && response.getBody().containsKey("choices")) {
-                List<Map> choices = (List<Map>) response.getBody().get("choices");
-                if (!choices.isEmpty()) {
+            Map<String, Object> body = response.getBody();
+            if (body != null && body.containsKey("choices")) {
+                List<Map<String, Object>> choices = (List<Map<String, Object>>) body.get("choices");
+                if (choices != null && !choices.isEmpty()) {
                     Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
                     content = (String) message.get("content");
                     Map<String, Object> parsed = parseJsonResponse(content, taskName);
@@ -284,7 +291,7 @@ public class AiService {
                     return parsed;
                 }
             }
-            log.error("[AiService] API 返回异常, provider={}, response={}", name, response.getBody());
+            log.error("[AiService] API 返回异常, provider={}, response={}", name, body);
         } catch (Exception e) {
             log.error("[AiService] API 调用失败 (task={}, provider={}), {}", taskName, name, e.getMessage());
         }

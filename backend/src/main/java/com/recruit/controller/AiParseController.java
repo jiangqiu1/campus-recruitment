@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -24,6 +25,8 @@ import java.util.*;
 @RestController
 @RequestMapping("/ai-parse")
 public class AiParseController extends BaseController {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Autowired
     private AiParseLogService aiParseLogService;
@@ -134,7 +137,7 @@ public class AiParseController extends BaseController {
         // 转换为 JSON 字符串
         String parsedResult;
         try {
-            parsedResult = new ObjectMapper().writeValueAsString(aiResult);
+            parsedResult = OBJECT_MAPPER.writeValueAsString(aiResult);
         } catch (JsonProcessingException e) {
             parsedResult = "{}";
         }
@@ -151,8 +154,8 @@ public class AiParseController extends BaseController {
         
         BigDecimal confidenceScore = new BigDecimal(filledFields)
                 .multiply(new BigDecimal("100"))
-                .divide(new BigDecimal(totalFields), 2, BigDecimal.ROUND_HALF_UP)
-                .divide(new BigDecimal("100"), 2, BigDecimal.ROUND_HALF_UP);
+                .divide(new BigDecimal(totalFields), 2, RoundingMode.HALF_UP)
+                .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
 
         // 记录AI解析日志
         boolean success = aiParseLogService.logParse(teacherId, rawMessage, parsedResult, confidenceScore);

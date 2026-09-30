@@ -90,7 +90,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useUserStore } from '@/stores/user.js'
 import { jobAPI, resumeScoreAPI } from '@/api/index.js'
 import { ElMessage } from 'element-plus'
-import * as echarts from 'echarts'
+import echarts from '@/utils/echarts'
 import { scoreColor, scoreTag, parseScoreDetail } from '@/utils/score'
 
 const userStore = useUserStore()

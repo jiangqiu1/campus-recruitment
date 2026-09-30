@@ -34,6 +34,8 @@ public class JobMatchRecordServiceImpl extends ServiceImpl<JobMatchRecordMapper,
 
     private static final Logger log = LoggerFactory.getLogger(JobMatchRecordServiceImpl.class);
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     @Autowired
     private JobMatchRecordMapper jobMatchRecordMapper;
 
@@ -110,7 +112,7 @@ public class JobMatchRecordServiceImpl extends ServiceImpl<JobMatchRecordMapper,
             if (result.containsKey("expMatch")) detail.put("expMatch", toInt(result.get("expMatch")));
             if (result.containsKey("majorFit")) detail.put("majorFit", toInt(result.get("majorFit")));
             if (!detail.isEmpty()) {
-                scoreDetail = new ObjectMapper().writeValueAsString(detail);
+                scoreDetail = OBJECT_MAPPER.writeValueAsString(detail);
             }
         } catch (Exception e) {
             log.warn("序列化 scoreDetail 失败", e);

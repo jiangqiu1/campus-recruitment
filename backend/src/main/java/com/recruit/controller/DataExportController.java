@@ -36,6 +36,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/export")
 public class DataExportController extends BaseController {
 
+    /**
+     * 单次导出最大行数：防止全表数据驻留内存（XLSX/PDF 仍需整表构建）
+     */
+    private static final int MAX_EXPORT_ROWS = 5000;
+
     @Autowired
     private UserService userService;
 
@@ -247,31 +252,51 @@ public class DataExportController extends BaseController {
     }
 
     /**
+     * 中文字体缓存：BaseFont 线程安全可共享，首次加载后复用，避免每次导出重读磁盘。
+     * 全部候选路径都失败时置 failed 标记，后续直接走 Helvetica fallback。
+     */
+    private static volatile BaseFont cachedChineseBaseFont;
+    private static volatile boolean chineseBaseFontFailed = false;
+
+    /**
      * 加载中文字体，按常见系统字体路径尝试
      */
     private com.lowagie.text.Font loadChineseFont(float size, int style, Color color) throws Exception {
-        String[] candidates = {
-                "C:\\Windows\\Fonts\\msyh.ttc,0",
-                "C:\\Windows\\Fonts\\msyhbd.ttc,0",
-                "C:\\Windows\\Fonts\\simhei.ttf",
-                "C:\\Windows\\Fonts\\simsun.ttc,0",
-                "C:\\Windows\\Fonts\\simsun.ttf",
-                "C:\\Windows\\Fonts\\arialuni.ttf"
-        };
-        for (String fontPath : candidates) {
-            try {
-                BaseFont baseFont = BaseFont.createFont(fontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
-                if (color != null) {
-                    return new com.lowagie.text.Font(baseFont, size, style, color);
-                } else {
-                    return new com.lowagie.text.Font(baseFont, size, style);
-                }
-            } catch (Exception ignored) {
-                // 尝试下一个字体
-            }
+        BaseFont baseFont = getChineseBaseFont();
+        if (baseFont != null) {
+            return color != null
+                    ? new com.lowagie.text.Font(baseFont, size, style, color)
+                    : new com.lowagie.text.Font(baseFont, size, style);
         }
-        //  fallback：使用 Helvetica，但中文可能无法显示
+        // fallback：使用 Helvetica，但中文可能无法显示
         return FontFactory.getFont(FontFactory.HELVETICA, size, style, color);
+    }
+
+    private BaseFont getChineseBaseFont() {
+        if (cachedChineseBaseFont != null) return cachedChineseBaseFont;
+        if (chineseBaseFontFailed) return null;
+        synchronized (DataExportController.class) {
+            if (cachedChineseBaseFont != null) return cachedChineseBaseFont;
+            if (chineseBaseFontFailed) return null;
+            String[] candidates = {
+                    "C:\\Windows\\Fonts\\msyh.ttc,0",
+                    "C:\\Windows\\Fonts\\msyhbd.ttc,0",
+                    "C:\\Windows\\Fonts\\simhei.ttf",
+                    "C:\\Windows\\Fonts\\simsun.ttc,0",
+                    "C:\\Windows\\Fonts\\simsun.ttf",
+                    "C:\\Windows\\Fonts\\arialuni.ttf"
+            };
+            for (String fontPath : candidates) {
+                try {
+                    cachedChineseBaseFont = BaseFont.createFont(fontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+                    return cachedChineseBaseFont;
+                } catch (Exception ignored) {
+                    // 尝试下一个字体
+                }
+            }
+            chineseBaseFontFailed = true;
+            return null;
+        }
     }
 
     // ==================== 数据获取 ====================
@@ -297,6 +322,7 @@ public class DataExportController extends BaseController {
                 rows.add(new String[]{"ID", "用户名", "姓名", "角色", "手机号", "状态", "创建时间"});
                 userService.lambdaQuery()
                         .eq(SysUser::getRole, 0)
+                        .last("LIMIT " + MAX_EXPORT_ROWS)
                         .list()
                         .stream()
                         .filter(u -> filter.isEmpty()
@@ -313,7 +339,9 @@ public class DataExportController extends BaseController {
 
             case "company":
                 rows.add(new String[]{"ID", "企业名称", "行业", "联系人", "联系电话", "状态", "合作等级", "创建时间"});
-                companyService.list()
+                companyService.lambdaQuery()
+                        .last("LIMIT " + MAX_EXPORT_ROWS)
+                        .list()
                         .stream()
                         .filter(c -> filter.isEmpty()
                                 || c.getName() != null && c.getName().toLowerCase().contains(lowerFilter)
@@ -332,7 +360,9 @@ public class DataExportController extends BaseController {
 
             case "job":
                 rows.add(new String[]{"ID", "岗位名称", "企业ID", "薪资范围", "学历要求", "工作地点", "状态", "创建时间"});
-                jobService.list()
+                jobService.lambdaQuery()
+                        .last("LIMIT " + MAX_EXPORT_ROWS)
+                        .list()
                         .stream()
                         .filter(j -> filter.isEmpty()
                                 || j.getTitle() != null && j.getTitle().toLowerCase().contains(lowerFilter)
@@ -351,7 +381,9 @@ public class DataExportController extends BaseController {
 
             case "delivery":
                 rows.add(new String[]{"ID", "学生ID", "岗位ID", "状态", "投递时间"});
-                deliveryService.list()
+                deliveryService.lambdaQuery()
+                        .last("LIMIT " + MAX_EXPORT_ROWS)
+                        .list()
                         .stream()
                         .filter(d -> filter.isEmpty()
                                 || String.valueOf(d.getStudentId()).contains(filter)
@@ -366,27 +398,34 @@ public class DataExportController extends BaseController {
 
             case "resume":
                 rows.add(new String[]{"ID", "学生ID", "学生姓名", "学历", "技能", "求职意向", "更新时间"});
-                resumeService.list()
+                List<Resume> resumeList = resumeService.lambdaQuery()
+                        .last("LIMIT " + MAX_EXPORT_ROWS)
+                        .list()
                         .stream()
                         .filter(r -> filter.isEmpty()
                                 || String.valueOf(r.getStudentId()).contains(filter)
                                 || r.getEducation() != null && r.getEducation().toLowerCase().contains(lowerFilter)
                                 || r.getJobTarget() != null && r.getJobTarget().toLowerCase().contains(lowerFilter))
-                        .forEach(r -> {
-                            String studentName = "";
-                            try {
-                                SysUser student = userService.getById(r.getStudentId());
-                                if (student != null) studentName = student.getRealName() != null ? student.getRealName() : "";
-                            } catch (Exception ignored) {}
-                            rows.add(new String[]{
-                                    String.valueOf(r.getId()), String.valueOf(r.getStudentId()),
-                                    studentName,
-                                    r.getEducation() != null ? r.getEducation() : "",
-                                    r.getSkills() != null ? r.getSkills() : "",
-                                    r.getJobTarget() != null ? r.getJobTarget() : "",
-                                    r.getUpdateTime() != null ? r.getUpdateTime().toString().replace("T", " ") : ""
-                            });
-                        });
+                        .collect(Collectors.toList());
+                // 批量取学生姓名，替代循环内逐条 getById
+                List<Long> resumeStudentIds = resumeList.stream()
+                        .map(Resume::getStudentId).filter(Objects::nonNull).distinct()
+                        .collect(Collectors.toList());
+                Map<Long, SysUser> studentMap = resumeStudentIds.isEmpty() ? Collections.emptyMap()
+                        : userService.listByIds(resumeStudentIds).stream()
+                                .collect(Collectors.toMap(SysUser::getId, u -> u));
+                for (Resume r : resumeList) {
+                    SysUser student = r.getStudentId() != null ? studentMap.get(r.getStudentId()) : null;
+                    String studentName = student != null && student.getRealName() != null ? student.getRealName() : "";
+                    rows.add(new String[]{
+                            String.valueOf(r.getId()), String.valueOf(r.getStudentId()),
+                            studentName,
+                            r.getEducation() != null ? r.getEducation() : "",
+                            r.getSkills() != null ? r.getSkills() : "",
+                            r.getJobTarget() != null ? r.getJobTarget() : "",
+                            r.getUpdateTime() != null ? r.getUpdateTime().toString().replace("T", " ") : ""
+                    });
+                }
                 break;
 
             default:

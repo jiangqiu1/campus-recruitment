@@ -71,7 +71,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { aiParseAPI, jobMatchAPI, resumeScoreAPI, userAPI } from '@/api'
-import * as echarts from 'echarts'
+import echarts from '@/utils/echarts'
 
 const loading = ref(false)
 const stats = ref({ parseCount: 0, matchCount: 0, scoreCount: 0, teacherCount: 0 })

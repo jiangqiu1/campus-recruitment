@@ -53,7 +53,7 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useUserStore } from '@/stores/user.js'
 import { statisticsAPI, jobAPI, deliveryAPI } from '@/api/index.js'
-import * as echarts from 'echarts'
+import echarts from '@/utils/echarts'
 
 const userStore = useUserStore()
 const userId = userStore.userId

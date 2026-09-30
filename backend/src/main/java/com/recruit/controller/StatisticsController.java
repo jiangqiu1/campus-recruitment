@@ -5,6 +5,7 @@ import com.recruit.entity.Class;
 import com.recruit.entity.Job;
 import com.recruit.entity.OperationLog;
 import com.recruit.entity.ResumeScoreLog;
+import com.recruit.entity.StudentClass;
 import com.recruit.entity.SysUser;
 import com.recruit.service.*;
 import com.recruit.utils.Result;
@@ -15,6 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 统计数据控制器
@@ -142,12 +144,14 @@ public class StatisticsController extends BaseController {
                 Long curUserId = getCurrentUserId();
                 List<Class> myClasses = classService.selectByTeacherId(curUserId);
                 classCount = myClasses != null ? myClasses.size() : 0;
-                if (myClasses != null) {
-                    for (Class cls : myClasses) {
-                        List<Long> studentIds = classService.getStudentIdsByClassId(cls.getId());
-                        if (studentIds != null) {
-                            allStudentIds.addAll(studentIds);
-                        }
+                if (myClasses != null && !myClasses.isEmpty() && studentClassService != null) {
+                    // 一次批量查询所有班级的学生-班级关联，替代逐班查询
+                    List<Long> classIds = myClasses.stream().map(Class::getId).collect(Collectors.toList());
+                    List<StudentClass> relations = studentClassService.lambdaQuery()
+                            .in(StudentClass::getClassId, classIds)
+                            .list();
+                    for (StudentClass rel : relations) {
+                        allStudentIds.add(rel.getStudentId());
                     }
                 }
                 studentCount = allStudentIds.size();
@@ -210,18 +214,20 @@ public class StatisticsController extends BaseController {
                         .orderByDesc(Delivery::getCreateTime)
                         .last("LIMIT 5")
                         .list();
+                // 批量取学生与岗位名，替代循环内逐条查询
+                List<Long> stuIds = recentDeliveries.stream()
+                        .map(Delivery::getStudentId).filter(Objects::nonNull).distinct()
+                        .collect(Collectors.toList());
+                Map<Long, SysUser> stuMap = stuIds.isEmpty() ? Collections.emptyMap()
+                        : userService.listByIds(stuIds).stream()
+                                .collect(Collectors.toMap(SysUser::getId, u -> u));
+                Map<Long, String> jobTitleMap = teacherJobs.stream()
+                        .collect(Collectors.toMap(Job::getId, Job::getTitle));
                 for (Delivery d : recentDeliveries) {
                     Map<String, Object> act = new HashMap<>();
-                    String studentName = "学生";
-                    try {
-                        com.recruit.entity.SysUser stu = userService.getById(d.getStudentId());
-                        if (stu != null) studentName = stu.getRealName() != null ? stu.getRealName() : "学生";
-                    } catch (Exception ignored) {}
-                    // 找岗位名称
-                    String jobTitle = "";
-                    for (Job j : teacherJobs) {
-                        if (j.getId().equals(d.getJobId())) { jobTitle = j.getTitle(); break; }
-                    }
+                    SysUser stu = d.getStudentId() != null ? stuMap.get(d.getStudentId()) : null;
+                    String studentName = stu != null && stu.getRealName() != null ? stu.getRealName() : "学生";
+                    String jobTitle = jobTitleMap.getOrDefault(d.getJobId(), "");
                     act.put("text", studentName + " 投递了「" + jobTitle + "」");
                     act.put("time", d.getCreateTime() != null ? d.getCreateTime().toString().replace("T", " ").substring(0, 16) : "");
                     act.put("type", "delivery");
@@ -281,38 +287,38 @@ public class StatisticsController extends BaseController {
 
         if (jobIds.isEmpty()) return Result.success(data);
 
-        // 获取所有投递
-        var deliveries = deliveryService.lambdaQuery()
-                .in(Delivery::getJobId, jobIds)
-                .list();
+        // 一次按状态分组统计，替代全量拉取投递到内存过滤计数
+        // CAST 是为了绕开 MySQL 驱动把 TINYINT(1) 读成 Boolean 的问题
+        List<Map<String, Object>> statusRows = deliveryService.getBaseMapper().selectMaps(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                        .select("CAST(status AS SIGNED) AS status, COUNT(*) AS cnt")
+                        .in("job_id", jobIds)
+                        .groupBy("status"));
+        Map<Integer, Long> cntByStatus = new HashMap<>();
+        for (Map<String, Object> row : statusRows) {
+            if (row.get("status") == null) continue;
+            cntByStatus.put(Integer.valueOf(row.get("status").toString()),
+                    row.get("cnt") != null ? Long.parseLong(row.get("cnt").toString()) : 0L);
+        }
 
         // 待处理简历（status=0）
-        long pendingResumeCount = deliveries.stream()
-                .filter(d -> d.getStatus() != null && d.getStatus() == 0)
-                .count();
-        data.put("pendingResumeCount", pendingResumeCount);
-
-        // 今日新增投递
-        java.time.LocalDate today = java.time.LocalDate.now();
-        long todayNewCount = deliveries.stream()
-                .filter(d -> d.getCreateTime() != null && d.getCreateTime().toLocalDate().equals(today))
-                .count();
-        data.put("todayNewCount", todayNewCount);
-
-        // 今日面试
-        long todayInterviewCount = deliveries.stream()
-                .filter(d -> d.getStatus() != null && d.getStatus() == 2
-                        && d.getInterviewTime() != null && d.getInterviewTime().toLocalDate().equals(today))
-                .count();
-        data.put("todayInterviewCount", todayInterviewCount);
+        data.put("pendingResumeCount", cntByStatus.getOrDefault(0, 0L));
 
         // 保留原字段（兼容旧页面）
-        data.put("resumeCount", (long) deliveries.size());
-        data.put("interviewCount", deliveries.stream()
-                .filter(d -> d.getStatus() != null && (d.getStatus() == 2 || d.getStatus() == 3))
+        data.put("resumeCount", deliveryService.lambdaQuery().in(Delivery::getJobId, jobIds).count());
+        data.put("interviewCount", cntByStatus.getOrDefault(2, 0L) + cntByStatus.getOrDefault(3, 0L));
+        data.put("hiredCount", cntByStatus.getOrDefault(3, 0L));
+
+        // 今日新增投递 / 今日面试
+        java.time.LocalDate today = java.time.LocalDate.now();
+        data.put("todayNewCount", deliveryService.lambdaQuery()
+                .in(Delivery::getJobId, jobIds)
+                .apply("DATE(create_time) = {0}", today)
                 .count());
-        data.put("hiredCount", deliveries.stream()
-                .filter(d -> d.getStatus() != null && d.getStatus() == 3)
+        data.put("todayInterviewCount", deliveryService.lambdaQuery()
+                .in(Delivery::getJobId, jobIds)
+                .eq(Delivery::getStatus, 2)
+                .apply("DATE(interview_time) = {0}", today)
                 .count());
 
         return Result.success(data);
@@ -408,10 +414,14 @@ public class StatisticsController extends BaseController {
         Long teacherId = getCurrentUserId();
         List<Class> myClasses = classService != null ? classService.selectByTeacherId(teacherId) : new ArrayList<>();
         Set<Long> myStudentIds = new HashSet<>();
-        if (myClasses != null && classService != null) {
-            for (Class cls : myClasses) {
-                List<Long> ids = classService.getStudentIdsByClassId(cls.getId());
-                if (ids != null) myStudentIds.addAll(ids);
+        if (myClasses != null && !myClasses.isEmpty() && studentClassService != null) {
+            // 一次批量查询所有班级的学生-班级关联，替代逐班查询
+            List<Long> classIds = myClasses.stream().map(Class::getId).collect(Collectors.toList());
+            List<StudentClass> relations = studentClassService.lambdaQuery()
+                    .in(StudentClass::getClassId, classIds)
+                    .list();
+            for (StudentClass rel : relations) {
+                myStudentIds.add(rel.getStudentId());
             }
         }
         List<Map<String, Object>> distribution = new ArrayList<>();
@@ -421,18 +431,25 @@ public class StatisticsController extends BaseController {
             put("待查看", "待查看");
             put("未录用", "未录用");
         }};
+        // 一次按状态分组统计，替代逐状态 count
+        // CAST 是为了绕开 MySQL 驱动把 TINYINT(1) 读成 Boolean 的问题
+        Map<Integer, Long> cntByStatus = new HashMap<>();
+        if (!myStudentIds.isEmpty()) {
+            List<Map<String, Object>> statusRows = deliveryService.getBaseMapper().selectMaps(
+                    new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                            .select("CAST(status AS SIGNED) AS status, COUNT(*) AS cnt")
+                            .in("student_id", myStudentIds)
+                            .groupBy("status"));
+            for (Map<String, Object> row : statusRows) {
+                if (row.get("status") == null) continue;
+                cntByStatus.put(Integer.valueOf(row.get("status").toString()),
+                        row.get("cnt") != null ? Long.parseLong(row.get("cnt").toString()) : 0L);
+            }
+        }
         for (Map.Entry<String, String> e : statusMap.entrySet()) {
             Map<String, Object> item = new HashMap<>();
             item.put("name", e.getValue());
-            long count;
-            if (!myStudentIds.isEmpty()) {
-                count = deliveryService.lambdaQuery()
-                        .eq(Delivery::getStatus, getStatusValue(e.getKey()))
-                        .in(Delivery::getStudentId, myStudentIds)
-                        .count();
-            } else {
-                count = 0L;
-            }
+            long count = cntByStatus.getOrDefault(getStatusValue(e.getKey()), 0L);
             item.put("value", count == 0 ? (long) Math.floor(Math.random() * 10) + 1 : count);
             distribution.add(item);
         }
@@ -493,15 +510,26 @@ public class StatisticsController extends BaseController {
                 .eq(Job::getStatus, 1)
                 .last("LIMIT 10")
                 .list();
+        // 一次按岗位分组统计投递量，替代逐岗位 count
+        Map<Long, Long> cntByJob = new HashMap<>();
+        if (!jobs.isEmpty()) {
+            List<Long> hotJobIds = jobs.stream().map(Job::getId).collect(Collectors.toList());
+            List<Map<String, Object>> rows = deliveryService.getBaseMapper().selectMaps(
+                    new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                            .select("job_id, COUNT(*) as cnt")
+                            .in("job_id", hotJobIds)
+                            .groupBy("job_id"));
+            for (Map<String, Object> row : rows) {
+                if (row.get("job_id") == null) continue;
+                cntByJob.put(Long.valueOf(row.get("job_id").toString()),
+                        row.get("cnt") != null ? Long.parseLong(row.get("cnt").toString()) : 0L);
+            }
+        }
         for (int i = 0; i < jobs.size() && i < 10; i++) {
             Map<String, Object> item = new HashMap<>();
             Job job = jobs.get(i);
-            // 统计该岗位的投递量
-            long deliveryCount = deliveryService.lambdaQuery()
-                    .eq(Delivery::getJobId, job.getId())
-                    .count();
             item.put("name", job.getTitle());
-            item.put("count", deliveryCount);
+            item.put("count", cntByJob.getOrDefault(job.getId(), 0L));
             item.put("size", 14 + (10 - i) * 2);
             hotJobs.add(item);
         }
@@ -526,14 +554,21 @@ public class StatisticsController extends BaseController {
                         .orderByDesc(OperationLog::getCreateTime)
                         .last("LIMIT 10")
                         .list();
+                // 批量取用户，替代循环内重复 getById
+                List<Long> uids = logs.stream()
+                        .map(OperationLog::getUserId).filter(Objects::nonNull).distinct()
+                        .collect(Collectors.toList());
+                Map<Long, SysUser> userMap = uids.isEmpty() ? Collections.emptyMap()
+                        : userService.listByIds(uids).stream()
+                                .collect(Collectors.toMap(SysUser::getId, u -> u));
                 for (OperationLog log : logs) {
                     Map<String, Object> item = new HashMap<>();
                     item.put("time", log.getCreateTime() != null ? log.getCreateTime().toString().replace("T", " ") : "");
                     Long uid = log.getUserId();
-                    String userName = uid != null ? 
-                        (userService.getById(uid) != null ? 
-                            userService.getById(uid).getRealName() + "(" + userService.getById(uid).getUsername() + ")" : 
-                            "用户#" + uid) : "?";
+                    SysUser u = uid != null ? userMap.get(uid) : null;
+                    String userName = u != null
+                            ? u.getRealName() + "(" + u.getUsername() + ")"
+                            : (uid != null ? "用户#" + uid : "?");
                     item.put("user", userName);
                     item.put("action", log.getOperationType() != null ? log.getOperationType() : "操作");
                     item.put("status", "成功");
@@ -547,11 +582,18 @@ public class StatisticsController extends BaseController {
                     .orderByDesc(Delivery::getCreateTime)
                     .last("LIMIT 6")
                     .list();
+            // 批量取学生，替代循环内重复 getById
+            List<Long> stuIds = deliveries.stream()
+                    .map(Delivery::getStudentId).filter(Objects::nonNull).distinct()
+                    .collect(Collectors.toList());
+            Map<Long, SysUser> stuMap = stuIds.isEmpty() ? Collections.emptyMap()
+                    : userService.listByIds(stuIds).stream()
+                            .collect(Collectors.toMap(SysUser::getId, u -> u));
             for (Delivery d : deliveries) {
                 Map<String, Object> item = new HashMap<>();
                 item.put("time", d.getCreateTime() != null ? d.getCreateTime().toString().replace("T", " ") : "");
-                String stuName = userService.getById(d.getStudentId()) != null ? userService.getById(d.getStudentId()).getRealName() : ("学生#" + d.getStudentId());
-                item.put("user", stuName);
+                SysUser stu = d.getStudentId() != null ? stuMap.get(d.getStudentId()) : null;
+                item.put("user", stu != null && stu.getRealName() != null ? stu.getRealName() : ("学生#" + d.getStudentId()));
                 item.put("action", "投递简历（岗位ID: " + d.getJobId() + "）");
                 item.put("status", d.getStatus() != null && d.getStatus() == 1 ? "已查看" : "待查看");
                 activities.add(item);
