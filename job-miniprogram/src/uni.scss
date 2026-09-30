@@ -6,11 +6,16 @@
  */
 
 /* ==================== 色彩变量 ==================== */
-/* 品牌主色 */
+/* 品牌主色（蓝=操作） */
 $uni-color-primary: #165DFF;
 $uni-color-primary-light: rgba(22, 93, 255, 0.1);
 $uni-color-primary-hover: #3B7AFF;
-$uni-color-ai: #0EA5E9;
+$uni-color-primary-lighter: #60A5FA;   // 浅主色：渐变终点
+$uni-gradient-primary: linear-gradient(135deg, #165DFF 0%, #2563EB 100%);
+
+/* AI 功能色（青=智能）——刻意不用紫色，避开 AI 产品紫渐变俗套，见 docs/frontend/08 设计规范 */
+$uni-color-ai: #0EA5E9;             // 图标/强调/浅底
+$uni-color-ai-strong: #0284C7;      // 小字号文字（可读性）
 $uni-color-ai-light: rgba(14, 165, 233, 0.1);
 
 /* 功能状态色 */
@@ -36,13 +41,16 @@ $uni-bg-color-hover: #F8F9FC;      // 点击态背景
 $uni-bg-color-mask: rgba(0, 0, 0, 0.6); // 遮罩层
 
 /* 边框/分割线 */
-$uni-border-color: #E8EAED;        // 组件边框
+$uni-border-color: #E5E6EB;        // 组件边框（#E8EAED 已并入）
 $uni-border-color-divider: #F2F3F5;// 分割线
 
 /* ==================== 字体变量 ==================== */
-/* 字号层级 - 行高规则：字号 + 8px */
-$uni-font-size-h1: 24px;
-$uni-line-height-h1: 32px;
+/* 字号层级 - 行高规则：字号 + 8px，定版 12/13/14/15/16/18/20/24 */
+$uni-font-size-hero: 24px;         // 特例大标题（登录页等）
+$uni-line-height-hero: 32px;
+
+$uni-font-size-h1: 20px;           // 页面大标题
+$uni-line-height-h1: 28px;
 
 $uni-font-size-h2: 18px;
 $uni-line-height-h2: 26px;
@@ -50,14 +58,17 @@ $uni-line-height-h2: 26px;
 $uni-font-size-h3: 16px;
 $uni-line-height-h3: 24px;
 
+$uni-font-size-em: 15px;           // 强调正文/按钮
+$uni-line-height-em: 22px;
+
 $uni-font-size-base: 14px;         // 正文
 $uni-line-height-base: 22px;
 
-$uni-font-size-sm: 12px;           // 辅助文字
+$uni-font-size-sm: 13px;           // 次要正文
 $uni-line-height-sm: 20px;
 
-$uni-font-size-xs: 10px;           // 极小标签
-$uni-line-height-xs: 18px;
+$uni-font-size-xs: 12px;           // 辅助说明/小标签
+$uni-line-height-xs: 20px;
 
 /* 字重 */
 $uni-font-weight-regular: 400;
@@ -89,6 +100,6 @@ $safe-area-bottom: 34px;       // 底部安全区高度（iPhone X 及以上）
 $page-horizontal-padding: 16px;// 页面左右安全边距
 
 /* ==================== 阴影变量（三级体系） ==================== */
-$uni-shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.04);   // 轻阴影：普通卡片
+$uni-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);     // 轻阴影：普通卡片（跟随全站高频值）
 $uni-shadow-base: 0 4px 12px rgba(0, 0, 0, 0.06); // 中阴影：弹窗/悬浮栏
 $uni-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);   // 重阴影：全屏遮罩弹窗

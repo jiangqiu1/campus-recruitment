@@ -299,18 +299,18 @@ export const mapJobData = (raw) => {
 }
 
 /* ======================== 教师端通用数据映射 ======================== */
-// 投递状态映射
+// 投递状态映射（色值对齐 uni.scss 设计 token，见 docs/frontend/08-小程序UI设计规范.md）
 export const DELIVERY_STATUS = {
-	PENDING: { value: 0, label: '待查看', color: '#F59E0B', class: 'pending' },
+	PENDING: { value: 0, label: '待查看', color: '#FF7D00', class: 'pending' },
 	VIEWED: { value: 1, label: '已查看', color: '#165DFF', class: 'viewed' },
 	INTERVIEW: { value: 2, label: '面试中', color: '#165DFF', class: 'interview' },
 	ACCEPTED: { value: 3, label: '已录用', color: '#8B5CF6', class: 'accepted' },
-	REJECTED: { value: 4, label: '不合适', color: '#EF4444', class: 'rejected' }
+	REJECTED: { value: 4, label: '不合适', color: '#F53F3F', class: 'rejected' }
 }
 
 // 岗位状态映射
 export const JOB_STATUS = {
-	DRAFT: { value: 0, label: '草稿', color: '#F59E0B', class: 'draft' },
+	DRAFT: { value: 0, label: '草稿', color: '#FF7D00', class: 'draft' },
 	ACTIVE: { value: 1, label: '招聘中', color: '#165DFF', class: 'active' },
 	CLOSED: { value: 2, label: '已关闭', color: '#86909C', class: 'closed' },
 	PAUSED: { value: 3, label: '已暂停', color: '#86909C', class: 'paused' }

@@ -316,24 +316,24 @@ const cancelDelivery = async (id) => {
 const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/job-detail?id=' + jobId })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* 统计卡片 */
 .stats-row {
 	flex-direction: row;
 	padding: 12px 16px 0;
 	gap: 8px;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 }
 .stat-card {
 	flex: 1;
 	align-items: center;
 	padding: 10px 4px;
-	border-radius: 10px;
-	background: #F7F8FA;
+	border-radius: 12px;
+	background: $uni-bg-color-page;
 	gap: 2px;
 }
 .stat-card.active {
-	background: #165DFF;
+	background: $uni-color-primary;
 }
 .stat-card:active {
 	opacity: 0.85;
@@ -341,15 +341,15 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 .stat-num {
 	font-size: 20px;
 	font-weight: 700;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	line-height: 1.3;
 }
 .stat-card.active .stat-num {
-	color: #FFFFFF;
+	color: $uni-text-color-inverse;
 }
 .stat-label {
 	font-size: 12px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	line-height: 1.3;
 }
 .stat-card.active .stat-label {
@@ -358,21 +358,21 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 .filter-tabs {
 	flex-direction: row;
 	padding: 8px 16px 0;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	gap: 24px;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 	height: 44px;
 	align-items: center;
 }
 .filter-tab {
 	font-size: 14px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	font-weight: 500;
 	position: relative;
 	padding-bottom: 4px;
 }
 .filter-tab.active {
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-weight: 600;
 }
 .filter-tab.active::after {
@@ -383,19 +383,19 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 	transform: translateX(-50%);
 	width: 20px;
 	height: 3px;
-	background: #165DFF;
-	border-radius: 2px;
+	background: $uni-color-primary;
+	border-radius: 4px;
 }
 .delivery-list {
 	padding: 12px 16px;
 	gap: 12px;
 }
 .delivery-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.delivery-card:active { background: #F7F8FA; }
+.delivery-card:active { background: $uni-bg-color-page; }
 .card-body {
 	padding: 16px;
 	gap: 8px;
@@ -410,7 +410,7 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 .card-title {
 	font-size: 16px;
 	font-weight: 600;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	flex: 1;
 	lines: 1;
 }
@@ -424,7 +424,7 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 /* 第二行：公司名 */
 .card-company {
 	font-size: 14px;
-	color: #4E5969;
+	color: $uni-text-color;
 }
 /* 第三行：地点/薪资 + 投递时间 */
 .card-meta-row {
@@ -439,19 +439,19 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 }
 .meta-text {
 	font-size: 13px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 }
 .meta-salary {
-	color: #165DFF;
+	color: $uni-color-primary;
 	font-weight: 500;
 }
 .meta-divider {
 	font-size: 12px;
-	color: #E5E6EB;
+	color: $uni-border-color;
 }
 .meta-time {
 	font-size: 12px;
-	color: #C9CDD4;
+	color: $uni-text-color-placeholder;
 }
 /* 时间轴 */
 .timeline {
@@ -476,54 +476,54 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 	width: 18px;
 	height: 18px;
 	border-radius: 50%;
-	background: #E5E6EB;
+	background: $uni-border-color;
 	align-items: center;
 	justify-content: center;
 	z-index: 1;
 	flex-shrink: 0;
 }
 .tl-dot.done {
-	background: #165DFF;
+	background: $uni-color-primary;
 }
 .tl-dot.current {
-	background: #165DFF;
+	background: $uni-color-primary;
 	width: 20px;
 	height: 20px;
-	box-shadow: 0 0 0 4px rgba(22,93,255,0.15);
+	box-shadow: 0 0 0 4px $uni-color-primary-light;
 }
 .tl-dot.rejected {
-	background: #F53F3F;
+	background: $uni-color-error;
 }
 .tl-line {
 	position: absolute;
 	left: calc(50% + 9px);
 	width: calc(100% - 18px);
 	height: 2px;
-	background: #E5E6EB;
+	background: $uni-border-color;
 	flex-shrink: 1;
 }
 .tl-line.done {
-	background: #165DFF;
+	background: $uni-color-primary;
 }
 .tl-label {
-	font-size: 11px;
-	color: #C9CDD4;
+	font-size: 12px;
+	color: $uni-text-color-placeholder;
 	line-height: 1.3;
 }
 .tl-label.done {
-	color: #165DFF;
+	color: $uni-color-primary;
 	font-weight: 500;
 }
 .tl-label.current {
-	color: #165DFF;
+	color: $uni-color-primary;
 	font-weight: 600;
 }
 .tl-label.rejected {
-	color: #F53F3F;
+	color: $uni-color-error;
 }
 /* 面试信息内嵌展示 */
 .interview-info {
-	background: rgba(22,93,255,0.06);
+	background: $uni-color-primary-light;
 	border-radius: 8px;
 	padding: 10px 12px;
 	margin-top: 4px;
@@ -534,7 +534,7 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 	align-items: center;
 	gap: 4px;
 	font-size: 13px;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	line-height: 1.5;
 }
 /* 操作按钮 */
@@ -546,19 +546,19 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 }
 .action-btn {
 	padding: 6px 14px;
-	border-radius: 6px;
+	border-radius: 8px;
 	font-size: 12px;
 	font-weight: 500;
 	border: none;
 	height: 32px;
 }
 .btn-cancel {
-	background: #F7F8FA;
-	color: #86909C;
+	background: $uni-bg-color-page;
+	color: $uni-text-color-secondary;
 }
 .btn-view {
-	background: rgba(22,93,255,0.08);
-	color: #165DFF;
+	background: $uni-color-primary-light;
+	color: $uni-color-primary;
 }
 /* 投递结果弹窗 */
 .result-content {
@@ -573,10 +573,10 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 }
 .result-feedback {
 	font-size: 14px;
-	color: #4E5969;
+	color: $uni-text-color;
 	line-height: 1.6;
 	text-align: center;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 	border-radius: 8px;
 	padding: 14px 16px;
 	width: 100%;
@@ -584,22 +584,22 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 }
 .result-feedback-empty {
 	font-size: 14px;
-	color: #C9CDD4;
+	color: $uni-text-color-placeholder;
 	text-align: center;
 }
 /* 面试日程快捷入口 */
 .interview-banner {
 	flex-direction: row;
 	align-items: center;
-	background: rgba(22,93,255,0.06);
-	border: 1px solid rgba(22,93,255,0.12);
-	border-radius: 10px;
+	background: $uni-color-primary-light;
+	border: 1px solid $uni-color-primary-light;
+	border-radius: 12px;
 	padding: 12px 16px;
 	margin: 12px 16px 0;
 	gap: 8px;
 }
-.interview-banner:active { background: rgba(22,93,255,0.1); }
-.banner-text { flex: 1; font-size: 14px; color: #1D2129; }
-.banner-count { font-size: 16px; font-weight: 700; color: #165DFF; }
-.banner-link { font-size: 13px; color: #165DFF; font-weight: 500; }
+.interview-banner:active { background: $uni-color-primary-light; }
+.banner-text { flex: 1; font-size: 14px; color: $uni-text-color-title; }
+.banner-count { font-size: 16px; font-weight: 700; color: $uni-color-primary; }
+.banner-link { font-size: 13px; color: $uni-color-primary; font-weight: 500; }
 </style>

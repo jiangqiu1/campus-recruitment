@@ -9,9 +9,9 @@
 					<view class="top-bar-right">
 						<text class="completeness-title">简历完整度 {{ completeness }}%</text>
 						<view class="ai-optimize" @click="goAIReview">
-							<uni-icons type="compose" size="14" color="#7C3AED" />
-							<text class="optimize-text optimize-text--purple">{{ reviewing ? 'AI 诊断中...' : 'AI 诊断' }}</text>
-							<uni-icons v-if="!reviewing" type="arrowright" size="14" color="#7C3AED" />
+							<uni-icons type="compose" size="14" color="#0EA5E9" />
+							<text class="optimize-text optimize-text--ai">{{ reviewing ? 'AI 诊断中...' : 'AI 诊断' }}</text>
+							<uni-icons v-if="!reviewing" type="arrowright" size="14" color="#0EA5E9" />
 						</view>
 					</view>
 				</view>
@@ -104,7 +104,7 @@
 						<view class="ai-section" v-if="aiAnalysisResult.recommendedSkills && aiAnalysisResult.recommendedSkills.length">
 							<text class="ai-subtitle">推荐补充技能</text>
 							<view class="tag-container">
-								<text v-for="(sk, i) in aiAnalysisResult.recommendedSkills" :key="i" class="skill-tag" style="background:rgba(139,92,246,0.1);color:#7C3AED;">{{ sk }}</text>
+								<text v-for="(sk, i) in aiAnalysisResult.recommendedSkills" :key="i" class="skill-tag" style="background:rgba(14, 165, 233,0.1);color:#0EA5E9;">{{ sk }}</text>
 							</view>
 						</view>
 					</view>
@@ -278,13 +278,13 @@ const formatTime = (time) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .resume-top-bar {
 	flex-direction: row;
 	align-items: center;
 	gap: 16px;
 	padding: 16px;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	margin-bottom: 12px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
@@ -295,7 +295,7 @@ const formatTime = (time) => {
 .completeness-title {
 	font-size: 15px;
 	font-weight: 600;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 .ai-optimize {
 	flex-direction: row;
@@ -304,14 +304,14 @@ const formatTime = (time) => {
 }
 .optimize-text {
 	font-size: 13px;
-	color: #0EA5E9;
+	color: $uni-color-ai;
 	font-weight: 500;
 }
-.optimize-text--purple {
-	color: #7C3AED;
+.optimize-text--ai {
+	color: $uni-color-ai;
 }
 .resume-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 20px;
 	margin: 0 16px;
@@ -323,22 +323,22 @@ const formatTime = (time) => {
 	justify-content: space-between;
 	margin-bottom: 16px;
 	padding-bottom: 16px;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 }
 .resume-name {
 	font-size: 20px;
 	font-weight: 700;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 .resume-contact {
 	font-size: 13px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	margin-top: 4px;
 }
 .default-badge {
-	font-size: 11px;
-	color: #165DFF;
-	background: rgba(22,93,255,0.08);
+	font-size: 12px;
+	color: $uni-color-primary;
+	background: $uni-color-primary-light;
 	padding: 2px 10px;
 	border-radius: 4px;
 	font-weight: 500;
@@ -346,39 +346,39 @@ const formatTime = (time) => {
 .section-block {
 	margin-bottom: 16px;
 	padding-bottom: 16px;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 }
 .section-block:last-child { border-bottom: none; padding-bottom: 0; }
 .section-label {
 	font-size: 14px;
 	font-weight: 600;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	margin-bottom: 8px;
 	display: block;
 }
 .section-value {
 	font-size: 14px;
-	color: #4E5969;
+	color: $uni-text-color;
 	line-height: 1.6;
 }
 .value-empty {
 	font-size: 14px;
-	color: #C9CDD4;
+	color: $uni-text-color-placeholder;
 }
 .exp-list { gap: 10px; }
 .exp-item { gap: 2px; }
-.exp-title { font-size: 15px; font-weight: 500; color: #1D2129; }
-.exp-sub { font-size: 13px; color: #86909C; }
+.exp-title { font-size: 15px; font-weight: 500; color: $uni-text-color-title; }
+.exp-sub { font-size: 13px; color: $uni-text-color-secondary; }
 .skill-tags { flex-direction: row; flex-wrap: wrap; gap: 6px; }
 .skill-tag {
 	font-size: 13px;
-	color: #165DFF;
-	background: rgba(22,93,255,0.08);
+	color: $uni-color-primary;
+	background: $uni-color-primary-light;
 	padding: 4px 10px;
 	border-radius: 4px;
 }
 .resume-footer { padding-top: 12px; }
-.update-time { font-size: 12px; color: #C9CDD4; }
+.update-time { font-size: 12px; color: $uni-text-color-placeholder; }
 .action-buttons { padding: 16px; gap: 10px; }
 .btn-primary, .btn-outline, .btn-text-danger {
 	width: 100%;
@@ -390,15 +390,15 @@ const formatTime = (time) => {
 	justify-content: center;
 	border: none;
 }
-.btn-primary { background: #165DFF; color: #FFFFFF; }
-.btn-outline { background: #FFFFFF; border: 1px solid #E5E6EB; color: #4E5969; }
-.btn-text-danger { background: transparent; color: #F53F3F; height: 40px; }
+.btn-primary { background: $uni-color-primary; color: $uni-text-color-inverse; }
+.btn-outline { background: $uni-bg-color; border: 1px solid $uni-border-color; color: $uni-text-color; }
+.btn-text-danger { background: transparent; color: $uni-color-error; height: 40px; }
 .btn-primary:active { opacity: 0.85; }
-.btn-outline:active { background: #F7F8FA; }
+.btn-outline:active { background: $uni-bg-color-page; }
 
 /* AI 简历分析结果卡片 */
 .section-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 16px;
 	margin: 0 16px 12px;
@@ -413,12 +413,12 @@ const formatTime = (time) => {
 .section-title {
 	font-size: 15px;
 	font-weight: 700;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 .ai-badge {
-	font-size: 11px;
-	color: #8B5CF6;
-	background: rgba(139,92,246,0.1);
+	font-size: 12px;
+	color: $uni-color-ai;
+	background: $uni-color-ai-light;
 	padding: 2px 8px;
 	border-radius: 8px;
 	font-weight: 500;
@@ -428,16 +428,16 @@ const formatTime = (time) => {
 	flex-direction: row;
 	justify-content: space-between;
 	padding: 8px 0;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 }
-.ai-score-row text:first-child { font-size: 13px; color: #86909C; }
-.score-num { font-size: 16px; color: #165DFF; font-weight: 700; }
+.ai-score-row text:first-child { font-size: 13px; color: $uni-text-color-secondary; }
+.score-num { font-size: 16px; color: $uni-color-primary; font-weight: 700; }
 .ai-section { margin-top: 10px; }
-.ai-subtitle { font-size: 13px; font-weight: 600; color: #4E5969; margin-bottom: 6px; display: block; }
-.ai-item { display: block; font-size: 13px; padding: 6px 10px; border-radius: 6px; margin-bottom: 4px; line-height: 1.5; }
-.ai-item--green { background: rgba(0,180,42,0.06); color: #00B42A; }
-.ai-item--red { background: rgba(239,68,68,0.06); color: #EF4444; }
-.ai-item--blue { background: rgba(22,93,255,0.06); color: #165DFF; }
-.ai-item--amber { background: rgba(245,158,11,0.08); color: #D97706; }
+.ai-subtitle { font-size: 13px; font-weight: 600; color: $uni-text-color; margin-bottom: 6px; display: block; }
+.ai-item { display: block; font-size: 13px; padding: 6px 10px; border-radius: 8px; margin-bottom: 4px; line-height: 1.5; }
+.ai-item--green { background: $uni-color-success-light; color: $uni-color-success; }
+.ai-item--red { background: rgba(239,68,68,0.06); color: $uni-color-error; }
+.ai-item--blue { background: $uni-color-primary-light; color: $uni-color-primary; }
+.ai-item--amber { background: rgba(245,158,11,0.08); color: $uni-color-warning; }
 .tag-container { flex-direction: row; flex-wrap: wrap; gap: 8px; }
 </style>

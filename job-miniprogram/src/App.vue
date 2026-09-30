@@ -20,6 +20,14 @@
 </script>
 
 <style>
+/* 全局点按反馈：按钮按压淡出（页面可按需覆盖） */
+button {
+	transition: opacity 0.2s ease;
+}
+button:active {
+	opacity: 0.85;
+}
+
 /* 全局基础样式 - 补充规范 */
 page {
 	background-color: #F7F8FA;

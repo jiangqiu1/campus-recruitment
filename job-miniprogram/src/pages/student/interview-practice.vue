@@ -8,7 +8,7 @@
 			<template v-else-if="!currentJob && !finished">
 				<view class="practice-banner">
 					<view class="banner-icon">
-						<uni-icons type="chat" size="32" color="#7C3AED" />
+						<uni-icons type="chat" size="32" color="#0EA5E9" />
 					</view>
 					<view class="banner-text">
 						<text class="banner-title">AI 模拟面试</text>
@@ -268,13 +268,13 @@ const scoreColor = (score) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .practice-banner {
 	flex-direction: row;
 	align-items: center;
 	margin: 16px;
 	padding: 20px;
-	background: rgba(124, 58, 237, 0.06);
+	background: $uni-color-ai-light;
 	border-radius: 12px;
 	gap: 16px;
 }
@@ -282,35 +282,35 @@ const scoreColor = (score) => {
 	width: 48px;
 	height: 48px;
 	border-radius: 12px;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	align-items: center;
 	justify-content: center;
 }
 .banner-text { flex: 1; }
-.banner-title { font-size: 18px; font-weight: 700; color: #1D2129; display: block; margin-bottom: 4px; }
-.banner-desc { font-size: 13px; color: #4E5969; line-height: 1.5; }
+.banner-title { font-size: 18px; font-weight: 700; color: $uni-text-color-title; display: block; margin-bottom: 4px; }
+.banner-desc { font-size: 13px; color: $uni-text-color; line-height: 1.5; }
 
 .job-section { padding: 0 16px; }
 .section-header { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.section-title { font-size: 16px; font-weight: 700; color: #1D2129; }
-.section-count { font-size: 13px; color: #86909C; }
+.section-title { font-size: 16px; font-weight: 700; color: $uni-text-color-title; }
+.section-count { font-size: 13px; color: $uni-text-color-secondary; }
 .job-list { gap: 10px; }
 .job-card {
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 16px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 .job-info { flex: 1; }
-.job-title { font-size: 16px; font-weight: 600; color: #1D2129; display: block; }
-.job-company { font-size: 13px; color: #86909C; margin-top: 2px; display: block; }
+.job-title { font-size: 16px; font-weight: 600; color: $uni-text-color-title; display: block; }
+.job-company { font-size: 13px; color: $uni-text-color-secondary; margin-top: 2px; display: block; }
 .job-card:active { opacity: 0.85; }
 
 .gen-loading { padding: 24px 16px; }
-.gen-loading-text { font-size: 13px; color: #86909C; text-align: center; margin-top: 12px; display: block; }
+.gen-loading-text { font-size: 13px; color: $uni-text-color-secondary; text-align: center; margin-top: 12px; display: block; }
 
 .practice-job-bar {
 	flex-direction: row;
@@ -318,17 +318,17 @@ const scoreColor = (score) => {
 	justify-content: space-between;
 	margin: 16px 16px 12px;
 	padding: 12px 16px;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 .practice-job-info { flex: 1; }
-.practice-job-title { font-size: 15px; font-weight: 600; color: #1D2129; display: block; }
-.progress-text { font-size: 12px; color: #86909C; margin-top: 2px; display: block; }
-.quit-link { font-size: 13px; color: #F53F3F; padding: 4px 0 4px 12px; }
+.practice-job-title { font-size: 15px; font-weight: 600; color: $uni-text-color-title; display: block; }
+.progress-text { font-size: 12px; color: $uni-text-color-secondary; margin-top: 2px; display: block; }
+.quit-link { font-size: 13px; color: $uni-color-error; padding: 4px 0 4px 12px; }
 
 .question-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 20px 16px;
 	margin: 0 16px;
@@ -338,49 +338,49 @@ const scoreColor = (score) => {
 .q-index {
 	font-size: 14px;
 	font-weight: 700;
-	color: #7C3AED;
-	background: rgba(124, 58, 237, 0.08);
+	color: $uni-color-ai;
+	background: $uni-color-ai-light;
 	padding: 2px 10px;
-	border-radius: 6px;
+	border-radius: 8px;
 }
-.q-type { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
-.q-type--tech { color: #165DFF; background: rgba(22, 93, 255, 0.08); }
-.q-type--proj { color: #7C3AED; background: rgba(124, 58, 237, 0.08); }
-.q-type--beh { color: #00B42A; background: rgba(0, 180, 42, 0.08); }
-.q-text { font-size: 16px; font-weight: 600; color: #1D2129; line-height: 1.6; }
+.q-type { font-size: 12px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+.q-type--tech { color: $uni-color-primary; background: $uni-color-primary-light; }
+.q-type--proj { color: $uni-color-ai; background: $uni-color-ai-light; }
+.q-type--beh { color: $uni-color-success; background: $uni-color-success-light; }
+.q-text { font-size: 16px; font-weight: 600; color: $uni-text-color-title; line-height: 1.6; }
 
 .answer-area { margin-top: 16px; }
-.answer-label { font-size: 13px; font-weight: 600; color: #4E5969; margin-bottom: 8px; display: block; }
+.answer-label { font-size: 13px; font-weight: 600; color: $uni-text-color; margin-bottom: 8px; display: block; }
 .answer-textarea {
 	width: 100%;
 	box-sizing: border-box;
 	min-height: 140px;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 	border-radius: 8px;
 	padding: 12px;
 	font-size: 14px;
 	line-height: 1.6;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 
 .result-card {
 	margin-top: 16px;
-	background: #FAFBFC;
-	border: 0.5px solid #F2F3F5;
-	border-radius: 10px;
+	background: $uni-bg-color-hover;
+	border: 0.5px solid $uni-border-color-divider;
+	border-radius: 12px;
 	padding: 14px;
 }
 .result-score-row { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.result-label { font-size: 13px; color: #86909C; }
+.result-label { font-size: 13px; color: $uni-text-color-secondary; }
 .result-score { font-size: 20px; font-weight: 800; }
 .result-block { margin-top: 10px; }
-.result-subtitle { font-size: 13px; font-weight: 600; color: #4E5969; margin-bottom: 4px; display: block; }
-.result-text { font-size: 13px; color: #4E5969; line-height: 1.6; }
+.result-subtitle { font-size: 13px; font-weight: 600; color: $uni-text-color; margin-bottom: 4px; display: block; }
+.result-text { font-size: 13px; color: $uni-text-color; line-height: 1.6; }
 .result-text--ref {
-	color: #165DFF;
-	background: rgba(22, 93, 255, 0.06);
+	color: $uni-color-primary;
+	background: $uni-color-primary-light;
 	padding: 8px 10px;
-	border-radius: 6px;
+	border-radius: 8px;
 }
 
 .submit-btn {
@@ -388,19 +388,19 @@ const scoreColor = (score) => {
 	width: 100%;
 	height: 46px;
 	border-radius: 12px;
-	background: #7C3AED;
-	color: #FFFFFF;
+	background: $uni-color-ai;
+	color: $uni-text-color-inverse;
 	font-size: 15px;
 	font-weight: 600;
 	align-items: center;
 	justify-content: center;
 	border: none;
 }
-.submit-btn[disabled] { background: #E5E6EB; color: #A9AEB8; }
+.submit-btn[disabled] { background: $uni-border-color; color: $uni-text-color-placeholder; }
 .submit-btn:active { opacity: 0.85; }
 
 .summary-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	margin: 16px;
 	padding: 32px 20px;
@@ -408,16 +408,16 @@ const scoreColor = (score) => {
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 .summary-icon { margin-bottom: 12px; }
-.summary-title { font-size: 20px; font-weight: 700; color: #1D2129; }
-.summary-desc { font-size: 13px; color: #86909C; margin-top: 6px; }
+.summary-title { font-size: 20px; font-weight: 700; color: $uni-text-color-title; }
+.summary-desc { font-size: 13px; color: $uni-text-color-secondary; margin-top: 6px; }
 .summary-score-row { align-items: center; margin-top: 20px; }
 .summary-score { font-size: 40px; font-weight: 800; }
-.summary-score-label { font-size: 12px; color: #86909C; margin-top: 2px; }
+.summary-score-label { font-size: 12px; color: $uni-text-color-secondary; margin-top: 2px; }
 .summary-tips { margin: 16px 0 8px; }
 .summary-tip {
 	font-size: 12px;
-	color: #4E5969;
-	background: #F7F8FA;
+	color: $uni-text-color;
+	background: $uni-bg-color-page;
 	padding: 8px 12px;
 	border-radius: 8px;
 	line-height: 1.6;

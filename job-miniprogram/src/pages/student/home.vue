@@ -19,7 +19,7 @@
 					<text>AI智能匹配</text>
 				</view>
 				<view class="quick-item" @click="goToInterviewPractice">
-					<view class="quick-icon"><uni-icons type="chat" size="24" color="#7C3AED" /></view>
+					<view class="quick-icon"><uni-icons type="chat" size="24" color="#0EA5E9" /></view>
 					<text>模拟面试</text>
 				</view>
 				<view class="quick-item" @click="goToHotJobs">
@@ -257,10 +257,10 @@ const goToCityPicker = () => uni.showToast({ title: '选择城市', icon: 'none'
 const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none' })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* Header */
 .header-section {
-	background: linear-gradient(135deg, #165DFF 0%, #2563EB 100%);
+	background: $uni-gradient-primary;
 	color: white;
 	padding: 16px 16px 24px;
 	flex-shrink: 0;
@@ -274,7 +274,7 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 .greeting-text {
 	font-size: 20px;
 	font-weight: 700;
-	color: #FFFFFF;
+	color: $uni-text-color-inverse;
 }
 
 /* 搜索框 */
@@ -282,8 +282,8 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	flex-direction: row;
 	align-items: center;
 	gap: 8px;
-	background: #FFFFFF;
-	border-radius: 24px;
+	background: $uni-bg-color;
+	border-radius: 999px;
 	padding: 0 16px;
 	height: 40px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -295,7 +295,7 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	padding: 0;
 	font-size: 14px;
 	background: transparent;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	outline: none;
 }
 /* 快捷入口 */
@@ -318,13 +318,13 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	width: 48px;
 	height: 48px;
 	border-radius: 12px;
-	background: rgba(22,93,255,0.08);
+	background: $uni-color-primary-light;
 	align-items: center;
 	justify-content: center;
 }
 .quick-item text {
 	font-size: 12px;
-	color: #4E5969;
+	color: $uni-text-color;
 	font-weight: 500;
 }
 .quick-item:active {
@@ -341,7 +341,7 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 .section-title {
 	font-size: 16px;
 	font-weight: 600;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 .stat-row {
 	flex-direction: row;
@@ -360,12 +360,12 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 .stat-num {
 	font-size: 22px;
 	font-weight: 700;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	margin-bottom: 4px;
 }
 .stat-label {
 	font-size: 12px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 }
 /* 列表区 */
 .list-section {
@@ -380,13 +380,13 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 }
 .list-tab {
 	font-size: 15px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	font-weight: 500;
 	padding-bottom: 4px;
 	position: relative;
 }
 .list-tab.active {
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-weight: 600;
 }
 .list-tab.active::after {
@@ -396,13 +396,13 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	left: 0;
 	width: 20px;
 	height: 3px;
-	background: #165DFF;
-	border-radius: 2px;
+	background: $uni-color-primary;
+	border-radius: 4px;
 }
 .section-more {
 	margin-left: auto;
 	font-size: 13px;
-	color: #165DFF;
+	color: $uni-color-primary;
 	font-weight: 500;
 }
 .card-list {
