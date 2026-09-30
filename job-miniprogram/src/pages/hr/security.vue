@@ -109,7 +109,7 @@ const goBack = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .menu-list {
 	background: white;
 	border-radius: 16px;
@@ -121,33 +121,33 @@ const goBack = () => {
 	flex-direction: row;
 	align-items: center;
 	padding: 16px;
-	border-bottom: 1px solid #F2F3F5;
+	border-bottom: 1px solid $uni-border-color-divider;
 }
 .menu-icon {
 	width: 36px;
 	height: 36px;
-	border-radius: 10px;
+	border-radius: 12px;
 	align-items: center;
 	justify-content: center;
 	margin-right: 12px;
 	font-size: 18px;
 }
-.menu-icon.blue { background: rgba(22,93,255,0.1); }
+.menu-icon.blue { background: $uni-color-primary-light; }
 .menu-icon.green { background: rgba(16,185,129,0.1); }
 .menu-icon.orange { background: rgba(245,158,11,0.1); }
 .menu-icon.red { background: rgba(239,68,68,0.1); }
 .menu-text {
 	flex: 1;
 	font-size: 15px;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-weight: 500;
 }
 .menu-value {
 	font-size: 14px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	margin-right: 8px;
 }
-.menu-arrow { color: #C9CDD4; font-size: 18px; }
+.menu-arrow { color: $uni-text-color-placeholder; font-size: 18px; }
 .info-card {
 	background: white;
 	border-radius: 16px;
@@ -158,13 +158,13 @@ const goBack = () => {
 .info-title {
 	font-size: 16px;
 	font-weight: 700;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	margin-bottom: 12px;
 	display: block;
 }
 .info-text {
 	font-size: 13px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	line-height: 1.8;
 	display: block;
 }

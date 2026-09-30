@@ -41,10 +41,10 @@
 import NavBar from '@/components/NavBar.vue'
 </script>
 
-<style scoped>
-.content-card { background: #FFFFFF; margin: 16px; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); line-height: 1.8; }
-.title { font-size: 18px; font-weight: 700; color: #1D2129; display: block; text-align: center; margin-bottom: 8px; }
-.update-time { font-size: 12px; color: #C9CDD4; display: block; text-align: center; margin-bottom: 20px; }
-.section-title { font-size: 15px; font-weight: 600; color: #1D2129; display: block; margin-top: 20px; margin-bottom: 8px; }
-.paragraph { font-size: 14px; color: #4E5969; display: block; margin-bottom: 8px; text-indent: 2em; }
+<style scoped lang="scss">
+.content-card { background: $uni-bg-color; margin: 16px; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); line-height: 1.8; }
+.title { font-size: 18px; font-weight: 700; color: $uni-text-color-title; display: block; text-align: center; margin-bottom: 8px; }
+.update-time { font-size: 12px; color: $uni-text-color-placeholder; display: block; text-align: center; margin-bottom: 20px; }
+.section-title { font-size: 15px; font-weight: 600; color: $uni-text-color-title; display: block; margin-top: 20px; margin-bottom: 8px; }
+.paragraph { font-size: 14px; color: $uni-text-color; display: block; margin-bottom: 8px; text-indent: 2em; }
 </style>

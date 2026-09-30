@@ -41,7 +41,7 @@
 import NavBar from '@/components/NavBar.vue'
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .about-header {
 	align-items: center;
 	padding: 40px 0 24px;
@@ -49,8 +49,8 @@ import NavBar from '@/components/NavBar.vue'
 .logo-placeholder {
 	width: 72px;
 	height: 72px;
-	border-radius: 20px;
-	background: rgba(22,93,255,0.08);
+	border-radius: 999px;
+	background: $uni-color-primary-light;
 	align-items: center;
 	justify-content: center;
 	margin-bottom: 12px;
@@ -58,15 +58,15 @@ import NavBar from '@/components/NavBar.vue'
 .app-name {
 	font-size: 20px;
 	font-weight: 700;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 .app-version {
 	font-size: 13px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	margin-top: 4px;
 }
 .about-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	margin: 0 16px 12px;
 	padding: 20px;
@@ -75,29 +75,29 @@ import NavBar from '@/components/NavBar.vue'
 .about-title {
 	font-size: 15px;
 	font-weight: 600;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	margin-bottom: 10px;
 	display: block;
 }
 .about-desc {
 	font-size: 14px;
-	color: #4E5969;
+	color: $uni-text-color;
 	line-height: 1.7;
 }
 .contact-row {
 	flex-direction: row;
 	align-items: center;
 	padding: 12px 0;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 }
 .contact-label {
 	font-size: 14px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	width: 80px;
 }
 .contact-value {
 	font-size: 14px;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	flex: 1;
 }
 .footer-text {
@@ -106,7 +106,7 @@ import NavBar from '@/components/NavBar.vue'
 }
 .footer-text text {
 	font-size: 12px;
-	color: #C9CDD4;
+	color: $uni-text-color-placeholder;
 	display: block;
 }
 </style>

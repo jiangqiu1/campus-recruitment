@@ -87,7 +87,7 @@
 				<view class="settings-item" @click="handleLogout">
 					<view class="settings-left">
 						<view class="settings-icon settings-icon--danger">
-							<uni-icons type="close" size="18" color="#EF4444" />
+							<uni-icons type="close" size="18" color="#F53F3F" />
 						</view>
 						<text class="settings-label settings-label--danger">退出登录</text>
 					</view>
@@ -271,7 +271,7 @@ const handleLogout = () => {
 	align-items: center;
 	background: rgba(255,255,255,0.2);
 	padding: 4px 10px;
-	border-radius: 20px;
+	border-radius: 999px;
 	align-self: flex-start;
 }
 .role-text {
@@ -321,18 +321,18 @@ const handleLogout = () => {
 /* ===== 菜单分组 ===== */
 .settings-group-label {
 	font-size: 12px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	padding: 12px 16px 4px;
 	font-weight: 500;
 }
 .settings-section-divider {
 	height: 8px;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 	margin: 4px 0;
 }
 .settings-hint {
-	font-size: 11px;
-	color: #C9CDD4;
+	font-size: 12px;
+	color: $uni-text-color-placeholder;
 	margin-left: 6px;
 }
 
@@ -372,7 +372,7 @@ const handleLogout = () => {
 	flex-shrink: 0;
 }
 .settings-icon--gray {
-	background: #F2F3F5;
+	background: $uni-border-color-divider;
 }
 .settings-icon--danger {
 	background: $uni-color-error-light;

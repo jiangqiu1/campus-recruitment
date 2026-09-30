@@ -137,7 +137,7 @@ const getCompanyId = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .stats-grid {
 	flex-direction: row;
 	flex-wrap: wrap;
@@ -146,7 +146,7 @@ const getCompanyId = () => {
 }
 .stat-card {
 	width: calc(50% - 6px);
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 20px 16px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
@@ -155,15 +155,15 @@ const getCompanyId = () => {
 .stat-num {
 	font-size: 28px;
 	font-weight: 800;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 .stat-label {
 	font-size: 13px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	margin-top: 4px;
 }
 .section-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	margin: 0 16px 12px;
 	padding: 16px;
@@ -172,7 +172,7 @@ const getCompanyId = () => {
 .section-title {
 	font-size: 15px;
 	font-weight: 700;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	margin-bottom: 12px;
 	display: block;
 }
@@ -190,17 +190,17 @@ const getCompanyId = () => {
 .today-num {
 	font-size: 24px;
 	font-weight: 800;
-	color: #165DFF;
+	color: $uni-color-primary;
 }
 .today-label {
 	font-size: 12px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	margin-top: 4px;
 }
 .today-divider {
 	width: 1px;
 	height: 40px;
-	background: #F2F3F5;
+	background: $uni-border-color-divider;
 }
 
 /* 漏斗图 */
@@ -213,28 +213,28 @@ const getCompanyId = () => {
 .funnel-label {
 	width: 60px;
 	font-size: 13px;
-	color: #4E5969;
+	color: $uni-text-color;
 	flex-shrink: 0;
 }
 .funnel-track {
 	flex: 1;
 	height: 8px;
-	background: #F2F3F5;
+	background: $uni-border-color-divider;
 	border-radius: 4px;
 	overflow: hidden;
 }
 .funnel-fill {
 	height: 100%;
 	border-radius: 4px;
-	background: #165DFF;
+	background: $uni-color-primary;
 }
-.funnel-fill--blue { background: #3B7AFF; }
-.funnel-fill--green { background: #00B42A; }
+.funnel-fill--blue { background: $uni-color-primary-hover; }
+.funnel-fill--green { background: $uni-color-success; }
 .funnel-val {
 	width: 32px;
 	font-size: 13px;
 	font-weight: 600;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	text-align: right;
 }
 .rate-row {
@@ -242,10 +242,10 @@ const getCompanyId = () => {
 	justify-content: space-around;
 	margin-top: 12px;
 	padding-top: 12px;
-	border-top: 0.5px solid #F2F3F5;
+	border-top: 0.5px solid $uni-border-color-divider;
 }
 .rate-text {
 	font-size: 13px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 }
 </style>

@@ -270,12 +270,12 @@ export default {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* ===== 岗位标签横向滚动 ===== */
 .job-tags-scroll {
 	white-space: nowrap;
 	padding: 10px 16px;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 }
 .job-tags-inner {
 	flex-direction: row;
@@ -284,21 +284,21 @@ export default {
 .job-tag {
 	display: inline-block;
 	padding: 6px 14px;
-	border-radius: 20px;
+	border-radius: 999px;
 	font-size: 13px;
-	color: #4E5969;
-	background: #F7F8FA;
+	color: $uni-text-color;
+	background: $uni-bg-color-page;
 	font-weight: 500;
 }
 .job-tag.active {
-	background: rgba(22,93,255,0.1);
-	color: #165DFF;
+	background: $uni-color-primary-light;
+	color: $uni-color-primary;
 	font-weight: 600;
-	box-shadow: 0 0 0 1px rgba(22,93,255,0.15);
+	box-shadow: 0 0 0 1px $uni-color-primary-light;
 }
 .job-tag-count {
 	font-size: 10px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	margin-left: 4px;
 }
 
@@ -307,18 +307,18 @@ export default {
 	flex-direction: row;
 	padding: 0 16px 8px;
 	gap: 16px;
-	background: #FFFFFF;
-	border-bottom: 0.5px solid #F2F3F5;
+	background: $uni-bg-color;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 }
 .status-tab {
 	font-size: 14px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	font-weight: 500;
 	padding-bottom: 6px;
 	position: relative;
 }
 .status-tab.active {
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-weight: 600;
 }
 .status-tab.active::after {
@@ -328,14 +328,14 @@ export default {
 	left: 0;
 	width: 20px;
 	height: 3px;
-	background: #165DFF;
-	border-radius: 2px;
+	background: $uni-color-primary;
+	border-radius: 4px;
 }
 
 /* ===== 候选人卡片 ===== */
 .candidate-list { padding: 12px 16px; }
 .candidate-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 14px 14px 14px 18px;
 	margin-bottom: 10px;
@@ -351,10 +351,10 @@ export default {
 	left: 0;
 	width: 3px;
 	height: calc(100% - 16px);
-	background: #F59E0B;
+	background: $uni-color-warning;
 	border-radius: 0 2px 2px 0;
 }
-.candidate-card:active { background: #F7F8FA; }
+.candidate-card:active { background: $uni-bg-color-page; }
 .candidate-top {
 	flex-direction: row;
 	align-items: center;
@@ -365,10 +365,10 @@ export default {
 	width: 40px;
 	height: 40px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #165DFF, #2563EB);
+	background: $uni-gradient-primary;
 	align-items: center;
 	justify-content: center;
-	color: #FFFFFF;
+	color: $uni-text-color-inverse;
 	font-size: 16px;
 	font-weight: 700;
 	flex-shrink: 0;
@@ -380,36 +380,36 @@ export default {
 	gap: 8px;
 	margin-bottom: 2px;
 }
-.cand-name { font-size: 16px; font-weight: 700; color: #1D2129; letter-spacing: 0.01em; }
+.cand-name { font-size: 16px; font-weight: 700; color: $uni-text-color-title; letter-spacing: 0.01em; }
 .score-tag {
-	font-size: 11px;
+	font-size: 12px;
 	padding: 2px 6px;
 	border-radius: 4px;
 	font-weight: 600;
 }
-.score-high { background: rgba(0,180,42,0.1); color: #00B42A; }
-.score-mid { background: rgba(22,93,255,0.1); color: #165DFF; }
-.score-low { background: rgba(245,158,11,0.1); color: #F59E0B; }
-.cand-job { font-size: 12px; color: #86909C; }
+.score-high { background: $uni-color-success-light; color: $uni-color-success; }
+.score-mid { background: $uni-color-primary-light; color: $uni-color-primary; }
+.score-low { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.cand-job { font-size: 12px; color: $uni-text-color-secondary; }
 .cand-meta {
 	margin-left: 50px;
 	margin-bottom: 8px;
 }
-.cand-time { font-size: 11px; color: #C9CDD4; }
+.cand-time { font-size: 12px; color: $uni-text-color-placeholder; }
 
 /* ===== 状态标签 ===== */
 .status-tag {
 	padding: 4px 10px;
-	border-radius: 6px;
+	border-radius: 8px;
 	font-size: 12px;
 	font-weight: 600;
 	flex-shrink: 0;
 }
-.tag-pending { background: rgba(245,158,11,0.1); color: #F59E0B; }
-.tag-viewed { background: rgba(22,93,255,0.1); color: #165DFF; }
-.tag-interview { background: rgba(22,93,255,0.1); color: #165DFF; }
-.tag-accepted { background: rgba(0,180,42,0.1); color: #00B42A; }
-.tag-rejected { background: rgba(239,68,68,0.1); color: #EF4444; }
+.tag-pending { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.tag-viewed { background: $uni-color-primary-light; color: $uni-color-primary; }
+.tag-interview { background: $uni-color-primary-light; color: $uni-color-primary; }
+.tag-accepted { background: $uni-color-success-light; color: $uni-color-success; }
+.tag-rejected { background: rgba(239,68,68,0.1); color: $uni-color-error; }
 
 /* ===== 操作标签 ===== */
 .cand-actions {
@@ -425,11 +425,11 @@ export default {
 	font-size: 12px;
 	font-weight: 600;
 }
-.action-tag.primary { background: #165DFF; color: #FFFFFF; box-shadow: 0 2px 6px rgba(22,93,255,0.25); }
+.action-tag.primary { background: $uni-color-primary; color: $uni-text-color-inverse; box-shadow: 0 2px 6px $uni-color-primary-light; }
 .action-tag.danger {
-	background: #FFFFFF;
-	border: 1px solid #EF4444;
-	color: #EF4444;
+	background: $uni-bg-color;
+	border: 1px solid $uni-color-error;
+	color: $uni-color-error;
 }
 
 /* ===== 面试弹窗 ===== */
@@ -448,8 +448,8 @@ export default {
 .modal-content {
 	width: 100%;
 	max-width: 340px;
-	background: #fff;
-	border-radius: 20px;
+	background: $uni-bg-color;
+	border-radius: 999px;
 	overflow: hidden;
 }
 .modal-header {
@@ -458,40 +458,40 @@ export default {
 	align-items: center;
 	padding: 20px 20px 0;
 }
-.modal-title { font-size: 18px; font-weight: 700; color: #1D2129; }
-.modal-close { font-size: 20px; color: #86909C; padding: 4px; }
+.modal-title { font-size: 18px; font-weight: 700; color: $uni-text-color-title; }
+.modal-close { font-size: 20px; color: $uni-text-color-secondary; padding: 4px; }
 .modal-body { padding: 16px 20px 20px; }
-.form-label { font-size: 13px; color: #4E5969; font-weight: 500; margin-bottom: 6px; display: block; }
+.form-label { font-size: 13px; color: $uni-text-color; font-weight: 500; margin-bottom: 6px; display: block; }
 .picker-input {
 	width: 100%;
 	height: 44px;
-	border: 1px solid #E5E6EB;
+	border: 1px solid $uni-border-color;
 	border-radius: 8px;
 	padding: 0 12px;
 	font-size: 14px;
-	color: #1D2129;
-	background: #F7F8FA;
+	color: $uni-text-color-title;
+	background: $uni-bg-color-page;
 	box-sizing: border-box;
 	align-items: center;
 	line-height: 44px;
 }
-.picker-placeholder { color: #C9CDD4; }
+.picker-placeholder { color: $uni-text-color-placeholder; }
 .form-input {
 	width: 100%;
 	height: 44px;
-	border: 1px solid #E5E6EB;
+	border: 1px solid $uni-border-color;
 	border-radius: 8px;
 	padding: 0 12px;
 	font-size: 14px;
-	color: #1D2129;
-	background: #F7F8FA;
+	color: $uni-text-color-title;
+	background: $uni-bg-color-page;
 	box-sizing: border-box;
 }
 .submit-btn {
 	width: 100%;
 	height: 44px;
 	border-radius: 8px;
-	background: #165DFF;
+	background: $uni-color-primary;
 	color: white;
 	font-size: 15px;
 	font-weight: 600;
@@ -499,5 +499,5 @@ export default {
 	margin-top: 20px;
 }
 
-.empty-state { padding: 60px 20px; align-items: center; color: #86909C; font-size: 14px; }
+.empty-state { padding: 60px 20px; align-items: center; color: $uni-text-color-secondary; font-size: 14px; }
 </style>

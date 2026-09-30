@@ -206,10 +206,10 @@ const fillFromAiParse = (data) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .page-wrapper {
 	min-height: 100vh;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 	display: flex;
 	flex-direction: column;
 }
@@ -231,29 +231,29 @@ const fillFromAiParse = (data) => {
 .form-label {
 	font-size: 14px;
 	font-weight: 600;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	margin-bottom: 8px;
 	display: block;
 	padding-left: 10px;
-	border-left: 3px solid #165DFF;
+	border-left: 3px solid $uni-color-primary;
 }
 .required {
-	color: #EF4444;
+	color: $uni-color-error;
 }
 .form-input {
 	width: 100%;
 	height: 48px;
-	border: 2px solid #E2E8F0;
+	border: 2px solid $uni-border-color;
 	border-radius: 12px;
 	padding: 0 16px;
 	font-size: 14px;
-	background: #F8F9FC;
-	color: #1D2129;
+	background: $uni-bg-color-hover;
+	color: $uni-text-color-title;
 	box-sizing: border-box;
 }
 .form-input:focus {
-	border-color: #165DFF;
-	background: #fff;
+	border-color: $uni-color-primary;
+	background: $uni-bg-color;
 }
 .form-row {
 	flex-direction: row;
@@ -262,39 +262,39 @@ const fillFromAiParse = (data) => {
 .form-picker {
 	width: 100%;
 	height: 48px;
-	border: 2px solid #E2E8F0;
+	border: 2px solid $uni-border-color;
 	border-radius: 12px;
 	padding: 0 16px;
 	font-size: 14px;
-	background: #F8F9FC;
+	background: $uni-bg-color-hover;
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
 	box-sizing: border-box;
 }
 .picker-text {
-	color: #1D2129;
+	color: $uni-text-color-title;
 	flex: 1;
 }
 .picker-arrow {
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	font-size: 12px;
 }
 .form-textarea {
 	width: 100%;
 	min-height: 120px;
-	border: 2px solid #E2E8F0;
+	border: 2px solid $uni-border-color;
 	border-radius: 12px;
 	padding: 12px 16px;
 	font-size: 14px;
-	background: #F8F9FC;
-	color: #1D2129;
+	background: $uni-bg-color-hover;
+	color: $uni-text-color-title;
 	line-height: 1.6;
 	box-sizing: border-box;
 }
 .form-textarea:focus {
-	border-color: #165DFF;
-	background: #fff;
+	border-color: $uni-color-primary;
+	background: $uni-bg-color;
 }
 .form-actions {
 	padding: 0 16px 24px;
@@ -310,15 +310,15 @@ const fillFromAiParse = (data) => {
 	justify-content: center;
 }
 .btn-primary {
-	background: linear-gradient(135deg, #165DFF, #2563EB);
+	background: $uni-gradient-primary;
 	color: white;
 	border: none;
-	box-shadow: 0 4px 14px rgba(22,93,255,0.3);
+	box-shadow: 0 4px 14px $uni-color-primary-light;
 }
 .btn-outline {
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 	border: none;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	font-weight: 500;
 }
 </style>

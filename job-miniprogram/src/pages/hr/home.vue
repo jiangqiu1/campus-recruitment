@@ -16,7 +16,7 @@
 				<view class="todo-card" @click="goToDeliveries('pending')">
 					<view class="todo-top">
 						<text class="todo-num">{{ formatNum(dashboard.pendingResumeCount) }}</text>
-						<view class="todo-icon todo-icon-yellow"><uni-icons type="paperplane" size="18" color="#F59E0B" /></view>
+						<view class="todo-icon todo-icon-yellow"><uni-icons type="paperplane" size="18" color="#FF7D00" /></view>
 					</view>
 					<text class="todo-label">待处理简历</text>
 				</view>
@@ -30,7 +30,7 @@
 				<view class="todo-card" @click="goToInterviews">
 					<view class="todo-top">
 						<text class="todo-num">{{ formatNum(dashboard.todayInterviewCount) }}</text>
-						<view class="todo-icon todo-icon-orange"><uni-icons type="calendar" size="18" color="#F59E0B" /></view>
+						<view class="todo-icon todo-icon-orange"><uni-icons type="calendar" size="18" color="#FF7D00" /></view>
 					</view>
 					<text class="todo-label">今日面试</text>
 				</view>
@@ -54,7 +54,7 @@
 					<text class="quick-action-label">数据统计</text>
 				</view>
 				<view class="quick-action-item" @click="goToMessages">
-					<uni-icons type="chat" size="18" color="#F59E0B" />
+					<uni-icons type="chat" size="18" color="#FF7D00" />
 					<text class="quick-action-label">消息通知</text>
 				</view>
 			</view>
@@ -199,10 +199,10 @@ const formatTime = (time, type) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* ===== 头部（完全对齐教师端） ===== */
 .header-section {
-	background: linear-gradient(135deg, #165DFF 0%, #2563EB 100%);
+	background: $uni-gradient-primary;
 	padding: 16px 16px 32px;
 	flex-shrink: 0;
 }
@@ -215,7 +215,7 @@ const formatTime = (time, type) => {
 .greeting {
 	font-size: 20px;
 	font-weight: 700;
-	color: #FFFFFF;
+	color: $uni-text-color-inverse;
 	margin-bottom: 8px;
 }
 .role-badge {
@@ -224,7 +224,7 @@ const formatTime = (time, type) => {
 	color: rgba(255,255,255,0.9);
 	background: rgba(255,255,255,0.15);
 	padding: 4px 12px;
-	border-radius: 20px;
+	border-radius: 999px;
 	font-weight: 500;
 }
 .header-action-btn {
@@ -242,12 +242,12 @@ const formatTime = (time, type) => {
 	right: -2px;
 	width: 18px;
 	height: 18px;
-	background: #EF4444;
+	background: $uni-color-error;
 	border-radius: 50%;
 	font-size: 10px;
 	align-items: center;
 	justify-content: center;
-	border: 2px solid #165DFF;
+	border: 2px solid $uni-color-primary;
 	color: white;
 	font-weight: 600;
 }
@@ -264,12 +264,12 @@ const formatTime = (time, type) => {
 }
 .todo-card {
 	width: calc(50% - 6px);
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 16px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.todo-card:active { background: #F7F8FA; }
+.todo-card:active { background: $uni-bg-color-page; }
 .todo-top {
 	flex-direction: row;
 	justify-content: space-between;
@@ -279,22 +279,22 @@ const formatTime = (time, type) => {
 .todo-num {
 	font-size: 24px;
 	font-weight: 800;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 .todo-icon {
 	width: 36px;
 	height: 36px;
-	border-radius: 10px;
+	border-radius: 12px;
 	align-items: center;
 	justify-content: center;
 }
 .todo-icon-yellow { background: rgba(245,158,11,0.08); }
-.todo-icon-blue { background: rgba(22,93,255,0.08); }
+.todo-icon-blue { background: $uni-color-primary-light; }
 .todo-icon-orange { background: rgba(245,158,11,0.08); }
-.todo-icon-green { background: rgba(0,180,42,0.08); }
+.todo-icon-green { background: $uni-color-success-light; }
 .todo-label {
 	font-size: 13px;
-	color: #4E5969;
+	color: $uni-text-color;
 	font-weight: 500;
 }
 
@@ -312,17 +312,17 @@ const formatTime = (time, type) => {
 	justify-content: center;
 	gap: 6px;
 	height: 44px;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 .quick-action-item + .quick-action-item {
 	margin-left: 12px;
 }
-.quick-action-item:active { background: #F7F8FA; }
+.quick-action-item:active { background: $uni-bg-color-page; }
 .quick-action-label {
 	font-size: 13px;
-	color: #4E5969;
+	color: $uni-text-color;
 	font-weight: 500;
 }
 
@@ -344,27 +344,27 @@ const formatTime = (time, type) => {
 .section-title {
 	font-size: 17px;
 	font-weight: 700;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	letter-spacing: 0.02em;
 }
 .section-title-secondary {
 	font-size: 15px;
 	font-weight: 600;
-	color: #4E5969;
+	color: $uni-text-color;
 }
 .section-more {
 	font-size: 13px;
-	color: #165DFF;
+	color: $uni-color-primary;
 	font-weight: 500;
 }
 
 /* ===== 待处理简历卡片（Signature 元素：左侧蓝色指示条） ===== */
 .resume-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 14px 14px 14px 18px;
 	margin-bottom: 10px;
-	box-shadow: 0 2px 12px rgba(22,93,255,0.06);
+	box-shadow: 0 2px 12px $uni-color-primary-light;
 	position: relative;
 	overflow: hidden;
 }
@@ -375,10 +375,10 @@ const formatTime = (time, type) => {
 	left: 0;
 	width: 3px;
 	height: calc(100% - 16px);
-	background: #165DFF;
+	background: $uni-color-primary;
 	border-radius: 0 2px 2px 0;
 }
-.resume-card:active { background: #F7F8FA; }
+.resume-card:active { background: $uni-bg-color-page; }
 .card-top {
 	flex-direction: row;
 	align-items: center;
@@ -389,10 +389,10 @@ const formatTime = (time, type) => {
 	width: 40px;
 	height: 40px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #165DFF, #2563EB);
+	background: $uni-gradient-primary;
 	align-items: center;
 	justify-content: center;
-	color: #FFFFFF;
+	color: $uni-text-color-inverse;
 	font-size: 16px;
 	font-weight: 700;
 	flex-shrink: 0;
@@ -404,17 +404,17 @@ const formatTime = (time, type) => {
 	gap: 8px;
 	margin-bottom: 2px;
 }
-.name { font-size: 15px; font-weight: 700; color: #1D2129; letter-spacing: 0.01em; }
+.name { font-size: 15px; font-weight: 700; color: $uni-text-color-title; letter-spacing: 0.01em; }
 .score-tag {
-	font-size: 11px;
+	font-size: 12px;
 	padding: 2px 6px;
 	border-radius: 4px;
-	background: rgba(14,165,233,0.1);
-	color: #0EA5E9;
+	background: $uni-color-ai-light;
+	color: $uni-color-ai;
 	font-weight: 600;
 }
-.sub-info { font-size: 12px; color: #86909C; }
-.time { font-size: 11px; color: #C9CDD4; flex-shrink: 0; }
+.sub-info { font-size: 12px; color: $uni-text-color-secondary; }
+.time { font-size: 12px; color: $uni-text-color-placeholder; flex-shrink: 0; }
 
 /* 操作：标签式轻量化按钮 */
 .card-actions { flex-direction: row; gap: 10px; }
@@ -426,16 +426,16 @@ const formatTime = (time, type) => {
 	font-size: 12px;
 	font-weight: 600;
 }
-.action-btn.primary { background: #165DFF; color: #FFFFFF; box-shadow: 0 2px 6px rgba(22,93,255,0.25); }
+.action-btn.primary { background: $uni-color-primary; color: $uni-text-color-inverse; box-shadow: 0 2px 6px $uni-color-primary-light; }
 .action-btn.danger {
-	background: #FFFFFF;
-	border: 1px solid #EF4444;
-	color: #EF4444;
+	background: $uni-bg-color;
+	border: 1px solid $uni-color-error;
+	color: $uni-color-error;
 }
 
 /* ===== 面试卡片 ===== */
 .interview-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 14px;
 	margin-bottom: 8px;
@@ -444,12 +444,12 @@ const formatTime = (time, type) => {
 	gap: 12px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.interview-card:active { background: #F7F8FA; }
+.interview-card:active { background: $uni-bg-color-page; }
 .interview-icon {
 	width: 36px;
 	height: 36px;
-	border-radius: 10px;
-	background: rgba(14,165,233,0.1);
+	border-radius: 12px;
+	background: $uni-color-ai-light;
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
@@ -458,58 +458,58 @@ const formatTime = (time, type) => {
 .interview-name {
 	font-size: 14px;
 	font-weight: 600;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	display: block;
 	margin-bottom: 2px;
 }
-.interview-job { font-size: 12px; color: #86909C; }
+.interview-job { font-size: 12px; color: $uni-text-color-secondary; }
 .interview-time {
 	font-size: 14px;
 	font-weight: 600;
-	color: #165DFF;
+	color: $uni-color-primary;
 	flex-shrink: 0;
 }
 
 /* ===== 近期投递（紧凑降权重） ===== */
 .compact-item {
-	background: #FFFFFF;
-	border-radius: 10px;
+	background: $uni-bg-color;
+	border-radius: 12px;
 	padding: 12px 14px;
 	margin-bottom: 6px;
 	flex-direction: row;
 	align-items: center;
 	box-shadow: 0 1px 4px rgba(0,0,0,0.03);
 }
-.compact-item:active { background: #F7F8FA; }
+.compact-item:active { background: $uni-bg-color-page; }
 .compact-name {
 	font-size: 14px;
 	font-weight: 500;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	flex-shrink: 0;
 }
 .compact-action {
 	font-size: 12px;
-	color: #4E5969;
+	color: $uni-text-color;
 	margin-left: 4px;
 	margin-right: 4px;
 	flex-shrink: 0;
 }
 .compact-job {
 	font-size: 14px;
-	color: #4E5969;
+	color: $uni-text-color;
 	flex: 1;
 	margin-right: 8px;
 }
 .status-tag {
 	padding: 3px 8px;
-	border-radius: 6px;
-	font-size: 11px;
+	border-radius: 8px;
+	font-size: 12px;
 	font-weight: 600;
 	flex-shrink: 0;
 }
-.tag-pending { background: rgba(245,158,11,0.1); color: #F59E0B; }
-.tag-viewed { background: rgba(22,93,255,0.1); color: #165DFF; }
-.tag-interview { background: rgba(22,93,255,0.1); color: #165DFF; }
-.tag-accepted { background: rgba(0,180,42,0.1); color: #00B42A; }
-.tag-rejected { background: rgba(239,68,68,0.1); color: #EF4444; }
+.tag-pending { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.tag-viewed { background: $uni-color-primary-light; color: $uni-color-primary; }
+.tag-interview { background: $uni-color-primary-light; color: $uni-color-primary; }
+.tag-accepted { background: $uni-color-success-light; color: $uni-color-success; }
+.tag-rejected { background: rgba(239,68,68,0.1); color: $uni-color-error; }
 </style>

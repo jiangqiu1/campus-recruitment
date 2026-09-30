@@ -68,19 +68,19 @@ const handleReset = async () => {
 }
 </script>
 
-<style scoped>
-.page-wrapper { min-height: 100vh; background: #F7F8FA; }
+<style scoped lang="scss">
+.page-wrapper { min-height: 100vh; background: $uni-bg-color-page; }
 .form-container { padding: 24px 16px; }
-.form-card { background: #FFFFFF; border-radius: 12px; padding: 24px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+.form-card { background: $uni-bg-color; border-radius: 12px; padding: 24px 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
 .input-group { margin-bottom: 20px; }
-.input-label { font-size: 14px; color: #4E5969; margin-bottom: 8px; display: block; font-weight: 500; }
-.input-field { width: 100%; height: 48px; border: 1px solid #E5E6EB; border-radius: 8px; padding: 0 14px; font-size: 15px; color: #1D2129; background: #F7F8FA; box-sizing: border-box; }
-.input-field:focus { border-color: #165DFF; background: #FFFFFF; }
+.input-label { font-size: 14px; color: $uni-text-color; margin-bottom: 8px; display: block; font-weight: 500; }
+.input-field { width: 100%; height: 48px; border: 1px solid $uni-border-color; border-radius: 8px; padding: 0 14px; font-size: 15px; color: $uni-text-color-title; background: $uni-bg-color-page; box-sizing: border-box; }
+.input-field:focus { border-color: $uni-color-primary; background: $uni-bg-color; }
 .code-row { flex-direction: row; gap: 12px; align-items: center; }
 .code-input { flex: 1; }
-.code-btn { width: 110px; height: 48px; background: rgba(22,93,255,0.08); color: #165DFF; font-size: 13px; font-weight: 500; border-radius: 8px; border: none; flex-shrink: 0; }
-.code-btn[disabled] { background: #F2F3F5; color: #C9CDD4; }
-.submit-btn { width: 100%; height: 48px; border-radius: 12px; background: #165DFF; color: #FFFFFF; font-size: 16px; font-weight: 600; border: none; margin-top: 8px; }
-.submit-btn[disabled] { background: #E5E6EB !important; color: #A9AEB8 !important; }
-.tip-text { display: block; text-align: center; font-size: 12px; color: #C9CDD4; margin-top: 16px; }
+.code-btn { width: 110px; height: 48px; background: $uni-color-primary-light; color: $uni-color-primary; font-size: 13px; font-weight: 500; border-radius: 8px; border: none; flex-shrink: 0; }
+.code-btn[disabled] { background: $uni-border-color-divider; color: $uni-text-color-placeholder; }
+.submit-btn { width: 100%; height: 48px; border-radius: 12px; background: $uni-color-primary; color: $uni-text-color-inverse; font-size: 16px; font-weight: 600; border: none; margin-top: 8px; }
+.submit-btn[disabled] { background: $uni-border-color !important; color: $uni-text-color-placeholder !important; }
+.tip-text { display: block; text-align: center; font-size: 12px; color: $uni-text-color-placeholder; margin-top: 16px; }
 </style>

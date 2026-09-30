@@ -237,16 +237,16 @@ const saveCompany = async () => {
 const goBack = () => uni.navigateBack()
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* ===== 顶部背景 ===== */
 .header-bg {
 	height: 110px;
-	background: linear-gradient(135deg, #165DFF 0%, #2563EB 100%);
+	background: $uni-gradient-primary;
 }
 
 /* ===== 悬浮企业名片 ===== */
 .company-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 16px;
 	margin: -50px 16px 0;
 	padding: 24px 16px 20px;
@@ -256,101 +256,101 @@ const goBack = () => uni.navigateBack()
 	z-index: 2;
 }
 .company-logo {
-	width: 72px; height: 72px; border-radius: 20px;
-	background: linear-gradient(135deg, #165DFF 0%, #2563EB 100%);
+	width: 72px; height: 72px; border-radius: 999px;
+	background: $uni-gradient-primary;
 	align-items: center; justify-content: center;
 	font-size: 32px; color: white; font-weight: 700;
-	box-shadow: 0 4px 12px rgba(22,93,255,0.3);
+	box-shadow: 0 4px 12px $uni-color-primary-light;
 	margin-bottom: 12px;
 }
-.company-name { font-size: 19px; font-weight: 700; color: #1D2129; }
-.company-short { font-size: 13px; color: #86909C; margin-top: 4px; }
+.company-name { font-size: 19px; font-weight: 700; color: $uni-text-color-title; }
+.company-short { font-size: 13px; color: $uni-text-color-secondary; margin-top: 4px; }
 .company-tags {
 	flex-direction: row; flex-wrap: wrap;
 	gap: 6px; margin-top: 10px;
 	justify-content: center;
 }
 .company-tag {
-	font-size: 11px; padding: 3px 10px; border-radius: 12px;
-	background: rgba(22,93,255,0.08); color: #165DFF;
+	font-size: 12px; padding: 3px 10px; border-radius: 12px;
+	background: $uni-color-primary-light; color: $uni-color-primary;
 }
 
 /* ===== 信息卡片 ===== */
 .info-card {
-	background: #FFFFFF; border-radius: 12px;
+	background: $uni-bg-color; border-radius: 12px;
 	margin: 12px 16px 0; padding: 18px 16px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 .info-title-row {
 	flex-direction: row; justify-content: space-between;
 	align-items: center; margin-bottom: 12px;
-	padding-bottom: 12px; border-bottom: 0.5px solid #F2F3F5;
+	padding-bottom: 12px; border-bottom: 0.5px solid $uni-border-color-divider;
 }
 .info-title-left { flex-direction: row; align-items: center; gap: 8px; }
-.title-dot { width: 4px; height: 16px; border-radius: 2px; background: #165DFF; }
-.info-title { font-size: 16px; font-weight: 700; color: #1D2129; }
+.title-dot { width: 4px; height: 16px; border-radius: 4px; background: $uni-color-primary; }
+.info-title { font-size: 16px; font-weight: 700; color: $uni-text-color-title; }
 .info-edit {
-	font-size: 13px; color: #165DFF; font-weight: 500;
-	padding: 6px 14px; border-radius: 8px; background: rgba(22,93,255,0.06);
+	font-size: 13px; color: $uni-color-primary; font-weight: 500;
+	padding: 6px 14px; border-radius: 8px; background: $uni-color-primary-light;
 }
-.info-edit:active { background: rgba(22,93,255,0.12); }
+.info-edit:active { background: $uni-color-primary-light; }
 
 /* ===== 字段行 ===== */
 .info-list { gap: 0; }
 .info-item {
 	flex-direction: row; padding: 12px 0;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 	align-items: center; justify-content: space-between;
 }
 .info-label {
-	width: 72px; font-size: 14px; color: #86909C;
+	width: 72px; font-size: 14px; color: $uni-text-color-secondary;
 	flex-shrink: 0; font-weight: 500;
 }
 .info-right { flex: 1; flex-direction: row; justify-content: flex-end; }
 .info-value {
-	font-size: 14px; color: #1D2129;
+	font-size: 14px; color: $uni-text-color-title;
 	font-weight: 500; text-align: right;
 }
-.info-value.empty { color: #C9CDD4; }
+.info-value.empty { color: $uni-text-color-placeholder; }
 .info-input {
-	flex: 1; height: 40px; border: 1px solid #E5E6EB;
+	flex: 1; height: 40px; border: 1px solid $uni-border-color;
 	border-radius: 8px; padding: 0 12px;
-	font-size: 14px; background: #F7F8FA; color: #1D2129;
+	font-size: 14px; background: $uni-bg-color-page; color: $uni-text-color-title;
 	text-align: right;
 }
-.info-input:focus { border-color: #165DFF; background: #FFFFFF; }
+.info-input:focus { border-color: $uni-color-primary; background: $uni-bg-color; }
 
 /* ===== 公司简介 ===== */
 .desc-text {
-	font-size: 13px; color: #4E5969; line-height: 1.8;
+	font-size: 13px; color: $uni-text-color; line-height: 1.8;
 	display: block;
 }
-.desc-text.empty { color: #C9CDD4; font-style: normal; }
+.desc-text.empty { color: $uni-text-color-placeholder; font-style: normal; }
 .info-textarea {
 	width: 100%; min-height: 120px;
-	border: 1px solid #E5E6EB; border-radius: 8px;
-	padding: 12px; font-size: 13px; color: #1D2129;
-	background: #F7F8FA; line-height: 1.8;
+	border: 1px solid $uni-border-color; border-radius: 8px;
+	padding: 12px; font-size: 13px; color: $uni-text-color-title;
+	background: $uni-bg-color-page; line-height: 1.8;
 }
-.info-textarea:focus { border-color: #165DFF; background: #FFFFFF; }
+.info-textarea:focus { border-color: $uni-color-primary; background: $uni-bg-color; }
 
 /* ===== 合作等级标签 ===== */
 .coop-tag {
-	font-size: 12px; padding: 3px 12px; border-radius: 10px;
+	font-size: 12px; padding: 3px 12px; border-radius: 12px;
 	font-weight: 500;
 }
-.coop-0 { background: #F2F3F5; color: #86909C; }
-.coop-1 { background: rgba(22,93,255,0.08); color: #165DFF; }
-.coop-2 { background: rgba(0,180,42,0.08); color: #00B42A; }
-.coop-3 { background: rgba(139,92,246,0.1); color: #7C3AED; }
+.coop-0 { background: $uni-border-color-divider; color: $uni-text-color-secondary; }
+.coop-1 { background: $uni-color-primary-light; color: $uni-color-primary; }
+.coop-2 { background: $uni-color-success-light; color: $uni-color-success; }
+.coop-3 { background: rgba(139,92,246,0.1); color: #8B5CF6; }
 
 /* ===== 保存按钮 ===== */
 .save-bar { padding: 16px 16px 0; }
 .save-btn {
 	width: 100%; height: 48px; border-radius: 12px;
-	background: linear-gradient(135deg, #165DFF 0%, #2563EB 100%);
+	background: $uni-gradient-primary;
 	color: white; font-size: 16px; font-weight: 600;
-	border: none; box-shadow: 0 4px 12px rgba(22,93,255,0.3);
+	border: none; box-shadow: 0 4px 12px $uni-color-primary-light;
 }
 .save-btn:active { opacity: 0.9; }
 </style>

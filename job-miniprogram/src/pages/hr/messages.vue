@@ -59,7 +59,7 @@ const getMessagesForHR = async () => {
 			;(dRes.data || []).forEach(d => {
 				const statusMap = { 0: '投递了', 1: '已查看', 2: '安排了面试', 3: '已录用', 4: '未通过' }
 				const statusIcon = { 0: 'paperplane', 1: 'eye', 2: 'calendar', 3: 'checkmark', 4: 'close' }
-				const statusColor = { 0: '#F59E0B', 1: '#165DFF', 2: '#165DFF', 3: '#00B42A', 4: '#EF4444' }
+				const statusColor = { 0: '#FF7D00', 1: '#165DFF', 2: '#165DFF', 3: '#00B42A', 4: '#F53F3F' }
 				const bgColor = { 0: '#FEF3E8', 1: '#E6F1FB', 2: '#E6F1FB', 3: '#EAF3DE', 4: '#FCEBEB' }
 				all.push({
 					title: d.studentName || '候选人' + ' ' + (statusMap[d.status] || '投递了'),
@@ -127,18 +127,18 @@ const goBack = () => uni.navigateBack()
 onMounted(loadMessages)
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .msg-list { padding: 12px 16px; }
 .msg-item {
 	flex-direction: row;
 	padding: 14px;
-	background: #fff;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	margin-bottom: 10px;
 	gap: 12px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.msg-item:active { background: #F7F8FA; }
+.msg-item:active { background: $uni-bg-color-page; }
 .msg-icon {
 	width: 40px; height: 40px; border-radius: 50%;
 	align-items: center; justify-content: center;
@@ -151,19 +151,19 @@ onMounted(loadMessages)
 	align-items: center;
 	margin-bottom: 4px;
 }
-.msg-title { font-size: 14px; font-weight: 500; color: #1D2129; }
+.msg-title { font-size: 14px; font-weight: 500; color: $uni-text-color-title; }
 .msg-title.unread { font-weight: 700; }
 .msg-dot {
 	width: 7px; height: 7px; border-radius: 50%;
-	background: #EF4444; flex-shrink: 0;
+	background: $uni-color-error; flex-shrink: 0;
 }
-.msg-time { font-size: 11px; color: #C9CDD4; flex-shrink: 0; }
-.msg-text { font-size: 13px; color: #86909C; line-height: 1.5; }
+.msg-time { font-size: 12px; color: $uni-text-color-placeholder; flex-shrink: 0; }
+.msg-text { font-size: 13px; color: $uni-text-color-secondary; line-height: 1.5; }
 .empty-state {
 	padding: 60px 20px;
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
 }
-.empty-text { font-size: 14px; color: #86909C; }
+.empty-text { font-size: 14px; color: $uni-text-color-secondary; }
 </style>

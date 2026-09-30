@@ -241,11 +241,11 @@ const showModifyModal = (item) => {
 const goToDetail = (id) => uni.navigateTo({ url: '/pages/hr/delivery-detail?id=' + id })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* 统计栏 */
 .stats-bar {
   flex-direction: row;
-  background: #FFFFFF;
+  background: $uni-bg-color;
   padding: 16px 16px 12px;
   gap: 0;
 }
@@ -257,29 +257,29 @@ const goToDetail = (id) => uni.navigateTo({ url: '/pages/hr/delivery-detail?id='
 .stats-num {
   font-size: 22px;
   font-weight: 800;
-  color: #1D2129;
+  color: $uni-text-color-title;
 }
 .stats-label {
-  font-size: 11px;
-  color: #86909C;
+  font-size: 12px;
+  color: $uni-text-color-secondary;
 }
 
 /* 日期滚动条 */
-.date-scroll { background: #FFFFFF; border-bottom: 0.5px solid #F2F3F5; }
+.date-scroll { background: $uni-bg-color; border-bottom: 0.5px solid $uni-border-color-divider; }
 .date-scroll-inner { flex-direction: row; padding: 10px 12px; gap: 8px; }
 .date-tab {
   flex-direction: column;
   align-items: center;
   padding: 8px 14px;
-  border-radius: 10px;
-  background: #F7F8FA;
+  border-radius: 12px;
+  background: $uni-bg-color-page;
   min-width: 52px;
 }
-.date-tab.active { background: #165DFF; }
-.date-tab.active .date-tab-week { color: #FFFFFF; }
+.date-tab.active { background: $uni-color-primary; }
+.date-tab.active .date-tab-week { color: $uni-text-color-inverse; }
 .date-tab.active .date-tab-day { color: rgba(255,255,255,0.8); }
-.date-tab-week { font-size: 12px; color: #4E5969; font-weight: 500; }
-.date-tab-day { font-size: 11px; color: #86909C; margin-top: 2px; }
+.date-tab-week { font-size: 12px; color: $uni-text-color; font-weight: 500; }
+.date-tab-day { font-size: 12px; color: $uni-text-color-secondary; margin-top: 2px; }
 
 /* 面试卡片 */
 .interview-list { padding: 12px 16px; }
@@ -287,49 +287,49 @@ const goToDetail = (id) => uni.navigateTo({ url: '/pages/hr/delivery-detail?id='
   flex-direction: row;
   align-items: center;
   gap: 12px;
-  background: #FFFFFF;
+  background: $uni-bg-color;
   border-radius: 12px;
   padding: 14px;
   margin-bottom: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.interview-card:active { background: #F7F8FA; }
+.interview-card:active { background: $uni-bg-color-page; }
 .card-left {
   width: 60px;
   align-items: center;
   flex-direction: column;
 }
-.card-date { font-size: 11px; color: #86909C; margin-bottom: 2px; }
-.card-time { font-size: 15px; font-weight: 700; color: #1D2129; }
+.card-date { font-size: 12px; color: $uni-text-color-secondary; margin-bottom: 2px; }
+.card-time { font-size: 15px; font-weight: 700; color: $uni-text-color-title; }
 .card-body { flex: 1; gap: 3px; }
 .card-top {
   flex-direction: row;
   align-items: center;
   gap: 8px;
 }
-.card-name { font-size: 15px; font-weight: 700; color: #1D2129; }
-.card-job { font-size: 12px; color: #86909C; margin-top: 2px; }
-.card-location { font-size: 12px; color: #C9CDD4; margin-top: 2px; }
-.card-feedback { font-size: 12px; color: #4E5969; margin-top: 4px; background: #F7F8FA; border-radius: 4px; padding: 4px 8px; }
+.card-name { font-size: 15px; font-weight: 700; color: $uni-text-color-title; }
+.card-job { font-size: 12px; color: $uni-text-color-secondary; margin-top: 2px; }
+.card-location { font-size: 12px; color: $uni-text-color-placeholder; margin-top: 2px; }
+.card-feedback { font-size: 12px; color: $uni-text-color; margin-top: 4px; background: $uni-bg-color-page; border-radius: 4px; padding: 4px 8px; }
 
-.status-tag { font-size: 11px; padding: 2px 8px; border-radius: 6px; font-weight: 600; flex-shrink: 0; }
-.tag-pending { background: rgba(245,158,11,0.1); color: #F59E0B; }
-.tag-viewed { background: rgba(22,93,255,0.1); color: #165DFF; }
-.tag-interview { background: rgba(22,93,255,0.1); color: #165DFF; }
-.tag-accepted { background: rgba(0,180,42,0.1); color: #00B42A; }
-.tag-rejected { background: rgba(239,68,68,0.1); color: #EF4444; }
+.status-tag { font-size: 12px; padding: 2px 8px; border-radius: 8px; font-weight: 600; flex-shrink: 0; }
+.tag-pending { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.tag-viewed { background: $uni-color-primary-light; color: $uni-color-primary; }
+.tag-interview { background: $uni-color-primary-light; color: $uni-color-primary; }
+.tag-accepted { background: $uni-color-success-light; color: $uni-color-success; }
+.tag-rejected { background: rgba(239,68,68,0.1); color: $uni-color-error; }
 
 /* 操作按钮 */
 .card-actions { flex-direction: column; gap: 6px; flex-shrink: 0; }
 .action-btn {
 	padding: 4px 12px;
-	border-radius: 6px;
+	border-radius: 8px;
 	font-size: 12px;
 	font-weight: 600;
 	text-align: center;
 	min-width: 48px;
 }
-.action-btn--accept { background: rgba(0,180,42,0.1); color: #00B42A; }
-.action-btn--reject { background: rgba(239,68,68,0.1); color: #EF4444; }
+.action-btn--accept { background: $uni-color-success-light; color: $uni-color-success; }
+.action-btn--reject { background: rgba(239,68,68,0.1); color: $uni-color-error; }
 .action-btn:active { opacity: 0.7; }
 </style>

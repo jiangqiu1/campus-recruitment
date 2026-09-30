@@ -208,7 +208,7 @@ const handleAiParse = async () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* ===== 筛选标签 ===== */
 .filter-tabs {
 	flex-direction: row;
@@ -220,29 +220,29 @@ const handleAiParse = async () => {
 }
 .filter-tab {
 	padding: 8px 16px;
-	border-radius: 20px;
+	border-radius: 999px;
 	font-size: 13px;
 	font-weight: 500;
-	color: #4E5969;
-	background: #F2F3F5;
+	color: $uni-text-color;
+	background: $uni-border-color-divider;
 	white-space: nowrap;
 }
 .filter-tab.active {
-	background: rgba(22,93,255,0.1);
-	color: #165DFF;
+	background: $uni-color-primary-light;
+	color: $uni-color-primary;
 	font-weight: 600;
 }
 
 /* ===== 岗位卡片 ===== */
 .job-list { padding: 12px 16px; }
 .job-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 16px;
 	margin-bottom: 10px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.job-card:active { background: #F7F8FA; }
+.job-card:active { background: $uni-bg-color-page; }
 .job-top { margin-bottom: 12px; }
 .job-title-row {
 	flex-direction: row;
@@ -253,33 +253,33 @@ const handleAiParse = async () => {
 .job-title {
 	font-size: 16px;
 	font-weight: 700;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	flex: 1;
 	margin-right: 8px;
 }
 .job-info-row { flex-direction: row; align-items: center; gap: 8px; }
 .job-salary {
 	font-size: 15px;
-	color: #F53F3F;
+	color: $uni-color-error;
 	font-weight: 700;
-	background: rgba(245,63,63,0.06);
+	background: $uni-color-error-light;
 	padding: 2px 8px;
 	border-radius: 4px;
 }
-.job-divider { font-size: 12px; color: #E5E6EB; }
-.job-delivery { font-size: 12px; color: #86909C; }
+.job-divider { font-size: 12px; color: $uni-border-color; }
+.job-delivery { font-size: 12px; color: $uni-text-color-secondary; }
 
 /* ===== 状态标签 ===== */
 .status-tag {
 	padding: 3px 10px;
-	border-radius: 6px;
+	border-radius: 8px;
 	font-size: 12px;
 	font-weight: 600;
 	flex-shrink: 0;
 }
-.tag-active { background: rgba(0,180,42,0.1); color: #00B42A; }
-.tag-draft { background: rgba(245,158,11,0.1); color: #F59E0B; }
-.tag-closed { background: rgba(201,205,212,0.3); color: #86909C; }
+.tag-active { background: $uni-color-success-light; color: $uni-color-success; }
+.tag-draft { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.tag-closed { background: rgba(201,205,212,0.3); color: $uni-text-color-secondary; }
 
 /* ===== 操作标签 ===== */
 .job-actions { flex-direction: row; gap: 10px; }
@@ -291,9 +291,9 @@ const handleAiParse = async () => {
 	font-size: 13px;
 	font-weight: 600;
 }
-.action-tag.primary { background: #165DFF; color: #FFFFFF; }
-.action-tag.warning { background: #F59E0B; color: #FFFFFF; }
-.action-tag.outline { background: #FFFFFF; border: 1px solid #E5E6EB; color: #4E5969; }
+.action-tag.primary { background: $uni-color-primary; color: $uni-text-color-inverse; }
+.action-tag.warning { background: $uni-color-warning; color: $uni-text-color-inverse; }
+.action-tag.outline { background: $uni-bg-color; border: 1px solid $uni-border-color; color: $uni-text-color; }
 
 /* ===== 浮动新建按钮 ===== */
 .fab-btn {
@@ -303,10 +303,10 @@ const handleAiParse = async () => {
 	width: 56px;
 	height: 56px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #165DFF, #2563EB);
+	background: $uni-gradient-primary;
 	align-items: center;
 	justify-content: center;
-	box-shadow: 0 4px 16px rgba(22,93,255,0.4);
+	box-shadow: 0 4px 16px $uni-color-primary-light;
 	z-index: 100;
 }
 .fab-icon {
@@ -337,7 +337,7 @@ const handleAiParse = async () => {
 .ai-job-banner__icon {
 	width: 36px;
 	height: 36px;
-	border-radius: 10px;
+	border-radius: 12px;
 	background: rgba(139,92,246,0.12);
 	align-items: center;
 	justify-content: center;
@@ -345,30 +345,30 @@ const handleAiParse = async () => {
 .ai-job-banner__title {
 	font-size: 14px;
 	font-weight: 600;
-	color: #7C3AED;
+	color: $uni-color-ai;
 }
 .ai-job-banner__desc {
-	font-size: 11px;
-	color: #A78BFA;
+	font-size: 12px;
+	color: $uni-color-ai;
 	margin-top: 1px;
 }
 
 /* AI 写岗位弹窗 */
 .ai-modal-body { padding: 0; width: 100%; overflow-x: hidden; }
-.ai-modal-desc { font-size: 13px; color: #86909C; margin-bottom: 12px; display: block; }
+.ai-modal-desc { font-size: 13px; color: $uni-text-color-secondary; margin-bottom: 12px; display: block; }
 .ai-modal-input {
 	width: 100%;
 	max-width: 100%;
 	height: 100px;
-	border: 1px solid #E5E6EB;
+	border: 1px solid $uni-border-color;
 	border-radius: 8px;
 	padding: 12px;
 	font-size: 14px;
 	line-height: 1.6;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 	box-sizing: border-box;
 }
-.ai-modal-count { font-size: 11px; color: #C9CDD4; text-align: right; margin-top: 4px; display: block; }
+.ai-modal-count { font-size: 12px; color: $uni-text-color-placeholder; text-align: right; margin-top: 4px; display: block; }
 .ai-modal-btn {
 	flex-direction: row;
 	align-items: center;
@@ -378,8 +378,8 @@ const handleAiParse = async () => {
 	max-width: 100%;
 	height: 44px;
 	border-radius: 8px;
-	background: linear-gradient(135deg, #8B5CF6, #7C3AED);
-	color: #fff;
+	background: $uni-gradient-ai;
+	color: $uni-text-color-inverse;
 	font-size: 15px;
 	font-weight: 600;
 	margin-top: 12px;
@@ -388,5 +388,5 @@ const handleAiParse = async () => {
 	overflow: hidden;
 }
 .ai-modal-btn:active { opacity: 0.85; }
-.ai-modal-btn.disabled { background: #E5E6EB !important; color: #A9AEB8 !important; }
+.ai-modal-btn.disabled { background: $uni-border-color !important; color: $uni-text-color-placeholder !important; }
 </style>
