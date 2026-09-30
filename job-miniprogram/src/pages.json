@@ -62,6 +62,12 @@
 			}
 		},
 		{
+			"path": "pages/student/interview-practice",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
 			"path": "pages/student/company-detail",
 			"style": {
 				"navigationStyle": "custom",

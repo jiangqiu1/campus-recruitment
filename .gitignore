@@ -69,3 +69,6 @@ scripts/seed_*.sql
 
 # 日志文件
 *.log.err
+
+# ZCode 会话工作目录
+.zcode/

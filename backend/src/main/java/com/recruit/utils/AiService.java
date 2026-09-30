@@ -1,21 +1,30 @@
 package com.recruit.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.recruit.config.AiProperties;
+import com.recruit.entity.AiParseLog;
+import com.recruit.service.AiParseLogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
  * AI 服务工具类
- * 调用 DeepSeek API 完成简历评分、人岗匹配、简历解析等 AI 任务。
+ * 通过 OpenAI 兼容接口调用多个大模型（DeepSeek / 智谱 GLM，见 AiProperties），
+ * 完成简历评分、人岗匹配、简历解析、模拟面试等 AI 任务。
+ * 每次调用（含降级 mock）都会写入 ai_parse_log 一条记录：provider/任务/耗时/mock标记，
+ * 作为毕设"多模型对比实验"的数据来源。
  * 也提供 PDF 文本提取等工具方法。
  */
 @Component
@@ -24,14 +33,11 @@ public class AiService {
     private static final Logger log = LoggerFactory.getLogger(AiService.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    @Value("${ai.api.key:}")
-    private String apiKey;
+    @Autowired
+    private AiProperties aiProperties;
 
-    @Value("${ai.api.url:https://api.deepseek.com/v1/chat/completions}")
-    private String apiUrl;
-
-    @Value("${ai.api.model:deepseek-chat}")
-    private String model;
+    @Autowired
+    private AiParseLogService aiParseLogService;
 
     private final RestTemplate restTemplate = buildRestTemplate();
 
@@ -166,50 +172,132 @@ public class AiService {
     }
 
     /**
-     * 调用 DeepSeek API
+     * 模拟面试：针对岗位和候选人简历生成面试题
+     *
+     * @return {questions: [{id, type: "技术|项目|行为", question}]}
+     */
+    public Map<String, Object> generateInterviewQuestions(String jobTitle, String jobDescription,
+                                                          String jobRequirements, String resumeText, int count) {
+        String prompt = "你是一个面试官。请针对以下岗位和候选人简历，出 " + count + " 道面试题。\n\n"
+                + "## 岗位名称\n" + jobTitle + "\n\n"
+                + "## 岗位职责\n" + jobDescription + "\n\n"
+                + "## 任职要求\n" + jobRequirements + "\n\n"
+                + "## 候选人简历\n" + truncate(resumeText, 2000) + "\n\n"
+                + "出题要求：结合岗位要求与候选人简历背景，覆盖技术、项目、行为三类；题目要具体、可回答，不要泛泛而谈。\n\n"
+                + "请严格按以下 JSON 格式返回：\n"
+                + "{\n"
+                + "  \"questions\": [\n"
+                + "    {\"id\": 1, \"type\": \"技术\", \"question\": \"题目内容\"},\n"
+                + "    {\"id\": 2, \"type\": \"项目\", \"question\": \"题目内容\"},\n"
+                + "    {\"id\": 3, \"type\": \"行为\", \"question\": \"题目内容\"}\n"
+                + "  ]\n"
+                + "}\n"
+                + "type 只能是「技术」「项目」「行为」三种之一，共 " + count + " 道题，id 从 1 递增。"
+                + "只返回 JSON，不要包含其他文字。";
+
+        // 题目数量多，max_tokens 放宽到 2048
+        return callAI(prompt, "genQuestions", null, 2048);
+    }
+
+    /**
+     * 模拟面试：点评候选人的面试作答
+     *
+     * @return {score: 0-100, comment: "点评", betterAnswer: "参考答案"}
+     */
+    public Map<String, Object> evaluateAnswer(String jobTitle, String question, String answer, String resumeText) {
+        String prompt = "你是一个面试官。请点评候选人对以下面试题的回答。\n\n"
+                + "## 岗位名称\n" + jobTitle + "\n\n"
+                + "## 面试题\n" + question + "\n\n"
+                + "## 候选人回答\n" + truncate(answer, 1500) + "\n\n"
+                + "## 候选人简历背景\n" + truncate(resumeText, 1000) + "\n\n"
+                + "请严格按以下 JSON 格式返回：\n"
+                + "{\n"
+                + "  \"score\": 评分（0-100的整数，考察切题程度、内容质量、表达条理）,\n"
+                + "  \"comment\": \"点评（100字以内，先说优点再指出不足）\",\n"
+                + "  \"betterAnswer\": \"参考答案（150字以内，示范一个更好的回答思路）\"\n"
+                + "}\n"
+                + "只返回 JSON，不要包含其他文字。";
+
+        return callAI(prompt, "evalAnswer");
+    }
+
+    /**
+     * 调用 AI（默认提供方，max_tokens=1024）
      */
     private Map<String, Object> callAI(String prompt, String taskName) {
-        // 没有配置 API Key 时返回模拟数据
-        if (apiKey == null || apiKey.isEmpty() || apiKey.equals("sk-placeholder")) {
-            log.warn("[AiService] API Key 未配置，返回模拟数据 (task={})", taskName);
-            return fallbackMock(taskName);
+        return callAI(prompt, taskName, null, 1024);
+    }
+
+    /**
+     * 调用 AI（指定提供方与 max_tokens），并写入调用日志
+     *
+     * @param providerName 提供方名称（deepseek/glm），null 时用 ai.default-provider
+     */
+    private Map<String, Object> callAI(String prompt, String taskName, String providerName, int maxTokens) {
+        String name = (providerName == null || providerName.isEmpty())
+                ? aiProperties.getDefaultProvider() : providerName;
+        AiProperties.Provider provider = aiProperties.getProviders() != null
+                ? aiProperties.getProviders().get(name) : null;
+
+        long start = System.currentTimeMillis();
+
+        // 没有配置该提供方或 API Key 缺失时返回模拟数据
+        if (provider == null || provider.getKey() == null || provider.getKey().isEmpty()
+                || "sk-placeholder".equals(provider.getKey())) {
+            log.warn("[AiService] AI 提供方 [{}] 未配置，返回模拟数据 (task={})", name, taskName);
+            Map<String, Object> mock = fallbackMock(taskName);
+            logAiCall(taskName, name, System.currentTimeMillis() - start, true, prompt, toJson(mock));
+            
+            return mock;
         }
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
+        headers.setBearerAuth(provider.getKey());
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", model);
+        requestBody.put("model", provider.getModel());
         requestBody.put("temperature", 0.3);
-        requestBody.put("max_tokens", 1024);
+        requestBody.put("max_tokens", maxTokens);
 
         List<Map<String, String>> messages = new ArrayList<>();
         messages.add(Map.of("role", "user", "content", prompt));
         requestBody.put("messages", messages);
 
+        String content = null;
         try {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-            ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, request, Map.class);
+            ResponseEntity<Map> response = restTemplate.postForEntity(provider.getUrl(), request, Map.class);
 
             if (response.getBody() != null && response.getBody().containsKey("choices")) {
                 List<Map> choices = (List<Map>) response.getBody().get("choices");
                 if (!choices.isEmpty()) {
                     Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-                    String content = (String) message.get("content");
-                    return parseJsonResponse(content, taskName);
+                    content = (String) message.get("content");
+                    Map<String, Object> parsed = parseJsonResponse(content, taskName);
+                    // 解析失败视为一次降级
+                    boolean mock = parsed == null;
+                    if (mock) {
+                        parsed = fallbackMock(taskName);
+                    }
+                    logAiCall(taskName, name, System.currentTimeMillis() - start, mock, prompt, content);
+                    return parsed;
                 }
             }
-            log.error("[AiService] API 返回异常, response={}", response.getBody());
+            log.error("[AiService] API 返回异常, provider={}, response={}", name, response.getBody());
         } catch (Exception e) {
-            log.error("[AiService] API 调用失败 (task={}), {}", taskName, e.getMessage());
+            log.error("[AiService] API 调用失败 (task={}, provider={}), {}", taskName, name, e.getMessage());
         }
 
-        return fallbackMock(taskName);
+        Map<String, Object> mock = fallbackMock(taskName);
+        logAiCall(taskName, name, System.currentTimeMillis() - start, true, prompt, content == null ? "" : content);
+        return mock;
     }
 
     /**
      * 解析 LLM 返回的 JSON 字符串
+     *
+     * @return 解析失败时返回 null（由 callAI 统一降级 mock）
      */
     private Map<String, Object> parseJsonResponse(String content, String taskName) {
         try {
@@ -227,7 +315,7 @@ public class AiService {
             return OBJECT_MAPPER.readValue(json, Map.class);
         } catch (Exception e) {
             log.error("[AiService] JSON 解析失败 (task={}), content={}", taskName, content, e);
-            return fallbackMock(taskName);
+            return null;
         }
     }
 
@@ -289,8 +377,89 @@ public class AiService {
                 mock.put("missingFields", new ArrayList<>() {{ add("求职意向"); add("项目经历"); }});
                 mock.put("recommendedSkills", new ArrayList<>() {{ add("Git"); add("Linux"); }});
                 break;
+            case "genQuestions":
+                mock.put("questions", buildMockQuestions());
+                break;
+            case "evalAnswer":
+                mock.put("score", 75);
+                mock.put("comment", "回答基本切题，结构清晰，但缺少具体例子和数据支撑");
+                mock.put("betterAnswer", "建议采用「结论 + 具体事例 + 结果」的结构回答，结合自己的项目经历给出可验证的细节");
+                break;
         }
         return mock;
+    }
+
+    /**
+     * 模拟面试题（降级用）
+     */
+    private List<Map<String, Object>> buildMockQuestions() {
+        String[][] defs = {
+                {"技术", "请介绍一下你最熟悉的技术栈，并说明在实际项目中如何使用"},
+                {"项目", "讲一个你最有成就感的项目：背景、你承担的角色、最终成果"},
+                {"技术", "如果项目上线后出现异常，你会如何定位和解决问题"},
+                {"行为", "与团队成员意见不一致时，你会怎么沟通处理"},
+                {"项目", "项目推进中遇到的最大困难是什么，你是怎么解决的"}
+        };
+        List<Map<String, Object>> questions = new ArrayList<>();
+        for (int i = 0; i < defs.length; i++) {
+            Map<String, Object> q = new HashMap<>();
+            q.put("id", i + 1);
+            q.put("type", defs[i][0]);
+            q.put("question", defs[i][1]);
+            questions.add(q);
+        }
+        return questions;
+    }
+
+    /**
+     * AI 调用日志：每次调用（含降级 mock）写一条 ai_parse_log，
+     * 记录 provider/任务/耗时/mock 标记，供多模型对比实验使用。
+     * 任何异常只记 warn，不影响主流程。
+     */
+    private void logAiCall(String taskName, String providerName, long latencyMs, boolean mock,
+                           String prompt, String resultContent) {
+        try {
+            AiParseLog entry = new AiParseLog();
+            entry.setTaskName(taskName);
+            entry.setProvider(providerName);
+            entry.setLatencyMs((int) latencyMs);
+            entry.setMockFlag(mock ? 1 : 0);
+            entry.setUserId(currentUserIdOrNull());
+            entry.setRawMessage(truncate(prompt, 300));
+            entry.setParsedResult(truncate(resultContent == null ? "" : resultContent, 2000));
+            entry.setIsManualCorrected(0);
+            entry.setCreateTime(LocalDateTime.now());
+            aiParseLogService.save(entry);
+        } catch (Exception ex) {
+            log.warn("[AiService] 写入AI调用日志失败: {}", ex.getMessage());
+        }
+    }
+
+    /**
+     * 尽力获取当前登录用户ID（无请求上下文或未登录时返回 null）
+     */
+    private Long currentUserIdOrNull() {
+        try {
+            ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attrs == null) {
+                return null;
+            }
+            Object val = attrs.getRequest().getAttribute("userId");
+            if (val == null) {
+                return null;
+            }
+            return val instanceof Long ? (Long) val : Long.valueOf(val.toString());
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String toJson(Object obj) {
+        try {
+            return OBJECT_MAPPER.writeValueAsString(obj);
+        } catch (Exception e) {
+            return "{}";
+        }
     }
 
     /**

@@ -22,10 +22,35 @@ public class AiParseLog {
     private Long id;
     
     /**
-     * 发起解析的教师ID - 外键(sys_user.id)
+     * 发起解析的教师ID - 外键(sys_user.id)（仅旧版解析数据使用）
      */
     private Long teacherId;
-    
+
+    /**
+     * AI提供方: deepseek/glm（双模型对比实验数据）
+     */
+    private String provider;
+
+    /**
+     * AI任务名: scoreResume/matchJob/parseResume/parseJob/analyzeResume/genQuestions/evalAnswer
+     */
+    private String taskName;
+
+    /**
+     * 调用耗时（毫秒）
+     */
+    private Integer latencyMs;
+
+    /**
+     * 发起用户ID（新调用统一记录，学生/教师通用）
+     */
+    private Long userId;
+
+    /**
+     * 是否降级为mock数据: 0=真实调用 1=降级mock
+     */
+    private Integer mockFlag;
+
     /**
      * 原始转发消息（文本或图片描述）
      */

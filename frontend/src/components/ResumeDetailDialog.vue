@@ -178,7 +178,19 @@
           <!-- 空状态 -->
           <div v-if="!useTeacherAI && !useHrAI" class="ai-empty-state">
             <div class="ai-score-null" style="margin-bottom:8px">--</div>
-            <p style="margin:0;font-size:13px;color:#C9CDD4">暂无评分数据</p>
+            <p style="margin:0;font-size:13px;color:#C9CDD4">
+              {{ mode === 'teacher' ? '还没有 AI 简历分析' : '暂无评分数据' }}
+            </p>
+          </div>
+
+          <!-- 教师模式：AI 诊断操作（简历未变更时后端直接返回缓存结果，不重复消耗 AI） -->
+          <div v-if="mode === 'teacher'" class="ai-run-area">
+            <el-button type="primary" :loading="analyzing" @click="runAnalysis(false)">
+              {{ aiAnalysisData ? '重新诊断' : 'AI 诊断' }}
+            </el-button>
+            <el-button v-if="aiAnalysisData" link size="small" class="ai-force-link" @click="forceAnalysis">
+              简历刚改过？强制重新分析
+            </el-button>
           </div>
         </div>
       </div>
@@ -188,7 +200,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { resumeAPI } from '@/api'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { resumeAPI, aiParseAPI } from '@/api'
 
 const props = defineProps({
   visible: Boolean,
@@ -316,6 +329,36 @@ const hrDimColor = (val) => {
   if (val >= 80) return '#10B981'
   if (val >= 60) return '#F59E0B'
   return '#EF4444'
+}
+
+// ---- AI 简历诊断（教师模式） ----
+const analyzing = ref(false)
+
+const runAnalysis = async (force) => {
+  if (analyzing.value || !props.studentId) return
+  analyzing.value = true
+  try {
+    const res = await aiParseAPI.analyzeResume(props.studentId, force)
+    if (res.code === 200) {
+      ElMessage.success(res.message || '简历分析成功')
+      // 后端已把结果写回 aiAnalysis，重新拉取刷新侧栏
+      await loadResume()
+    } else {
+      ElMessage.error(res.message || '简历分析失败')
+    }
+  } catch (e) {
+    ElMessage.error(e?.response?.data?.message || e?.message || '简历分析失败')
+  } finally {
+    analyzing.value = false
+  }
+}
+
+const forceAnalysis = () => {
+  ElMessageBox.confirm('将忽略缓存结果，重新调用 AI 分析该学生的简历。', '强制重新分析', {
+    confirmButtonText: '重新分析',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => runAnalysis(true)).catch(() => {})
 }
 </script>
 
@@ -548,6 +591,19 @@ const hrDimColor = (val) => {
   color: #7C3AED;
 }
 .ai-empty-state { padding: 24px 0; }
+.ai-run-area {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ai-run-area .el-button {
+  width: 100%;
+}
+.ai-force-link {
+  align-self: center;
+  font-size: 12px;
+  color: #86909C;
+}
 
 /* HR 评分样式 */
 .hr-score-hero {

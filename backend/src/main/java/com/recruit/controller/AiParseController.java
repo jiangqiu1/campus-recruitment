@@ -191,9 +191,10 @@ public class AiParseController extends BaseController {
     /**
      * 简历分析：分析学生简历的不足并给出改进建议
      * 分析结果会保存到简历表中，供学生和教师随时查看
+     * 简历在最近诊断后未变更时直接返回缓存结果，force=true 强制重新分析
      *
-     * @param params 包含 studentId
-     * @return 分析结果（评分、优势、不足、建议等）
+     * @param params 包含 studentId、force（可选）
+     * @return 分析结果（评分、优势、不足、建议等，cached=true 表示命中缓存）
      */
     @LogOperation("AI分析简历")
     @PostMapping("/analyze-resume")
@@ -209,35 +210,13 @@ public class AiParseController extends BaseController {
             return Result.error(404, "该学生暂无简历");
         }
 
-        // 组装简历数据发给 AI
-        java.util.Map<String, Object> resumeData = new java.util.HashMap<>();
-        resumeData.put("education", resume.getEducation());
-        resumeData.put("internship", resume.getInternship());
-        resumeData.put("skills", resume.getSkills());
-        resumeData.put("selfEvaluation", resume.getSelfEvaluation());
-        resumeData.put("jobTarget", resume.getJobTarget());
+        boolean force = Boolean.parseBoolean(String.valueOf(params.get("force")));
 
-        String resumeJson;
-        try {
-            resumeJson = new ObjectMapper().writeValueAsString(resumeData);
-        } catch (Exception e) {
-            resumeJson = "{}";
-        }
+        // 诊断（带缓存：简历未变更时复用已有结果，不重复调用 AI）
+        Map<String, Object> aiResult = resumeService.analyzeWithCache(resume, force);
+        boolean cached = Boolean.TRUE.equals(aiResult.get("cached"));
 
-        // 调用 AI 分析
-        Map<String, Object> aiResult = aiService.analyzeResume(resumeJson);
-
-        // 将分析结果保存到 resume 表，供学生和教师后续查看
-        try {
-            String aiResultJson = new ObjectMapper().writeValueAsString(aiResult);
-            resume.setAiAnalysis(aiResultJson);
-            resumeService.updateById(resume);
-        } catch (Exception e) {
-            // 保存失败不影响返回结果，仅记录日志
-            log.error("保存AI简历分析结果失败", e);
-        }
-
-        return Result.success("简历分析成功", aiResult);
+        return Result.success(cached ? "简历未变更，已返回最近诊断结果" : "简历分析成功", aiResult);
     }
 
     /**

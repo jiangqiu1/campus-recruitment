@@ -12,11 +12,15 @@
 				</view>
 			</view>
 
-			<!-- 快捷入口（3个，投递记录已移至TabBar） -->
+			<!-- 快捷入口（4个，投递记录已移至TabBar） -->
 			<view class="quick-menu">
 				<view class="quick-item" @click="goToAIMatches">
 					<view class="quick-icon"><uni-icons type="star" size="24" color="#165DFF" /></view>
 					<text>AI智能匹配</text>
+				</view>
+				<view class="quick-item" @click="goToInterviewPractice">
+					<view class="quick-icon"><uni-icons type="chat" size="24" color="#7C3AED" /></view>
+					<text>模拟面试</text>
 				</view>
 				<view class="quick-item" @click="goToHotJobs">
 					<view class="quick-icon"><uni-icons type="list" size="24" color="#165DFF" /></view>
@@ -246,6 +250,7 @@ const goToCollect = () => uni.navigateTo({ url: '/pages/student/collect' })
 const goToProfile = () => uni.navigateTo({ url: '/pages/student/profile' })
 const goToMessages = () => uni.navigateTo({ url: '/pages/student/messages' })
 const goToAIMatches = () => uni.navigateTo({ url: '/pages/student/ai-matches' })
+const goToInterviewPractice = () => uni.navigateTo({ url: '/pages/student/interview-practice' })
 const goToHotJobs = () => uni.navigateTo({ url: '/pages/student/hot-jobs' })
 const goToResume = () => uni.navigateTo({ url: '/pages/student/resume-edit' })
 const goToCityPicker = () => uni.showToast({ title: '选择城市', icon: 'none' })

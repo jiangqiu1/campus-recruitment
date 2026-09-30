@@ -8,10 +8,10 @@
 					<ScoreCircle :score="completeness" :size="56" />
 					<view class="top-bar-right">
 						<text class="completeness-title">简历完整度 {{ completeness }}%</text>
-						<view class="ai-optimize" @click="goAIOptimize">
-							<uni-icons type="star" size="14" color="#0EA5E9" />
-							<text class="optimize-text">AI 优化建议</text>
-							<uni-icons type="arrowright" size="14" color="#0EA5E9" />
+						<view class="ai-optimize" @click="goAIReview">
+							<uni-icons type="compose" size="14" color="#7C3AED" />
+							<text class="optimize-text optimize-text--purple">{{ reviewing ? 'AI 诊断中...' : 'AI 诊断' }}</text>
+							<uni-icons v-if="!reviewing" type="arrowright" size="14" color="#7C3AED" />
 						</view>
 					</view>
 				</view>
@@ -78,7 +78,7 @@
 				<view class="section-card" v-if="aiAnalysisResult" id="ai-analysis-section">
 					<view class="section-title-row">
 						<text class="section-title">AI 简历分析</text>
-						<text class="ai-badge">来自教师评估</text>
+						<text class="ai-badge">{{ analysisBadge }}</text>
 					</view>
 					<view class="ai-result">
 						<view class="ai-score-row">
@@ -125,7 +125,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { resumeAPI } from '@/utils/request'
+import { resumeAPI, aiAssistantAPI } from '@/utils/request'
 import NavBar from '@/components/NavBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import LoadingState from '@/components/LoadingState.vue'
@@ -136,6 +136,7 @@ const resume = ref(null)
 const completeness = ref(0)
 const userInfo = ref({})
 const aiAnalysisResult = ref(null)
+const reviewing = ref(false)
 
 const parsedEducation = computed(() => {
 	if (!resume.value?.education) return []
@@ -219,13 +220,34 @@ const goEdit = () => uni.navigateTo({ url: '/pages/student/resume-edit' })
 const goCreate = () => uni.navigateTo({ url: '/pages/student/resume-edit' })
 const scrollTarget = ref('')
 
-const goAIOptimize = () => {
-	if (aiAnalysisResult.value) {
+// 分析卡徽标：显示最近一次分析时间（无时间戳的旧数据显示通用文案）
+const analysisBadge = computed(() => {
+	const t = aiAnalysisResult.value?.analyzedAt
+	if (!t) return 'AI 评估'
+	const d = new Date(t)
+	if (isNaN(d.getTime())) return 'AI 评估'
+	const hh = String(d.getHours()).padStart(2, '0')
+	const mm = String(d.getMinutes()).padStart(2, '0')
+	return `分析于 ${d.getMonth() + 1}-${String(d.getDate()).padStart(2, '0')} ${hh}:${mm}`
+})
+
+// AI 诊断：分析自己的简历（简历未变更时后端直接返回缓存结果）
+const goAIReview = async () => {
+	if (reviewing.value) return
+	reviewing.value = true
+	uni.showLoading({ title: 'AI 诊断中...', mask: true })
+	try {
+		const res = await aiAssistantAPI.resumeReview(false)
+		await loadResume()
+		uni.hideLoading()
 		scrollTarget.value = 'ai-analysis-section'
-		// 下次点击可再次触发滚动
 		setTimeout(() => { scrollTarget.value = '' }, 500)
-	} else {
-		uni.showToast({ title: '暂无 AI 分析结果，等待教师评估', icon: 'none' })
+		uni.showToast({ title: res.message || '诊断完成', icon: 'none' })
+	} catch (e) {
+		uni.hideLoading()
+		uni.showToast({ title: (e && e.message) || '诊断失败，请稍后重试', icon: 'none' })
+	} finally {
+		reviewing.value = false
 	}
 }
 const handlePreview = () => uni.showToast({ title: '预览简历', icon: 'none' })
@@ -284,6 +306,9 @@ const formatTime = (time) => {
 	font-size: 13px;
 	color: #0EA5E9;
 	font-weight: 500;
+}
+.optimize-text--purple {
+	color: #7C3AED;
 }
 .resume-card {
 	background: #FFFFFF;

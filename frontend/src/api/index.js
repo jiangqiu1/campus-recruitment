@@ -192,7 +192,8 @@ export const resumeScoreAPI = {
 // ==================== AI 解析日志模块 ====================
 export const aiParseAPI = {
   getParseLogs: (params) => request.get('/ai-parse/logs', { params }),
-  analyzeResume: (studentId) => request.post('/ai-parse/analyze-resume', { studentId }),
+  // force=true 强制重新调用 AI；默认简历未变更时后端直接返回缓存诊断结果
+  analyzeResume: (studentId, force) => request.post('/ai-parse/analyze-resume', { studentId, force }),
   parseJob: (rawMessage) => request.post('/ai-parse/parse-job', { rawMessage })
 }
 

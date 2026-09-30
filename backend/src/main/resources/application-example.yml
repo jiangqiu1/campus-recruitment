@@ -61,11 +61,19 @@ aes:
   key: YOUR_AES_KEY_AT_LEAST_16_BYTES
   iv: YOUR_AES_IV_16_BYTES
 
+# AI 服务配置（多模型：DeepSeek + 智谱 GLM，均为 OpenAI 兼容接口）
+# default-provider 指定默认通道；某通道 key 缺失时该通道的调用自动降级为 mock 数据
 ai:
-  api:
-    key: YOUR_DEEPSEEK_API_KEY
-    url: https://api.deepseek.com/v1/chat/completions
-    model: deepseek-chat
+  default-provider: deepseek
+  providers:
+    deepseek:
+      key: YOUR_DEEPSEEK_API_KEY
+      url: https://api.deepseek.com/v1/chat/completions
+      model: deepseek-chat
+    glm:
+      key: YOUR_ZHIPU_API_KEY
+      url: https://open.bigmodel.cn/api/paas/v4/chat/completions
+      model: glm-4.5-flash
 
 file:
   upload-path: ${user.home}/uploads/

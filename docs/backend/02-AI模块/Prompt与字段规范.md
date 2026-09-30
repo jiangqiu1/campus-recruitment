@@ -1,25 +1,31 @@
 # AI 模块 · Prompt 与字段规范（深度补充）
 
 > 本文档记录 `AiService`（`utils/AiService.java`）五大 AI 场景的完整 Prompt 原文、输入输出 JSON 字段结构、统一调用参数与降级数据。可直接照此范式扩展新的 AI 场景。
+> **2026-09-30 起**：AI 配置已升级为多 provider 结构（DeepSeek + 智谱 GLM），新增 genQuestions / evalAnswer 两个场景，详见同目录 `双模型与学生AI助手-20260930.md`；本文档场景四、五之后的行号为旧版参考。
 
-## 1. 配置项（AiService 30-31 行）
+## 1. 配置项（已升级为多 provider，见 AiProperties）
 
-| 配置 | 默认值 | 说明 |
-|------|--------|------|
-| `ai.api.key` | 空字符串 | DeepSeek API Key，空或 `sk-placeholder` 时走 mock |
-| `ai.api.url` | `https://api.deepseek.com/v1/chat/completions` | 接口地址 |
-| `ai.api.model` | `deepseek-chat` | 模型名 |
+| 配置 | 说明 |
+|------|------|
+| `ai.default-provider` | 默认通道名（deepseek / glm） |
+| `ai.providers.<name>.key` | 各通道 API Key，空或 `sk-placeholder` 时该通道走 mock |
+| `ai.providers.<name>.url` | 各通道接口地址（OpenAI 兼容） |
+| `ai.providers.<name>.model` | 各通道模型名 |
 
-## 2. 统一调用参数（callAI，158 行）
+> 旧键 `ai.api.key/url/model` 已废弃。
+
+## 2. 统一调用参数（callAI）
 
 | 参数 | 值 |
 |------|-----|
 | temperature | 0.3（保证一致性） |
-| max_tokens | 1024 |
+| max_tokens | 默认 1024（genQuestions 用 2048） |
 | messages | `[{role:"user", content:prompt}]` |
 | HTTP | `RestTemplate.postForEntity` + Bearer 鉴权 |
 
-**截断规则**（truncate，300 行）：评分/匹配截 2000 字符，解析/分析截 3000 字符。
+**截断规则**（truncate）：评分/匹配截 2000 字符，解析/分析截 3000 字符。
+
+**调用日志**：每次调用写一条 ai_parse_log（provider/task_name/latency_ms/user_id/mock_flag），详见 `双模型与学生AI助手-20260930.md`。
 
 ## 3. 场景一：简历评分 `scoreResume`（38 行）
 

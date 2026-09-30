@@ -1,5 +1,29 @@
 # 变更日志
 
+## 2026-09-30
+
+### 新增：AI 双模型接入（DeepSeek + 智谱 GLM）+ 学生 AI 助手
+
+**后端**：
+- `AiService` 双 provider 改造：新增 `config/AiProperties`（`ai.default-provider` + `ai.providers.{deepseek,glm}`），旧键 `ai.api.*` 废弃；某通道 key 缺失自动降级 mock
+- 每次 AI 调用写一条 `ai_parse_log`（provider/task_name/latency_ms/user_id/mock_flag），作为毕设多模型对比实验数据源；迁移脚本 `backend/sql/migration-20260930-ai-provider.sql`（**需执行**）
+- 新增 `AiService.generateInterviewQuestions` / `evaluateAnswer`（模拟面试）
+- 新增 `AiAssistantController`（`/ai-assistant`，学生向）：`POST /resume-review`（简历诊断）、`POST /interview/questions`、`POST /interview/evaluate`；`BaseController` 新增 `requireStudent()`
+- 简历诊断防重复缓存：`ResumeService.analyzeWithCache`，aiAnalysis 记录 `analyzedAt`，简历未变更直接返回缓存（`cached:true`），`force=true` 强制重跑；教师 `analyze-resume` 同步接入
+
+**小程序**：
+- `request.js` 新增 `aiAssistantAPI`
+- `resume.vue` 顶栏新增「AI 诊断」按钮（命中缓存秒回）
+- 新页面 `interview-practice.vue`（选投递岗位 → AI 出 5 题 → 逐题点评 → 小结），`pages.json` 注册 + home 快捷入口
+
+**PC 端**：
+- `ResumeDetailDialog` 教师模式新增「AI 诊断/重新诊断」+「强制重新分析」（带 force）
+- `aiParseAPI.analyzeResume(studentId, force)` 透传 force
+
+**待办**：执行 SQL 迁移；智谱 key 到位后填 `providers.glm.key` 并把 `default-provider` 改为 `glm`；建议作废已泄露到 GitHub 的 DeepSeek key。
+
+详见 `docs/backend/02-AI模块/双模型与学生AI助手-20260930.md`。
+
 ## 2026-06-08
 
 ### 修复：前端登录失败 + 权限校验错误

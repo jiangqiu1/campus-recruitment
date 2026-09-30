@@ -49,6 +49,16 @@ public class BaseController {
     }
 
     /**
+     * 校验当前用户是否为学生角色，不是则抛出403异常
+     */
+    protected void requireStudent() {
+        Integer role = getCurrentRole();
+        if (!Objects.equals(role, 0)) {
+            throw new BusinessException(403, "仅学生可执行此操作");
+        }
+    }
+
+    /**
      * 校验当前用户是否为教师角色，不是则抛出403异常
      */
     protected void requireTeacher() {

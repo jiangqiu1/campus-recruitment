@@ -276,6 +276,14 @@ export const aiParseAPI = {
   analyzeResume: (studentId) => request({ url: '/ai-parse/analyze-resume', method: 'POST', data: { studentId } }),
 }
 
+/* ======================== AI助手模块（学生向：简历诊断 / 模拟面试） ======================== */
+export const aiAssistantAPI = {
+  // 诊断当前登录学生自己的简历；简历未变更时后端返回缓存结果，force=true 强制重新分析
+  resumeReview: (force) => request({ url: '/ai-assistant/resume-review', method: 'POST', data: { force: !!force } }),
+  genInterviewQuestions: (jobId) => request({ url: '/ai-assistant/interview/questions', method: 'POST', data: { jobId } }),
+  evaluateAnswer: (jobId, question, answer) => request({ url: '/ai-assistant/interview/evaluate', method: 'POST', data: { jobId, question, answer } }),
+}
+
 /* ======================== 字段映射工具 ======================== */
 export const mapJobData = (raw) => {
 	if (!raw) return {}
