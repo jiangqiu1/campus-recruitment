@@ -110,9 +110,9 @@ const handleSave = async () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .form-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	margin: 16px;
 	overflow: hidden;
@@ -122,45 +122,45 @@ const handleSave = async () => {
 	flex-direction: row;
 	align-items: center;
 	padding: 16px;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 	min-height: 52px;
 }
 .form-label {
 	width: 60px;
 	font-size: 15px;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-weight: 500;
 	flex-shrink: 0;
 }
 .form-input {
 	flex: 1;
 	font-size: 15px;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	padding: 0;
 	height: 36px;
 }
-.form-input::placeholder { color: #C9CDD4; }
+.form-input::placeholder { color: $uni-text-color-placeholder; }
 .gender-group { flex-direction: row; gap: 10px; }
 .gender-option {
 	padding: 6px 20px;
-	border-radius: 20px;
+	border-radius: 999px;
 	font-size: 14px;
-	color: #86909C;
-	background: #F7F8FA;
-	border: 1px solid #E5E6EB;
+	color: $uni-text-color-secondary;
+	background: $uni-bg-color-page;
+	border: 1px solid $uni-border-color;
 }
 .gender-option.active {
-	color: #165DFF;
-	background: rgba(22,93,255,0.06);
-	border-color: #165DFF;
+	color: $uni-color-primary;
+	background: $uni-color-primary-light;
+	border-color: $uni-color-primary;
 }
 .save-btn {
 	width: calc(100% - 32px);
 	margin: 0 16px 20px;
 	height: 46px;
 	border-radius: 12px;
-	background: #165DFF;
-	color: #FFFFFF;
+	background: $uni-color-primary;
+	color: $uni-text-color-inverse;
 	font-size: 16px;
 	font-weight: 600;
 	border: none;
@@ -168,5 +168,5 @@ const handleSave = async () => {
 	justify-content: center;
 }
 .save-btn:active { opacity: 0.85; }
-.save-btn[disabled] { background: #A9AEB8; opacity: 0.6; }
+.save-btn[disabled] { background: $uni-text-color-placeholder; opacity: 0.6; }
 </style>

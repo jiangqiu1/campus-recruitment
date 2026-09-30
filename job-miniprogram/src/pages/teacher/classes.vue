@@ -170,21 +170,21 @@ const goToStudents = (classId, className) => {
 const goToResumes = () => uni.navigateTo({ url: '/pages/teacher/resumes' })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* 搜索框和学生端完全一致 */
 .search-box {
 	flex-direction: row;
 	align-items: center;
 	gap: 8px;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 24px;
 	padding: 0 16px;
 	height: 40px;
 	margin: 12px 16px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.search-box input { flex: 1; font-size: 14px; background: transparent; border: none; color: #1D2129; height: 100%; }
-.all-resume-link { font-size: 13px; color: #165DFF; font-weight: 500; flex-shrink: 0; }
+.search-box input { flex: 1; font-size: 14px; background: transparent; border: none; color: $uni-text-color-title; height: 100%; }
+.all-resume-link { font-size: 13px; color: $uni-color-primary; font-weight: 500; flex-shrink: 0; }
 
 .class-list { padding: 0 16px; }
 .class-card {
@@ -204,14 +204,14 @@ const goToResumes = () => uni.navigateTo({ url: '/pages/teacher/resumes' })
 .class-icon {
 	width: 48px;
 	height: 48px;
-	background: rgba(22,93,255,0.08);
+	background: $uni-color-primary-light;
 	border-radius: 12px;
 	align-items: center;
 	justify-content: center;
 }
 .class-info { flex: 1; }
-.class-name { font-size: 16px; font-weight: 700; color: #1D2129; display: block; margin-bottom: 4px; }
-.class-major { font-size: 13px; color: #86909C; display: block; }
+.class-name { font-size: 16px; font-weight: 700; color: $uni-text-color-title; display: block; margin-bottom: 4px; }
+.class-major { font-size: 13px; color: $uni-text-color-secondary; display: block; }
 .more-btn {
 	width: 32px;
 	height: 32px;
@@ -222,33 +222,33 @@ const goToResumes = () => uni.navigateTo({ url: '/pages/teacher/resumes' })
 	flex-direction: row;
 	justify-content: space-around;
 	padding-top: 12px;
-	border-top: 0.5px solid #F2F3F5;
+	border-top: 0.5px solid $uni-border-color-divider;
 }
 .stat-item { align-items: center; gap: 4px; }
-.stat-num { font-size: 20px; font-weight: 800; color: #1D2129; }
-.stat-label { font-size: 12px; color: #86909C; }
+.stat-num { font-size: 20px; font-weight: 800; color: $uni-text-color-title; }
+.stat-label { font-size: 12px; color: $uni-text-color-secondary; }
 
 .add-form { padding: 0; gap: 12px; }
 .form-input {
 	width: 100%;
 	height: 44px;
-	border: 1px solid #E5E6EB;
+	border: 1px solid $uni-border-color;
 	border-radius: 8px;
 	padding: 0 12px;
 	font-size: 15px;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 	box-sizing: border-box;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 .form-input:focus {
-	border-color: #165DFF;
-	background: #FFFFFF;
+	border-color: $uni-color-primary;
+	background: $uni-bg-color;
 }
 .submit-btn {
 	width: 100%;
 	height: 44px;
 	border-radius: 12px;
-	background: #165DFF;
+	background: $uni-color-primary;
 	color: white;
 	font-size: 15px;
 	font-weight: 600;
@@ -264,10 +264,10 @@ const goToResumes = () => uni.navigateTo({ url: '/pages/teacher/resumes' })
 	width: 56px;
 	height: 56px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #165DFF, #2563EB);
+	background: $uni-gradient-primary;
 	align-items: center;
 	justify-content: center;
-	box-shadow: 0 4px 16px rgba(22,93,255,0.4);
+	box-shadow: 0 4px 16px $uni-color-primary-light;
 	z-index: 100;
 }
 .fab-icon {

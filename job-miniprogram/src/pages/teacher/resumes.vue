@@ -195,25 +195,25 @@ const goToResume = (stu) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* 搜索框和学生端完全一致 */
 .search-box {
 	flex-direction: row;
 	align-items: center;
 	gap: 8px;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 24px;
 	padding: 0 16px;
 	height: 40px;
 	margin: 12px 16px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.search-box input { flex: 1; font-size: 14px; background: transparent; border: none; color: #1D2129; height: 100%; }
+.search-box input { flex: 1; font-size: 14px; background: transparent; border: none; color: $uni-text-color-title; height: 100%; }
 .clear-btn { line-height: 1; }
 
 .filter-row { flex-direction: row; padding: 0 16px; gap: 12px; margin-bottom: 12px; }
-.filter-picker { flex-direction: row; align-items: center; gap: 4px; padding: 6px 12px; background: #F7F8FA; border-radius: 8px; }
-.filter-picker text { font-size: 13px; color: #4E5969; }
+.filter-picker { flex-direction: row; align-items: center; gap: 4px; padding: 6px 12px; background: $uni-bg-color-page; border-radius: 8px; }
+.filter-picker text { font-size: 13px; color: $uni-text-color; }
 
 /* Tab 复用首页样式规范 */
 .list-tabs {
@@ -225,14 +225,14 @@ const goToResume = (stu) => {
 }
 .list-tab {
 	font-size: 15px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	font-weight: 500;
 	padding-bottom: 4px;
 	position: relative;
 	white-space: nowrap;
 }
 .list-tab.active {
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-weight: 600;
 }
 .list-tab.active::after {
@@ -242,8 +242,8 @@ const goToResume = (stu) => {
 	left: 0;
 	width: 20px;
 	height: 3px;
-	background: #165DFF;
-	border-radius: 2px;
+	background: $uni-color-primary;
+	border-radius: 4px;
 }
 
 .resume-list { padding: 0 16px; }
@@ -266,7 +266,7 @@ const goToResume = (stu) => {
 	width: 44px;
 	height: 44px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #165DFF, #2563EB);
+	background: $uni-gradient-primary;
 	align-items: center;
 	justify-content: center;
 	font-size: 18px;
@@ -275,16 +275,16 @@ const goToResume = (stu) => {
 	flex-shrink: 0;
 }
 .resume-info { flex: 1; }
-.resume-name { font-size: 15px; font-weight: 700; color: #1D2129; display: block; margin-bottom: 2px; }
-.resume-class { font-size: 12px; color: #86909C; display: block; margin-bottom: 6px; }
+.resume-name { font-size: 15px; font-weight: 700; color: $uni-text-color-title; display: block; margin-bottom: 2px; }
+.resume-class { font-size: 12px; color: $uni-text-color-secondary; display: block; margin-bottom: 6px; }
 .resume-tags { flex-direction: row; gap: 8px; }
 .resume-tags .tag {
 	padding: 2px 8px;
-	border-radius: 6px;
-	font-size: 11px;
+	border-radius: 8px;
+	font-size: 12px;
 	font-weight: 500;
-	background: rgba(22,93,255,0.08);
-	color: #165DFF;
+	background: $uni-color-primary-light;
+	color: $uni-color-primary;
 }
-.resume-card:active { background: #F7F8FA; }
+.resume-card:active { background: $uni-bg-color-page; }
 </style>

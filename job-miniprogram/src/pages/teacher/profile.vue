@@ -37,7 +37,7 @@
 				</view>
 				<view class="func-item" @click="gotoFunc('/pages/teacher/ai-matches')">
 					<view class="func-icon func-icon--purple">
-						<uni-icons type="star" size="22" color="#7C3AED" />
+						<uni-icons type="star" size="22" color="#0EA5E9" />
 					</view>
 					<text class="func-label">AI人岗匹配</text>
 				</view>
@@ -116,7 +116,7 @@
 				<view class="settings-item" @click="handleLogout">
 					<view class="settings-left">
 						<view class="settings-icon settings-icon--danger">
-							<uni-icons type="close" size="18" color="#EF4444" />
+							<uni-icons type="close" size="18" color="#F53F3F" />
 						</view>
 						<text class="settings-label settings-label--danger">退出登录</text>
 					</view>
@@ -232,12 +232,12 @@ const handleLogout = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* ========== 全局基础：与登录页底色体系对齐 ========== */
 .page-wrapper {
 	width: 100%;
 	height: 100vh;
-	background-color: #F7F8FA;
+	background-color: $uni-bg-color-page;
 	display: flex;
 	flex-direction: column;
 }
@@ -254,8 +254,8 @@ const handleLogout = () => {
 	align-items: center;
 	justify-content: space-between;
 	padding: 16px 20px 28px;
-	background: linear-gradient(170deg, #165DFF 0%, #3B7AFF 100%);
-	color: #FFFFFF;
+	background: linear-gradient(170deg, $uni-color-primary 0%, $uni-color-primary-hover 100%);
+	color: $uni-text-color-inverse;
 	transition: padding 0.25s ease;
 }
 .profile-header--shrink {
@@ -303,11 +303,11 @@ const handleLogout = () => {
 	display: flex;
 	flex-direction: row;
 	flex-wrap: nowrap;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 16px;
 	margin: -14px 16px 0;
 	padding: 18px 8px;
-	box-shadow: 0 4px 24px rgba(22,93,255,0.08);
+	box-shadow: 0 4px 24px $uni-color-primary-light;
 	position: relative;
 	z-index: 2;
 }
@@ -330,14 +330,14 @@ const handleLogout = () => {
 	align-items: center;
 	justify-content: center;
 }
-.func-icon--blue { background: rgba(22, 93, 255, 0.1); }
+.func-icon--blue { background: $uni-color-primary-light; }
 .func-icon--amber { background: rgba(217, 119, 6, 0.1); }
 .func-icon--purple { background: rgba(124, 58, 237, 0.1); }
 .func-icon--emerald { background: rgba(5, 150, 105, 0.1); }
 .func-icon--red { background: rgba(220, 38, 38, 0.1); }
 .func-label {
 	font-size: 12px;
-	color: #4E5969;
+	color: $uni-text-color;
 	font-weight: 500;
 }
 
@@ -350,12 +350,12 @@ const handleLogout = () => {
 .section-title {
 	font-size: 16px;
 	font-weight: 600;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 
 /* ========== 数据卡片：沿用登录页卡片规范 ========== */
 .stat-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 16px;
 	margin: 0 16px;
 	padding: 18px 20px;
@@ -363,7 +363,7 @@ const handleLogout = () => {
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
-	box-shadow: 0 4px 24px rgba(22,93,255,0.08);
+	box-shadow: 0 4px 24px $uni-color-primary-light;
 	transition: transform 0.2s ease, opacity 0.2s ease;
 }
 .stat-card:active {
@@ -372,7 +372,7 @@ const handleLogout = () => {
 }
 .stat-card--primary {
 	background: linear-gradient(135deg, #EFF4FF 0%, #FFFFFF 100%);
-	border: 1px solid rgba(22, 93, 255, 0.12);
+	border: 1px solid $uni-color-primary-light;
 }
 .stat-card__main {
 	display: flex;
@@ -382,7 +382,7 @@ const handleLogout = () => {
 .stat-num--large {
 	font-size: 28px;
 	font-weight: 700;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-variant-numeric: tabular-nums;
 	line-height: 1.1;
 }
@@ -394,12 +394,12 @@ const handleLogout = () => {
 }
 .stat-trend {
 	font-size: 13px;
-	color: #10B981;
+	color: $uni-color-success;
 	font-weight: 500;
 }
 .stat-label {
 	font-size: 12px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 }
 
 /* 次要指标网格 */
@@ -411,13 +411,13 @@ const handleLogout = () => {
 }
 .stat-box {
 	flex: 1;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 14px 12px;
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
-	box-shadow: 0 2px 12px rgba(22,93,255,0.06);
+	box-shadow: 0 2px 12px $uni-color-primary-light;
 	transition: transform 0.2s ease, opacity 0.2s ease;
 }
 .stat-box:active {
@@ -427,18 +427,18 @@ const handleLogout = () => {
 .stat-num {
 	font-size: 20px;
 	font-weight: 700;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-variant-numeric: tabular-nums;
 	line-height: 1.2;
 }
 
 /* ========== 设置列表：与登录页输入框边框/分割线体系对齐 ========== */
 .settings-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 16px;
 	margin: 0 16px;
 	padding: 4px 0;
-	box-shadow: 0 4px 24px rgba(22,93,255,0.08);
+	box-shadow: 0 4px 24px $uni-color-primary-light;
 }
 .settings-item {
 	display: flex;
@@ -449,7 +449,7 @@ const handleLogout = () => {
 	transition: background-color 0.2s ease;
 }
 .settings-item:active {
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 }
 .settings-left {
 	display: flex;
@@ -460,8 +460,8 @@ const handleLogout = () => {
 .settings-icon {
 	width: 34px;
 	height: 34px;
-	border-radius: 10px;
-	background: rgba(22, 93, 255, 0.1);
+	border-radius: 12px;
+	background: $uni-color-primary-light;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -472,15 +472,15 @@ const handleLogout = () => {
 }
 .settings-label {
 	font-size: 15px;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-weight: 500;
 }
 .settings-label--danger {
-	color: #EF4444;
+	color: $uni-color-error;
 }
 .settings-divider {
 	height: 1px;
-	background: #E5E6EB;
+	background: $uni-border-color;
 	margin-left: 62px;
 }
 

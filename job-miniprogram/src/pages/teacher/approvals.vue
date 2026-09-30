@@ -187,24 +187,24 @@ const handleReject = async (item) => {
 const loadMore = () => {}
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .filter-tabs {
 	flex-direction: row;
 	padding: 0 16px;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	gap: 20px;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 	height: 44px;
 	align-items: center;
 }
 .filter-tab {
 	font-size: 14px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	font-weight: 500;
 	padding-bottom: 4px;
 	position: relative;
 }
-.filter-tab.active { color: #1D2129; font-weight: 600; }
+.filter-tab.active { color: $uni-text-color-title; font-weight: 600; }
 .filter-tab.active::after {
 	content: '';
 	position: absolute;
@@ -213,14 +213,14 @@ const loadMore = () => {}
 	transform: translateX(-50%);
 	width: 20px;
 	height: 3px;
-	background: #165DFF;
-	border-radius: 2px;
+	background: $uni-color-primary;
+	border-radius: 4px;
 }
 .tab-badge {
 	position: absolute;
 	top: -4px;
 	right: -12px;
-	background: #EF4444;
+	background: $uni-color-error;
 	color: white;
 	font-size: 10px;
 	min-width: 16px;
@@ -250,25 +250,25 @@ const loadMore = () => {}
 	left: 0;
 	width: 3px;
 	height: calc(100% - 16px);
-	background: #F59E0B;
+	background: $uni-color-warning;
 	border-radius: 0 2px 2px 0;
 }
 .card-header { flex-direction: row; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
 .job-info { flex: 1; }
-.job-title { font-size: 16px; font-weight: 700; color: #1D2129; display: block; margin-bottom: 2px; }
-.company-name { font-size: 12px; color: #86909C; display: block; }
+.job-title { font-size: 16px; font-weight: 700; color: $uni-text-color-title; display: block; margin-bottom: 2px; }
+.company-name { font-size: 12px; color: $uni-text-color-secondary; display: block; }
 .status-tag { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 8px; white-space: nowrap; margin-left: 8px; }
-.status-tag.pending { background: rgba(245,158,11,0.1); color: #F59E0B; }
-.status-tag.approved { background: rgba(0,180,42,0.08); color: #00B42A; }
-.status-tag.rejected { background: rgba(239,68,68,0.08); color: #EF4444; }
+.status-tag.pending { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.status-tag.approved { background: $uni-color-success-light; color: $uni-color-success; }
+.status-tag.rejected { background: rgba(239,68,68,0.08); color: $uni-color-error; }
 
-.card-meta { flex-direction: row; flex-wrap: wrap; gap: 12px 16px; margin-bottom: 12px; font-size: 12px; color: #86909C; }
-.change-content { background: #F7F8FA; border-radius: 8px; padding: 12px; margin-bottom: 14px; }
-.change-label { font-size: 12px; font-weight: 600; color: #4E5969; display: block; margin-bottom: 8px; }
+.card-meta { flex-direction: row; flex-wrap: wrap; gap: 12px 16px; margin-bottom: 12px; font-size: 12px; color: $uni-text-color-secondary; }
+.change-content { background: $uni-bg-color-page; border-radius: 8px; padding: 12px; margin-bottom: 14px; }
+.change-label { font-size: 12px; font-weight: 600; color: $uni-text-color; display: block; margin-bottom: 8px; }
 .change-rows { display: flex; flex-direction: column; gap: 6px; }
 .change-row { flex-direction: row; align-items: flex-start; gap: 8px; }
-.change-key { font-size: 12px; color: #86909C; flex-shrink: 0; min-width: 70px; }
-.change-value { font-size: 13px; color: #1D2129; line-height: 1.5; flex: 1; word-break: break-word; }
+.change-key { font-size: 12px; color: $uni-text-color-secondary; flex-shrink: 0; min-width: 70px; }
+.change-value { font-size: 13px; color: $uni-text-color-title; line-height: 1.5; flex: 1; word-break: break-word; }
 
 .card-actions { flex-direction: row; gap: 12px; }
 .action-btn {
@@ -281,8 +281,8 @@ const loadMore = () => {}
 	align-items: center;
 	justify-content: center;
 }
-.action-btn.approve { background: linear-gradient(135deg, #165DFF, #2563EB); color: white; }
-.action-btn.reject { background: white; border: 1px solid #E5E6EB; color: #EF4444; }
+.action-btn.approve { background: $uni-gradient-primary; color: white; }
+.action-btn.reject { background: white; border: 1px solid $uni-border-color; color: $uni-color-error; }
 .action-btn:active { opacity: 0.85; }
 
 .empty-state { padding: 40px; }

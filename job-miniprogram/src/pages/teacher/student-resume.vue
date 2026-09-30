@@ -77,7 +77,7 @@
 				<view class="section-title-row">
 					<text class="section-title">AI 简历分析</text>
 					<text class="ai-analyze-btn" @click="handleAnalyze" v-if="!aiAnalyzing">
-						<uni-icons type="star" size="14" color="#8B5CF6" />
+						<uni-icons type="star" size="14" color="#0EA5E9" />
 						<text>分析简历</text>
 					</text>
 				</view>
@@ -105,7 +105,7 @@
 					<view class="ai-section" v-if="aiResult.recommendedSkills && aiResult.recommendedSkills.length">
 						<text class="ai-subtitle">推荐补充技能</text>
 						<view class="tag-container">
-							<text v-for="(sk, i) in aiResult.recommendedSkills" :key="i" class="skill-tag" style="background:rgba(139,92,246,0.1);color:#7C3AED;">{{ sk }}</text>
+							<text v-for="(sk, i) in aiResult.recommendedSkills" :key="i" class="skill-tag" style="background:rgba(14, 165, 233,0.1);color:#0EA5E9;">{{ sk }}</text>
 						</view>
 					</view>
 				</view>
@@ -334,7 +334,7 @@ const handleAnalyze = async () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* 头部信息卡 */
 .info-header-card {
 	margin: 16px 16px 0;
@@ -350,7 +350,7 @@ const handleAnalyze = async () => {
 	width: 56px;
 	height: 56px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #165DFF, #2563EB);
+	background: $uni-gradient-primary;
 	align-items: center;
 	justify-content: center;
 	font-size: 24px;
@@ -359,10 +359,10 @@ const handleAnalyze = async () => {
 	flex-shrink: 0;
 }
 .basic-info { flex: 1; }
-.basic-info .name { font-size: 18px; font-weight: 700; color: #1D2129; display: block; margin-bottom: 4px; }
-.basic-info .desc { font-size: 13px; color: #86909C; display: block; margin-bottom: 6px; }
+.basic-info .name { font-size: 18px; font-weight: 700; color: $uni-text-color-title; display: block; margin-bottom: 4px; }
+.basic-info .desc { font-size: 13px; color: $uni-text-color-secondary; display: block; margin-bottom: 6px; }
 .contact-row { flex-direction: row; flex-wrap: wrap; gap: 12px; }
-.contact-row text { font-size: 12px; color: #86909C; flex-direction: row; align-items: center; gap: 4px; word-break: break-all; }
+.contact-row text { font-size: 12px; color: $uni-text-color-secondary; flex-direction: row; align-items: center; gap: 4px; word-break: break-all; }
 
 /* 模块卡片全局统一样式 */
 .section-card {
@@ -372,30 +372,30 @@ const handleAnalyze = async () => {
 	padding: 16px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.section-title { font-size: 15px; font-weight: 700; color: #1D2129; margin-bottom: 12px; display: block; }
+.section-title { font-size: 15px; font-weight: 700; color: $uni-text-color-title; margin-bottom: 12px; display: block; }
 
 .tag-row { flex-direction: row; gap: 8px; }
-.tag-tag { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; background: #F2F3F5; color: #4E5969; }
+.tag-tag { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; background: $uni-border-color-divider; color: $uni-text-color; }
 
 .tag-container { flex-direction: row; flex-wrap: wrap; gap: 8px; }
-.skill-tag { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; background: rgba(22,93,255,0.08); color: #165DFF; }
+.skill-tag { padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 500; background: $uni-color-primary-light; color: $uni-color-primary; }
 
-.exp-item { padding: 12px 0; border-bottom: 0.5px solid #F2F3F5; }
+.exp-item { padding: 12px 0; border-bottom: 0.5px solid $uni-border-color-divider; }
 .exp-item:last-child { border-bottom: none; }
 .exp-head { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.exp-school { font-size: 14px; font-weight: 600; color: #1D2129; }
-.exp-time { font-size: 12px; color: #C9CDD4; }
-.exp-sub { font-size: 13px; color: #4E5969; display: block; }
-.exp-desc { font-size: 13px; color: #86909C; display: block; margin-top: 4px; line-height: 1.5; }
+.exp-school { font-size: 14px; font-weight: 600; color: $uni-text-color-title; }
+.exp-time { font-size: 12px; color: $uni-text-color-placeholder; }
+.exp-sub { font-size: 13px; color: $uni-text-color; display: block; }
+.exp-desc { font-size: 13px; color: $uni-text-color-secondary; display: block; margin-top: 4px; line-height: 1.5; }
 
 /* AI分析 */
 .ai-result { gap: 8px; }
-.ai-score-row { flex-direction: row; justify-content: space-between; padding: 8px 0; border-bottom: 0.5px solid #F2F3F5; }
-.ai-score-row text:first-child { font-size: 13px; color: #86909C; }
-.score-num { font-size: 16px; color: #165DFF; font-weight: 700; }
-.score-val { font-size: 13px; color: #1D2129; font-weight: 600; }
-.ai-suggestion { margin-top: 8px; padding: 12px; background: rgba(22,93,255,0.06); border-radius: 10px; }
-.ai-suggestion text { font-size: 13px; color: #4E5969; line-height: 1.6; }
+.ai-score-row { flex-direction: row; justify-content: space-between; padding: 8px 0; border-bottom: 0.5px solid $uni-border-color-divider; }
+.ai-score-row text:first-child { font-size: 13px; color: $uni-text-color-secondary; }
+.score-num { font-size: 16px; color: $uni-color-primary; font-weight: 700; }
+.score-val { font-size: 13px; color: $uni-text-color-title; font-weight: 600; }
+.ai-suggestion { margin-top: 8px; padding: 12px; background: $uni-color-primary-light; border-radius: 12px; }
+.ai-suggestion text { font-size: 13px; color: $uni-text-color; line-height: 1.6; }
 
 /* AI 分析新样式 */
 .section-title-row {
@@ -409,37 +409,37 @@ const handleAnalyze = async () => {
 	align-items: center;
 	gap: 4px;
 	padding: 4px 12px;
-	background: rgba(139,92,246,0.1);
+	background: $uni-color-ai-light;
 	border-radius: 14px;
 	font-size: 12px;
-	color: #7C3AED;
+	color: $uni-color-ai;
 	font-weight: 600;
 }
 .ai-analyze-btn:active { opacity: 0.7; }
 .ai-loading { padding: 20px 0; align-items: center; }
-.ai-loading text { font-size: 13px; color: #8B5CF6; }
+.ai-loading text { font-size: 13px; color: $uni-color-ai; }
 .ai-section { margin-top: 10px; }
-.ai-subtitle { font-size: 13px; font-weight: 600; color: #4E5969; margin-bottom: 6px; display: block; }
-.ai-item { display: block; font-size: 13px; padding: 6px 10px; border-radius: 6px; margin-bottom: 4px; line-height: 1.5; }
-.ai-item--green { background: rgba(0,180,42,0.06); color: #00B42A; }
-.ai-item--red { background: rgba(239,68,68,0.06); color: #EF4444; }
-.ai-item--blue { background: rgba(22,93,255,0.06); color: #165DFF; }
-.ai-item--amber { background: rgba(245,158,11,0.08); color: #D97706; }
+.ai-subtitle { font-size: 13px; font-weight: 600; color: $uni-text-color; margin-bottom: 6px; display: block; }
+.ai-item { display: block; font-size: 13px; padding: 6px 10px; border-radius: 8px; margin-bottom: 4px; line-height: 1.5; }
+.ai-item--green { background: $uni-color-success-light; color: $uni-color-success; }
+.ai-item--red { background: rgba(239,68,68,0.06); color: $uni-color-error; }
+.ai-item--blue { background: $uni-color-primary-light; color: $uni-color-primary; }
+.ai-item--amber { background: rgba(245,158,11,0.08); color: $uni-color-warning; }
 
 /* 投递记录 */
-.delivery-item { padding: 12px 0; border-bottom: 0.5px solid #F2F3F5; }
+.delivery-item { padding: 12px 0; border-bottom: 0.5px solid $uni-border-color-divider; }
 .delivery-item:last-child { border-bottom: none; }
 .delivery-top { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 4px; }
 .delivery-info { flex: 1; }
-.delivery-job { font-size: 14px; font-weight: 600; color: #1D2129; display: block; margin-bottom: 2px; }
-.delivery-company { font-size: 12px; color: #86909C; display: block; }
-.delivery-time { font-size: 12px; color: #C9CDD4; display: block; }
-.status-tag { font-size: 12px; padding: 2px 8px; border-radius: 6px; font-weight: 600; flex-shrink: 0; }
-.status-pending { background: rgba(245,158,11,0.1); color: #F59E0B; }
-.status-viewed { background: rgba(22,93,255,0.1); color: #165DFF; }
-.status-interview { background: rgba(22,93,255,0.08); color: #165DFF; }
-.status-accepted { background: rgba(0,180,42,0.1); color: #00B42A; }
-.status-rejected { background: rgba(239,68,68,0.1); color: #EF4444; }
+.delivery-job { font-size: 14px; font-weight: 600; color: $uni-text-color-title; display: block; margin-bottom: 2px; }
+.delivery-company { font-size: 12px; color: $uni-text-color-secondary; display: block; }
+.delivery-time { font-size: 12px; color: $uni-text-color-placeholder; display: block; }
+.status-tag { font-size: 12px; padding: 2px 8px; border-radius: 8px; font-weight: 600; flex-shrink: 0; }
+.status-pending { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.status-viewed { background: $uni-color-primary-light; color: $uni-color-primary; }
+.status-interview { background: $uni-color-primary-light; color: $uni-color-primary; }
+.status-accepted { background: $uni-color-success-light; color: $uni-color-success; }
+.status-rejected { background: rgba(239,68,68,0.1); color: $uni-color-error; }
 
 /* 底部操作栏 */
 .bottom-bar {
@@ -451,7 +451,7 @@ const handleAnalyze = async () => {
 	padding: 12px 16px;
 	padding-bottom: calc(12px + env(safe-area-inset-bottom));
 	background: white;
-	border-top: 0.5px solid #F2F3F5;
+	border-top: 0.5px solid $uni-border-color-divider;
 	gap: 12px;
 }
 .btn-outline, .btn-primary {
@@ -464,6 +464,6 @@ const handleAnalyze = async () => {
 	justify-content: center;
 	border: none;
 }
-.btn-outline { background: white; border: 1px solid #E5E6EB; color: #4E5969; }
-.btn-primary { background: #165DFF; color: white; }
+.btn-outline { background: white; border: 1px solid $uni-border-color; color: $uni-text-color; }
+.btn-primary { background: $uni-color-primary; color: white; }
 </style>

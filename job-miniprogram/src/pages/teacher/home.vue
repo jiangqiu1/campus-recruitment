@@ -16,7 +16,7 @@
 				<view class="todo-card" @click="goToApprovals">
 					<view class="todo-top">
 						<text class="todo-num">{{ (dashboard.pendingApprovalCount || 0) > 99 ? '99+' : dashboard.pendingApprovalCount || 0 }}</text>
-						<view class="todo-icon"><uni-icons type="auth" size="18" color="#F59E0B" /></view>
+						<view class="todo-icon"><uni-icons type="auth" size="18" color="#FF7D00" /></view>
 					</view>
 					<text class="todo-label">待审批</text>
 				</view>
@@ -37,7 +37,7 @@
 				<view class="todo-card" @click="goToUrgentJobs">
 					<view class="todo-top">
 						<text class="todo-num">{{ (dashboard.urgentJobCount || 0) > 99 ? '99+' : dashboard.urgentJobCount || 0 }}</text>
-						<view class="todo-icon"><uni-icons type="star" size="18" color="#EF4444" /></view>
+						<view class="todo-icon"><uni-icons type="star" size="18" color="#F53F3F" /></view>
 					</view>
 					<text class="todo-label">急招岗位</text>
 				</view>
@@ -135,10 +135,10 @@ const goToActivityDetail = (act) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* ========== 顶部头部 ========== */
 .header-section {
-	background: linear-gradient(135deg, #165DFF 0%, #2563EB 100%);
+	background: $uni-gradient-primary;
 	color: white;
 	padding: 16px 16px 32px;
 	flex-shrink: 0;
@@ -166,7 +166,7 @@ const goToActivityDetail = (act) => {
 	font-size: 12px;
 	background: rgba(255,255,255,0.2);
 	padding: 3px 10px;
-	border-radius: 10px;
+	border-radius: 12px;
 }
 
 /* ========== 待办快捷区（2×2卡片） ========== */
@@ -195,22 +195,22 @@ const goToActivityDetail = (act) => {
 .todo-num {
 	font-size: 28px;
 	font-weight: 800;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 .todo-icon {
 	width: 36px;
 	height: 36px;
-	border-radius: 10px;
+	border-radius: 12px;
 	background: rgba(245,158,11,0.08);
 	align-items: center;
 	justify-content: center;
 }
-.todo-card:nth-child(2) .todo-icon { background: rgba(22,93,255,0.08); }
-.todo-card:nth-child(3) .todo-icon { background: rgba(0,180,42,0.08); }
+.todo-card:nth-child(2) .todo-icon { background: $uni-color-primary-light; }
+.todo-card:nth-child(3) .todo-icon { background: $uni-color-success-light; }
 .todo-card:nth-child(4) .todo-icon { background: rgba(239,68,68,0.08); }
 .todo-label {
 	font-size: 13px;
-	color: #4E5969;
+	color: $uni-text-color;
 	font-weight: 500;
 }
 .todo-card:active { transform: scale(0.97); }
@@ -229,13 +229,13 @@ const goToActivityDetail = (act) => {
 }
 .list-tab {
 	font-size: 15px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	font-weight: 500;
 	padding-bottom: 4px;
 	position: relative;
 }
 .list-tab.active {
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-weight: 600;
 }
 .list-tab.active::after {
@@ -245,13 +245,13 @@ const goToActivityDetail = (act) => {
 	left: 0;
 	width: 20px;
 	height: 3px;
-	background: #165DFF;
-	border-radius: 2px;
+	background: $uni-color-primary;
+	border-radius: 4px;
 }
 .section-more {
 	margin-left: auto;
 	font-size: 13px;
-	color: #165DFF;
+	color: $uni-color-primary;
 	font-weight: 500;
 }
 .activity-list {
@@ -264,7 +264,7 @@ const goToActivityDetail = (act) => {
 	flex-direction: row;
 	gap: 12px;
 	padding: 14px 0;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 }
 .activity-item:last-child { border-bottom: none; }
 .activity-dot {
@@ -274,11 +274,11 @@ const goToActivityDetail = (act) => {
 	margin-top: 6px;
 	flex-shrink: 0;
 }
-.activity-dot.delivery { background: #165DFF; }
-.activity-dot.register { background: #165DFF; }
-.activity-dot.interview { background: #F59E0B; }
-.activity-dot.employed { background: #8B5CF6; }
+.activity-dot.delivery { background: $uni-color-primary; }
+.activity-dot.register { background: $uni-color-primary; }
+.activity-dot.interview { background: $uni-color-warning; }
+.activity-dot.employed { background: $uni-color-ai; }
 .activity-content { gap: 4px; flex: 1; }
-.activity-text { font-size: 14px; color: #1D2129; }
-.activity-time { font-size: 12px; color: #C9CDD4; }
+.activity-text { font-size: 14px; color: $uni-text-color-title; }
+.activity-time { font-size: 12px; color: $uni-text-color-placeholder; }
 </style>

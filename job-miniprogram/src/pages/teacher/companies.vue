@@ -79,18 +79,18 @@ const goToCompany = (id) => {
 }
 </script>
 
-<style scoped>
-.search-bar { padding: 8px 16px; background: #FFFFFF; }
+<style scoped lang="scss">
+.search-bar { padding: 8px 16px; background: $uni-bg-color; }
 .search-input {
 	flex-direction: row;
 	align-items: center;
 	gap: 8px;
-	background: #F7F8FA;
-	border-radius: 20px;
+	background: $uni-bg-color-page;
+	border-radius: 999px;
 	padding: 0 16px;
 	height: 36px;
 }
-.search-input input { flex: 1; font-size: 14px; background: transparent; border: none; color: #1D2129; }
+.search-input input { flex: 1; font-size: 14px; background: transparent; border: none; color: $uni-text-color-title; }
 .clear-btn { line-height: 1; }
 
 .company-list { padding: 16px; }
@@ -106,7 +106,7 @@ const goToCompany = (id) => {
 	width: 48px;
 	height: 48px;
 	border-radius: 12px;
-	background: linear-gradient(135deg, #165DFF, #2563EB);
+	background: $uni-gradient-primary;
 	align-items: center;
 	justify-content: center;
 	font-size: 22px;
@@ -114,10 +114,10 @@ const goToCompany = (id) => {
 	font-weight: 700;
 }
 .company-info { flex: 1; }
-.company-name { font-size: 16px; font-weight: 700; color: #1D2129; display: block; margin-bottom: 2px; }
-.company-industry { font-size: 13px; color: #86909C; display: block; }
-.company-meta { flex-direction: row; gap: 16px; font-size: 13px; color: #86909C; margin-bottom: 8px; }
+.company-name { font-size: 16px; font-weight: 700; color: $uni-text-color-title; display: block; margin-bottom: 2px; }
+.company-industry { font-size: 13px; color: $uni-text-color-secondary; display: block; }
+.company-meta { flex-direction: row; gap: 16px; font-size: 13px; color: $uni-text-color-secondary; margin-bottom: 8px; }
 .company-tags { flex-direction: row; gap: 8px; }
-.tag-tag { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 500; background: rgba(22,93,255,0.08); color: #165DFF; }
-.company-card:active { background: #F7F8FA; }
+.tag-tag { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 500; background: $uni-color-primary-light; color: $uni-color-primary; }
+.company-card:active { background: $uni-bg-color-page; }
 </style>

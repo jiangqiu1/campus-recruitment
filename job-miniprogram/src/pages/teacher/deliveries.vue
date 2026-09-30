@@ -88,11 +88,11 @@ const statusDistribution = computed(() => {
 	const list = deliveries.value
 	const total = list.length || 1
 	const statusList = [
-		{ status: 'pending', label: '待查看', color: '#F59E0B' },
+		{ status: 'pending', label: '待查看', color: '#FF7D00' },
 		{ status: 'viewed', label: '已查看', color: '#165DFF' },
 		{ status: 'interview', label: '面试中', color: '#165DFF' },
 		{ status: 'accepted', label: '已录用', color: '#00B42A' },
-		{ status: 'rejected', label: '未通过', color: '#EF4444' }
+		{ status: 'rejected', label: '未通过', color: '#F53F3F' }
 	]
 	return statusList.map(item => {
 		const count = list.filter(d => d.status === item.status).length
@@ -212,7 +212,7 @@ const goToStudentResume = (d) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* 岗位选择器 */
 .selector-bar {
 	flex-direction: row;
@@ -221,9 +221,9 @@ const goToStudentResume = (d) => {
 	background: white;
 	gap: 8px;
 }
-.selector-bar .label { font-size: 14px; color: #86909C; }
-.selector-bar .value { flex: 1; font-size: 14px; color: #1D2129; font-weight: 600; }
-.selector-bar .value.placeholder { color: #C9CDD4; font-weight: 400; }
+.selector-bar .label { font-size: 14px; color: $uni-text-color-secondary; }
+.selector-bar .value { flex: 1; font-size: 14px; color: $uni-text-color-title; font-weight: 600; }
+.selector-bar .value.placeholder { color: $uni-text-color-placeholder; font-weight: 400; }
 
 /* 状态分布卡片 */
 .chart-card {
@@ -236,18 +236,18 @@ const goToStudentResume = (d) => {
 .section-title {
 	font-size: 15px;
 	font-weight: 700;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	margin-bottom: 16px;
 	display: block;
 }
 .bar-list { gap: 10px; }
 .bar-item { gap: 6px; }
-.bar-label { flex-direction: row; justify-content: space-between; font-size: 13px; color: #4E5969; }
-.bar-label .count { font-size: 13px; color: #86909C; }
-.bar-track { height: 8px; background: #F2F3F5; border-radius: 4px; overflow: hidden; }
-.bar-track-selected { background: rgba(22,93,255,0.1); border: 1px solid #165DFF; }
+.bar-label { flex-direction: row; justify-content: space-between; font-size: 13px; color: $uni-text-color; }
+.bar-label .count { font-size: 13px; color: $uni-text-color-secondary; }
+.bar-track { height: 8px; background: $uni-border-color-divider; border-radius: 4px; overflow: hidden; }
+.bar-track-selected { background: $uni-color-primary-light; border: 1px solid $uni-color-primary; }
 .bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
-.bar-count { font-size: 13px; color: #165DFF; font-weight: 600; }
+.bar-count { font-size: 13px; color: $uni-color-primary; font-weight: 600; }
 
 /* 投递卡片 */
 .delivery-list { padding: 0 16px; }
@@ -268,7 +268,7 @@ const goToStudentResume = (d) => {
 	width: 40px;
 	height: 40px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #165DFF, #2563EB);
+	background: $uni-gradient-primary;
 	align-items: center;
 	justify-content: center;
 	font-size: 16px;
@@ -277,25 +277,25 @@ const goToStudentResume = (d) => {
 	flex-shrink: 0;
 }
 .delivery-info { flex: 1; }
-.delivery-name { font-size: 15px; font-weight: 700; color: #1D2129; display: block; margin-bottom: 2px; }
-.delivery-class { font-size: 12px; color: #86909C; display: block; }
+.delivery-name { font-size: 15px; font-weight: 700; color: $uni-text-color-title; display: block; margin-bottom: 2px; }
+.delivery-class { font-size: 12px; color: $uni-text-color-secondary; display: block; }
 .status-tag { font-size: 12px; padding: 3px 10px; border-radius: 8px; font-weight: 600; flex-shrink: 0; }
-.status-pending { background: rgba(245,158,11,0.1); color: #F59E0B; }
-.status-viewed { background: rgba(22,93,255,0.1); color: #165DFF; }
-.status-interview { background: rgba(22,93,255,0.1); color: #165DFF; }
-.status-accepted { background: rgba(0,180,42,0.1); color: #00B42A; }
-.status-rejected { background: rgba(239,68,68,0.1); color: #EF4444; }
+.status-pending { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.status-viewed { background: $uni-color-primary-light; color: $uni-color-primary; }
+.status-interview { background: $uni-color-primary-light; color: $uni-color-primary; }
+.status-accepted { background: $uni-color-success-light; color: $uni-color-success; }
+.status-rejected { background: rgba(239,68,68,0.1); color: $uni-color-error; }
 
 .delivery-bottom { flex-direction: row; justify-content: space-between; align-items: center; }
-.delivery-time { font-size: 12px; color: #C9CDD4; flex-direction: row; align-items: center; gap: 4px; }
-.delivery-link { font-size: 13px; color: #165DFF; font-weight: 600; }
+.delivery-time { font-size: 12px; color: $uni-text-color-placeholder; flex-direction: row; align-items: center; gap: 4px; }
+.delivery-link { font-size: 13px; color: $uni-color-primary; font-weight: 600; }
 
 .modal-item {
 	flex-direction: row;
 	align-items: center;
 	padding: 14px 16px;
 }
-.modal-item-text { flex: 1; font-size: 15px; color: #1D2129; }
-.modal-item.selected { background: rgba(22,93,255,0.05); }
-.delivery-card:active { background: #F7F8FA; }
+.modal-item-text { flex: 1; font-size: 15px; color: $uni-text-color-title; }
+.modal-item.selected { background: $uni-color-primary-light; }
+.delivery-card:active { background: $uni-bg-color-page; }
 </style>

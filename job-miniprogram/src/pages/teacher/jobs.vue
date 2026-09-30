@@ -14,14 +14,14 @@
 		<view class="ai-job-banner" @click="showAiJobModal = true">
 			<view class="ai-job-banner__left">
 				<view class="ai-job-banner__icon">
-					<uni-icons type="star" size="20" color="#8B5CF6" />
+					<uni-icons type="star" size="20" color="#0EA5E9" />
 				</view>
 				<view>
 					<text class="ai-job-banner__title">AI 智能写岗位</text>
 					<text class="ai-job-banner__desc">粘贴岗位描述，AI 自动提取信息并填充表单</text>
 				</view>
 			</view>
-			<uni-icons type="arrowright" size="16" color="#8B5CF6" />
+			<uni-icons type="arrowright" size="16" color="#0EA5E9" />
 		</view>
 
 		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
@@ -247,28 +247,28 @@ const goToDeliveries = (job) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* 筛选 Tab 统一样式 */
 .list-tabs {
 	flex-direction: row;
 	padding: 0 16px;
 	gap: 20px;
 	margin-bottom: 4px;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	height: 44px;
 	align-items: center;
 	overflow-x: auto;
 }
 .list-tab {
 	font-size: 15px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	font-weight: 500;
 	padding-bottom: 4px;
 	position: relative;
 	white-space: nowrap;
 }
 .list-tab.active {
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-weight: 600;
 }
 .list-tab.active::after {
@@ -278,12 +278,12 @@ const goToDeliveries = (job) => {
 	left: 0;
 	width: 20px;
 	height: 3px;
-	background: #165DFF;
-	border-radius: 2px;
+	background: $uni-color-primary;
+	border-radius: 4px;
 }
 .tab-badge {
-	font-size: 11px;
-	color: #86909C;
+	font-size: 12px;
+	color: $uni-text-color-secondary;
 	margin-left: 2px;
 	font-weight: 400;
 }
@@ -293,8 +293,8 @@ const goToDeliveries = (job) => {
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
-	background: rgba(139,92,246,0.06);
-	border: 1px solid rgba(139,92,246,0.15);
+	background: $uni-color-ai-light;
+	border: 1px solid $uni-color-ai-light;
 	border-radius: 12px;
 	margin: 12px 16px;
 	padding: 12px 16px;
@@ -308,39 +308,39 @@ const goToDeliveries = (job) => {
 .ai-job-banner__icon {
 	width: 36px;
 	height: 36px;
-	border-radius: 10px;
-	background: rgba(139,92,246,0.12);
+	border-radius: 12px;
+	background: $uni-color-ai-light;
 	align-items: center;
 	justify-content: center;
 }
 .ai-job-banner__title {
 	font-size: 14px;
 	font-weight: 600;
-	color: #7C3AED;
+	color: $uni-color-ai;
 }
 .ai-job-banner__desc {
-	font-size: 11px;
-	color: #A78BFA;
+	font-size: 12px;
+	color: $uni-color-ai;
 	margin-top: 1px;
 }
 .ai-job-banner:active { opacity: 0.8; }
 
 /* AI 写岗位弹窗 */
 .ai-modal-body { padding: 0; width: 100%; overflow-x: hidden; }
-.ai-modal-desc { font-size: 13px; color: #86909C; margin-bottom: 12px; display: block; max-width: 100%; word-wrap: break-word; }
+.ai-modal-desc { font-size: 13px; color: $uni-text-color-secondary; margin-bottom: 12px; display: block; max-width: 100%; word-wrap: break-word; }
 .ai-modal-input {
 	width: 100%;
 	max-width: 100%;
 	height: 100px;
-	border: 1px solid #E5E6EB;
+	border: 1px solid $uni-border-color;
 	border-radius: 8px;
 	padding: 12px;
 	font-size: 14px;
 	line-height: 1.6;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 	box-sizing: border-box;
 }
-.ai-modal-count { font-size: 11px; color: #C9CDD4; text-align: right; margin-top: 4px; display: block; max-width: 100%; }
+.ai-modal-count { font-size: 12px; color: $uni-text-color-placeholder; text-align: right; margin-top: 4px; display: block; max-width: 100%; }
 .ai-modal-btn {
 	flex-direction: row;
 	align-items: center;
@@ -350,8 +350,8 @@ const goToDeliveries = (job) => {
 	max-width: 100%;
 	height: 44px;
 	border-radius: 8px;
-	background: linear-gradient(135deg, #8B5CF6, #7C3AED);
-	color: #fff;
+	background: $uni-gradient-ai;
+	color: $uni-text-color-inverse;
 	font-size: 15px;
 	font-weight: 600;
 	margin-top: 12px;
@@ -360,8 +360,8 @@ const goToDeliveries = (job) => {
 	overflow: hidden;
 }
 .ai-modal-btn:active { opacity: 0.85; }
-.ai-modal-btn.disabled { background: #E5E6EB !important; color: #A9AEB8 !important; }
-.ai-modal-btn[disabled] { background: #E5E6EB !important; color: #A9AEB8 !important; }
+.ai-modal-btn.disabled { background: $uni-border-color !important; color: $uni-text-color-placeholder !important; }
+.ai-modal-btn[disabled] { background: $uni-border-color !important; color: $uni-text-color-placeholder !important; }
 
 .job-list { padding: 16px; }
 .job-card {
@@ -380,7 +380,7 @@ const goToDeliveries = (job) => {
 	left: 0;
 	width: 100%;
 	height: 3px;
-	background: linear-gradient(90deg, #165DFF, transparent);
+	background: linear-gradient(90deg, $uni-color-primary, transparent);
 }
 .job-card-top {
 	flex-direction: row;
@@ -389,13 +389,13 @@ const goToDeliveries = (job) => {
 	margin-bottom: 8px;
 }
 .job-info { flex: 1; }
-.job-title { font-size: 16px; font-weight: 700; color: #1D2129; display: block; margin-bottom: 4px; }
-.job-company { font-size: 13px; color: #86909C; display: block; }
+.job-title { font-size: 16px; font-weight: 700; color: $uni-text-color-title; display: block; margin-bottom: 4px; }
+.job-company { font-size: 13px; color: $uni-text-color-secondary; display: block; }
 .job-salary {
 	font-size: 15px;
 	font-weight: 700;
-	color: #F53F3F;
-	background: rgba(245,63,63,0.06);
+	color: $uni-color-error;
+	background: $uni-color-error-light;
 	padding: 2px 8px;
 	border-radius: 4px;
 	flex-shrink: 0;
@@ -404,14 +404,14 @@ const goToDeliveries = (job) => {
 	flex-direction: row;
 	gap: 12px;
 	font-size: 13px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	margin-bottom: 12px;
 }
 .job-actions {
 	flex-direction: row;
 	gap: 10px;
 	padding-top: 14px;
-	border-top: 1px solid #F2F3F5;
+	border-top: 1px solid $uni-border-color-divider;
 	flex-wrap: wrap;
 }
 /* 操作按钮 — 胶囊风格，更饱满 */
@@ -419,17 +419,17 @@ const goToDeliveries = (job) => {
 	flex: 1;
 	text-align: center;
 	padding: 10px 0;
-	border-radius: 10px;
+	border-radius: 12px;
 	font-size: 14px;
 	font-weight: 600;
-	background: #F2F3F5;
-	color: #4E5969;
+	background: $uni-border-color-divider;
+	color: $uni-text-color;
 	min-width: 60px;
 }
 .action-tag:active { opacity: 0.75; }
-.action-tag.primary { background: #165DFF; color: #FFFFFF; }
-.action-tag.warning { background: #F59E0B; color: #FFFFFF; }
-.action-tag.ai { background: #8B5CF6; color: #FFFFFF; }
+.action-tag.primary { background: $uni-color-primary; color: $uni-text-color-inverse; }
+.action-tag.warning { background: $uni-color-warning; color: $uni-text-color-inverse; }
+.action-tag.ai { background: $uni-color-ai; color: $uni-text-color-inverse; }
 
 .fab {
 	position: fixed;
@@ -438,10 +438,10 @@ const goToDeliveries = (job) => {
 	width: 56px;
 	height: 56px;
 	border-radius: 50%;
-	background: #165DFF;
+	background: $uni-color-primary;
 	align-items: center;
 	justify-content: center;
-	box-shadow: 0 4px 16px rgba(22,93,255,0.4);
+	box-shadow: 0 4px 16px $uni-color-primary-light;
 	z-index: 100;
 }
 .fab-icon { font-size: 28px; color: white; font-weight: 300; }

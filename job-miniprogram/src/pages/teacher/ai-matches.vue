@@ -371,45 +371,45 @@ const scoreTx = (score) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .mode-tabs {
-	flex-direction: row; background: #fff; margin: 12px 16px; border-radius: 12px; overflow: hidden;
+	flex-direction: row; background: $uni-bg-color; margin: 12px 16px; border-radius: 12px; overflow: hidden;
 }
 .mode-tab {
-	flex: 1; text-align: center; padding: 12px 0; font-size: 14px; font-weight: 500; color: #86909C;
+	flex: 1; text-align: center; padding: 12px 0; font-size: 14px; font-weight: 500; color: $uni-text-color-secondary;
 }
-.mode-tab.active { color: #165DFF; background: rgba(22,93,255,0.06); font-weight: 600; }
+.mode-tab.active { color: $uni-color-primary; background: $uni-color-primary-light; font-weight: 600; }
 .job-select-bar { background: white; padding: 14px 16px; margin: 0 16px 12px; border-radius: 12px; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
 .select-row { flex-direction: row; align-items: center; gap: 10px; }
-.select-label { font-size: 14px; font-weight: 600; color: #1D2129; white-space: nowrap; }
+.select-label { font-size: 14px; font-weight: 600; color: $uni-text-color-title; white-space: nowrap; }
 .job-picker { flex: 1; }
-.job-picker-btn { flex-direction: row; align-items: center; justify-content: space-between; padding: 8px 12px; background: #F7F8FA; border-radius: 8px; }
-.job-picker-btn text { font-size: 13px; color: #4E5969; }
-.batch-btn { width: 100%; height: 42px; border-radius: 10px; background: #165DFF; color: #fff; font-size: 15px; font-weight: 600; align-items: center; justify-content: center; border: none; margin-top: 4px; }
-.batch-btn[disabled] { background: #E5E6EB !important; color: #A9AEB8 !important; }
-.loading-hint { padding: 40px 16px; text-align: center; font-size: 13px; color: #86909C; }
+.job-picker-btn { flex-direction: row; align-items: center; justify-content: space-between; padding: 8px 12px; background: $uni-bg-color-page; border-radius: 8px; }
+.job-picker-btn text { font-size: 13px; color: $uni-text-color; }
+.batch-btn { width: 100%; height: 42px; border-radius: 12px; background: $uni-color-primary; color: $uni-text-color-inverse; font-size: 15px; font-weight: 600; align-items: center; justify-content: center; border: none; margin-top: 4px; }
+.batch-btn[disabled] { background: $uni-border-color !important; color: $uni-text-color-placeholder !important; }
+.loading-hint { padding: 40px 16px; text-align: center; font-size: 13px; color: $uni-text-color-secondary; }
 .stats-row { flex-direction: row; flex-wrap: wrap; padding: 0 16px; gap: 8px; }
 .stat-card { flex: 1; min-width: 70px; background: white; border-radius: 12px; padding: 12px; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-.stat-num { font-size: 20px; font-weight: 700; color: #1D2129; }
-.stat-label { font-size: 11px; color: #86909C; margin-top: 4px; }
+.stat-num { font-size: 20px; font-weight: 700; color: $uni-text-color-title; }
+.stat-label { font-size: 12px; color: $uni-text-color-secondary; margin-top: 4px; }
 .section { padding: 0 16px; }
 .section-header { flex-direction: row; justify-content: space-between; align-items: center; padding: 12px 0; }
-.section-title { font-size: 16px; font-weight: 600; color: #1D2129; }
-.section-count { font-size: 12px; color: #86909C; }
+.section-title { font-size: 16px; font-weight: 600; color: $uni-text-color-title; }
+.section-count { font-size: 12px; color: $uni-text-color-secondary; }
 .match-list { gap: 12px; }
 .match-card { background: white; border-radius: 12px; padding: 14px; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
 .match-top { flex-direction: row; justify-content: space-between; align-items: center; }
 .match-info { flex: 1; gap: 4px; }
-.student-name { font-size: 15px; font-weight: 600; color: #1D2129; }
-.student-detail { font-size: 12px; color: #86909C; }
+.student-name { font-size: 15px; font-weight: 600; color: $uni-text-color-title; }
+.student-detail { font-size: 12px; color: $uni-text-color-secondary; }
 .match-score-box { align-items: center; gap: 2px; }
 .score-badge { padding: 4px 10px; border-radius: 8px; }
 .score-text { font-size: 15px; font-weight: 700; }
-.score-label { font-size: 10px; color: #C9CDD4; }
-.match-reason { font-size: 13px; color: #4E5969; line-height: 1.6; }
+.score-label { font-size: 10px; color: $uni-text-color-placeholder; }
+.match-reason { font-size: 13px; color: $uni-text-color; line-height: 1.6; }
 .match-actions { flex-direction: row; gap: 10px; }
 .action-btn { flex: 1; height: 36px; border-radius: 8px; font-size: 13px; font-weight: 500; align-items: center; justify-content: center; border: none; }
-.push-btn { background: rgba(22,93,255,0.08); color: #165DFF; }
-.push-btn.pushed { background: #E5E6EB; color: #A9AEB8; }
-.view-btn { background: #F7F8FA; color: #4E5969; }
+.push-btn { background: $uni-color-primary-light; color: $uni-color-primary; }
+.push-btn.pushed { background: $uni-border-color; color: $uni-text-color-placeholder; }
+.view-btn { background: $uni-bg-color-page; color: $uni-text-color; }
 </style>

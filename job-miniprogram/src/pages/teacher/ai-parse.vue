@@ -162,73 +162,73 @@ const formatTime = (t) => t ? t.substring(0, 16).replace('T', ' ') : ''
 const formatPercent = (s) => s != null ? Math.round(Number(s) * 100) + '%' : '--'
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .parse-panel, .history-panel { padding: 16px; }
 .panel-header { flex-direction: row; align-items: center; gap: 10px; margin-bottom: 8px; }
-.panel-title { font-size: 18px; font-weight: 700; color: #1D2129; }
-.panel-desc { font-size: 13px; color: #86909C; margin-bottom: 16px; }
+.panel-title { font-size: 18px; font-weight: 700; color: $uni-text-color-title; }
+.panel-desc { font-size: 13px; color: $uni-text-color-secondary; margin-bottom: 16px; }
 
 .input-section { margin-bottom: 12px; }
-.input-label { font-size: 14px; font-weight: 600; color: #1D2129; margin-bottom: 8px; display: block; }
+.input-label { font-size: 14px; font-weight: 600; color: $uni-text-color-title; margin-bottom: 8px; display: block; }
 .raw-input {
 	width: 100%;
 	height: 200px;
-	background: #F7F8FA;
-	border: 1px solid #E5E6EB;
+	background: $uni-bg-color-page;
+	border: 1px solid $uni-border-color;
 	border-radius: 8px;
 	padding: 12px;
 	font-size: 14px;
 	line-height: 1.6;
 }
-.raw-input:focus { border-color: #165DFF; background: #fff; }
-.input-count { font-size: 11px; color: #C9CDD4; text-align: right; margin-top: 4px; display: block; }
+.raw-input:focus { border-color: $uni-color-primary; background: $uni-bg-color; }
+.input-count { font-size: 12px; color: $uni-text-color-placeholder; text-align: right; margin-top: 4px; display: block; }
 
 .parse-btn {
 	width: 100%;
 	height: 46px;
 	border-radius: 8px;
-	background: linear-gradient(135deg, #165DFF, #2563EB);
-	color: #fff;
+	background: $uni-gradient-primary;
+	color: $uni-text-color-inverse;
 	font-size: 16px;
 	font-weight: 700;
 	border: none;
 	align-items: center;
 	justify-content: center;
 }
-.parse-btn[disabled] { background: #E5E6EB !important; color: #A9AEB8 !important; }
+.parse-btn[disabled] { background: $uni-border-color !important; color: $uni-text-color-placeholder !important; }
 
 .result-section {
 	margin-top: 20px;
-	background: rgba(22,93,255,0.06);
+	background: $uni-color-primary-light;
 	border-radius: 12px;
 	padding: 16px;
 }
 .result-header { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.result-title { font-size: 16px; font-weight: 700; color: #1D2129; }
-.confidence-badge { padding: 3px 10px; background: rgba(22,93,255,0.08); border-radius: 12px; font-size: 12px; color: #2563EB; }
+.result-title { font-size: 16px; font-weight: 700; color: $uni-text-color-title; }
+.confidence-badge { padding: 3px 10px; background: $uni-color-primary-light; border-radius: 12px; font-size: 12px; color: $uni-color-primary-hover; }
 .result-content { flex-direction: column; gap: 8px; }
-.result-item { flex-direction: row; padding: 8px 12px; background: #fff; border-radius: 8px; }
-.result-key { width: 80px; font-size: 13px; font-weight: 600; color: #4E5969; flex-shrink: 0; }
-.result-val { flex: 1; font-size: 13px; color: #1D2129; }
+.result-item { flex-direction: row; padding: 8px 12px; background: $uni-bg-color; border-radius: 8px; }
+.result-key { width: 80px; font-size: 13px; font-weight: 600; color: $uni-text-color; flex-shrink: 0; }
+.result-val { flex: 1; font-size: 13px; color: $uni-text-color-title; }
 
 .log-list { flex-direction: column; gap: 10px; }
-.log-card { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.log-card { background: $uni-bg-color; border-radius: 12px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
 .log-top { flex-direction: row; justify-content: space-between; margin-bottom: 6px; }
-.log-time { font-size: 12px; color: #86909C; }
-.log-confidence { font-size: 12px; font-weight: 600; color: #165DFF; }
-.log-preview { font-size: 13px; color: #4E5969; display: block; margin-bottom: 6px; }
-.log-status { font-size: 11px; padding: 2px 8px; border-radius: 4px; background: #FFF7E6; color: #F59E0B; }
-.log-status.corrected { background: rgba(22,93,255,0.06); color: #165DFF; }
+.log-time { font-size: 12px; color: $uni-text-color-secondary; }
+.log-confidence { font-size: 12px; font-weight: 600; color: $uni-color-primary; }
+.log-preview { font-size: 13px; color: $uni-text-color; display: block; margin-bottom: 6px; }
+.log-status { font-size: 12px; padding: 2px 8px; border-radius: 4px; background: $uni-color-warning-light; color: $uni-color-warning; }
+.log-status.corrected { background: $uni-color-primary-light; color: $uni-color-primary; }
 
 .correct-input {
 	width: 100%;
 	height: 150px;
-	border: 1px solid #E5E6EB;
+	border: 1px solid $uni-border-color;
 	border-radius: 8px;
 	padding: 10px;
 	font-size: 13px;
 	margin-bottom: 16px;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 }
 .modal-actions { flex-direction: row; gap: 12px; }
 .modal-btn {
@@ -241,6 +241,6 @@ const formatPercent = (s) => s != null ? Math.round(Number(s) * 100) + '%' : '--
 	font-weight: 600;
 	border: none;
 }
-.modal-btn.cancel { background: #F7F8FA; color: #4E5969; }
-.modal-btn.confirm { background: #165DFF; color: #fff; }
+.modal-btn.cancel { background: $uni-bg-color-page; color: $uni-text-color; }
+.modal-btn.confirm { background: $uni-color-primary; color: $uni-text-color-inverse; }
 </style>

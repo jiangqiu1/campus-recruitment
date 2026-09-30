@@ -87,7 +87,7 @@ const goToResume = (studentId, realName) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .student-list { padding: 16px; }
 .student-card {
 	flex-direction: row;
@@ -102,7 +102,7 @@ const goToResume = (studentId, realName) => {
 	width: 48px;
 	height: 48px;
 	border-radius: 50%;
-	background: linear-gradient(135deg, #165DFF, #2563EB);
+	background: $uni-gradient-primary;
 	align-items: center;
 	justify-content: center;
 	font-size: 20px;
@@ -112,12 +112,12 @@ const goToResume = (studentId, realName) => {
 	flex-shrink: 0;
 }
 .student-info { flex: 1; }
-.student-name { font-size: 16px; font-weight: 700; color: #1D2129; display: block; margin-bottom: 2px; }
-.student-id { font-size: 13px; color: #86909C; display: block; margin-bottom: 6px; }
+.student-name { font-size: 16px; font-weight: 700; color: $uni-text-color-title; display: block; margin-bottom: 2px; }
+.student-id { font-size: 13px; color: $uni-text-color-secondary; display: block; margin-bottom: 6px; }
 .student-tags { flex-direction: row; gap: 8px; }
-.tag-green { padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; background: rgba(22,93,255,0.08); color: #165DFF; }
-.tag-blue { padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; background: rgba(22,93,255,0.1); color: #165DFF; }
-.student-card:active { background: #F7F8FA; }
+.tag-green { padding: 3px 8px; border-radius: 8px; font-size: 12px; font-weight: 600; background: $uni-color-primary-light; color: $uni-color-primary; }
+.tag-blue { padding: 3px 8px; border-radius: 8px; font-size: 12px; font-weight: 600; background: $uni-color-primary-light; color: $uni-color-primary; }
+.student-card:active { background: $uni-bg-color-page; }
 .tags-row { flex-direction: row; gap: 8px; margin-top: 6px; }
-.tag { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; background: rgba(22,93,255,0.08); color: #165DFF; }
+.tag { padding: 2px 8px; border-radius: 8px; font-size: 12px; font-weight: 500; background: $uni-color-primary-light; color: $uni-color-primary; }
 </style>

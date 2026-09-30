@@ -5,7 +5,7 @@
 			<view class="form-container">
 				<view class="form-section">
 					<view class="input-group">
-						<text class="input-label">岗位名称 <text style="color:#EF4444;">*</text></text>
+						<text class="input-label">岗位名称 <text style="color:#F53F3F;">*</text></text>
 						<input class="input-field" v-model="form.title" placeholder="请输入岗位名称" />
 					</view>
 					<view class="input-group">
@@ -16,7 +16,7 @@
 						</view>
 					</view>
 					<view class="input-group">
-						<text class="input-label">工作地点 <text style="color:#EF4444;">*</text></text>
+						<text class="input-label">工作地点 <text style="color:#F53F3F;">*</text></text>
 						<input class="input-field" v-model="form.location" placeholder="如：广州" />
 					</view>
 					<view class="row-inputs">
@@ -50,7 +50,7 @@
 						</view>
 					</view>
 					<view class="input-group">
-						<text class="input-label">岗位描述 <text style="color:#EF4444;">*</text></text>
+						<text class="input-label">岗位描述 <text style="color:#F53F3F;">*</text></text>
 						<textarea class="input-textarea" v-model="form.description" placeholder="在此输入完整的岗位描述，点击下方「AI 智能填写」可自动提取标题、薪资、地点等信息" />
 					</view>
 					<button class="ai-btn" :loading="aiParsing" @click="handleAiParseJob" :disabled="!form.description.trim()">
@@ -310,7 +310,7 @@ const handleAiParseJob = async () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .form-container { padding: 16px; }
 .form-section {
 	background: white;
@@ -319,30 +319,30 @@ const handleAiParseJob = async () => {
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 .input-group { margin-bottom: 16px; }
-.input-label { font-size: 14px; font-weight: 600; color: #1D2129; margin-bottom: 8px; display: block; }
+.input-label { font-size: 14px; font-weight: 600; color: $uni-text-color-title; margin-bottom: 8px; display: block; }
 .input-field {
 	width: 100%;
 	height: 44px;
-	border: 1px solid #E5E6EB;
+	border: 1px solid $uni-border-color;
 	border-radius: 8px;
 	padding: 0 12px;
 	font-size: 15px;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 	box-sizing: border-box;
 }
-.input-field:focus { border-color: #165DFF; background: #FFFFFF; }
+.input-field:focus { border-color: $uni-color-primary; background: $uni-bg-color; }
 .input-textarea {
 	width: 100%;
 	min-height: 120px;
-	border: 1px solid #E5E6EB;
+	border: 1px solid $uni-border-color;
 	border-radius: 8px;
 	padding: 12px;
 	font-size: 15px;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 	box-sizing: border-box;
 	line-height: 1.6;
 }
-.input-textarea:focus { border-color: #165DFF; background: #FFFFFF; }
+.input-textarea:focus { border-color: $uni-color-primary; background: $uni-bg-color; }
 
 /* AI 智能填写按钮 */
 .ai-btn {
@@ -352,25 +352,25 @@ const handleAiParseJob = async () => {
 	gap: 6px;
 	height: 42px;
 	border-radius: 8px;
-	background: linear-gradient(135deg, #8B5CF6, #7C3AED);
-	color: #fff;
+	background: $uni-gradient-ai;
+	color: $uni-text-color-inverse;
 	font-size: 15px;
 	font-weight: 600;
 	border: none;
 	margin-bottom: 16px;
 }
-.ai-btn[disabled] { background: #E5E6EB !important; color: #A9AEB8 !important; }
+.ai-btn[disabled] { background: $uni-border-color !important; color: $uni-text-color-placeholder !important; }
 .ai-btn:active { opacity: 0.85; }
 
 /* 企业选择弹窗 - 快速添加 */
-.modal-item-sep { height: 1px; background: #F2F3F5; margin: 12px 0; }
+.modal-item-sep { height: 1px; background: $uni-border-color-divider; margin: 12px 0; }
 .add-company-section { padding-bottom: 4px; }
 .add-company-toggle {
 	flex-direction: row;
 	align-items: center;
 	gap: 6px;
 	font-size: 14px;
-	color: #165DFF;
+	color: $uni-color-primary;
 	font-weight: 500;
 	padding: 8px 0;
 }
@@ -378,12 +378,12 @@ const handleAiParseJob = async () => {
 .add-input {
 	width: 100%;
 	height: 40px;
-	border: 1px solid #E5E6EB;
+	border: 1px solid $uni-border-color;
 	border-radius: 8px;
 	padding: 0 12px;
 	font-size: 14px;
-	background: #F7F8FA;
-	color: #1D2129;
+	background: $uni-bg-color-page;
+	color: $uni-text-color-title;
 	box-sizing: border-box;
 }
 .add-input.half { width: calc(50% - 5px); }
@@ -392,7 +392,7 @@ const handleAiParseJob = async () => {
 	width: 100%;
 	height: 40px;
 	border-radius: 8px;
-	background: #165DFF;
+	background: $uni-color-primary;
 	color: white;
 	font-size: 14px;
 	font-weight: 600;
@@ -400,7 +400,7 @@ const handleAiParseJob = async () => {
 	align-items: center;
 	justify-content: center;
 }
-.add-company-btn[disabled] { background: #E5E6EB !important; color: #A9AEB8 !important; }
+.add-company-btn[disabled] { background: $uni-border-color !important; color: $uni-text-color-placeholder !important; }
 
 .row-inputs { flex-direction: row; gap: 12px; }
 .input-group.half { flex: 1; }
@@ -408,13 +408,13 @@ const handleAiParseJob = async () => {
 	flex-direction: row;
 	align-items: center;
 	height: 44px;
-	border: 1px solid #E5E6EB;
+	border: 1px solid $uni-border-color;
 	border-radius: 8px;
 	padding: 0 12px;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 }
-.picker-text { flex: 1; font-size: 15px; color: #1D2129; }
-.picker-text.placeholder { color: #C9CDD4; }
+.picker-text { flex: 1; font-size: 15px; color: $uni-text-color-title; }
+.picker-text.placeholder { color: $uni-text-color-placeholder; }
 
 .form-actions {
 	flex-direction: row;
@@ -425,9 +425,9 @@ const handleAiParseJob = async () => {
 	flex: 1;
 	padding: 12px;
 	border-radius: 8px;
-	border: 1px solid #E5E6EB;
+	border: 1px solid $uni-border-color;
 	background: white;
-	color: #4E5969;
+	color: $uni-text-color;
 	font-size: 15px;
 	font-weight: 600;
 	align-items: center;
@@ -438,7 +438,7 @@ const handleAiParseJob = async () => {
 	padding: 12px;
 	border-radius: 8px;
 	border: none;
-	background: linear-gradient(135deg, #165DFF, #2563EB);
+	background: $uni-gradient-primary;
 	color: white;
 	font-size: 15px;
 	font-weight: 700;
@@ -451,6 +451,6 @@ const handleAiParseJob = async () => {
 	align-items: center;
 	padding: 14px 16px;
 }
-.modal-item-text { flex: 1; font-size: 15px; color: #1D2129; }
-.modal-item.selected { background: rgba(22,93,255,0.05); }
+.modal-item-text { flex: 1; font-size: 15px; color: $uni-text-color-title; }
+.modal-item.selected { background: $uni-color-primary-light; }
 </style>

@@ -76,10 +76,10 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .page-wrapper {
 	min-height: 100vh;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 }
 .content-scrollable {
 	height: 100vh;
@@ -88,17 +88,17 @@ onMounted(async () => {
 /* ===== 蓝色渐变头部背景 ===== */
 .header-bg {
 	height: 160px;
-	background: linear-gradient(180deg, #165DFF 0%, #3B7AFF 60%, #E8EDFF 100%);
+	background: linear-gradient(180deg, $uni-color-primary 0%, $uni-color-primary-hover 60%, #E8EDFF 100%);
 }
 
 /* ===== 浮动白色公司卡片 ===== */
 .company-card {
 	margin: -80px 16px 12px;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 16px;
 	padding: 24px 20px 20px;
 	align-items: center;
-	box-shadow: 0 4px 24px rgba(22,93,255,0.10);
+	box-shadow: 0 4px 24px $uni-color-primary-light;
 	position: relative;
 	z-index: 1;
 }
@@ -106,24 +106,24 @@ onMounted(async () => {
 	width: 64px;
 	height: 64px;
 	border-radius: 16px;
-	background: linear-gradient(135deg, #165DFF, #60A5FA);
+	background: linear-gradient(135deg, $uni-color-primary, $uni-color-primary-lighter);
 	align-items: center;
 	justify-content: center;
 	font-size: 28px;
-	color: #FFFFFF;
+	color: $uni-text-color-inverse;
 	font-weight: 700;
 	margin-bottom: 12px;
-	box-shadow: 0 4px 12px rgba(22,93,255,0.25);
+	box-shadow: 0 4px 12px $uni-color-primary-light;
 }
 .company-name {
 	font-size: 20px;
 	font-weight: 700;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	margin-bottom: 4px;
 }
 .company-short {
 	font-size: 13px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	margin-bottom: 12px;
 }
 .company-tags {
@@ -134,16 +134,16 @@ onMounted(async () => {
 }
 .company-tag {
 	font-size: 12px;
-	color: #165DFF;
-	background: rgba(22,93,255,0.08);
+	color: $uni-color-primary;
+	background: $uni-color-primary-light;
 	padding: 4px 12px;
-	border-radius: 20px;
+	border-radius: 999px;
 	font-weight: 500;
 }
 
 /* ===== 信息卡片 ===== */
 .info-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	margin: 0 16px 12px;
 	border-radius: 12px;
 	padding: 20px 16px;
@@ -155,9 +155,9 @@ onMounted(async () => {
 .info-title {
 	font-size: 16px;
 	font-weight: 700;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	padding-left: 12px;
-	border-left: 4px solid #165DFF;
+	border-left: 4px solid $uni-color-primary;
 	display: block;
 	line-height: 1.4;
 }
@@ -168,20 +168,20 @@ onMounted(async () => {
 	flex-direction: row;
 	align-items: center;
 	padding: 12px 0;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 }
 .info-item:last-child {
 	border-bottom: none;
 }
 .info-label {
 	font-size: 14px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	width: 80px;
 	flex-shrink: 0;
 }
 .info-value {
 	font-size: 14px;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	flex: 1;
 	text-align: right;
 }
@@ -189,7 +189,7 @@ onMounted(async () => {
 /* ===== 公司简介描述 ===== */
 .desc-text {
 	font-size: 14px;
-	color: #4E5969;
+	color: $uni-text-color;
 	line-height: 1.8;
 	display: block;
 	white-space: pre-line;
@@ -204,19 +204,19 @@ onMounted(async () => {
 	flex-shrink: 0;
 }
 .coop-0 {
-	color: #86909C;
-	background: #F2F3F5;
+	color: $uni-text-color-secondary;
+	background: $uni-border-color-divider;
 }
 .coop-1 {
-	color: #165DFF;
-	background: rgba(22,93,255,0.08);
+	color: $uni-color-primary;
+	background: $uni-color-primary-light;
 }
 .coop-2 {
-	color: #722ED1;
+	color: #8B5CF6;
 	background: rgba(114,46,209,0.08);
 }
 .coop-3 {
-	color: #F77234;
+	color: $uni-color-warning;
 	background: rgba(247,114,52,0.08);
 }
 
