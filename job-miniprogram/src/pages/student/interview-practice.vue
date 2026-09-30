@@ -42,7 +42,7 @@
 			</template>
 
 			<!-- 答题中 -->
-			<template v-else-if="questions.length">
+			<template v-else-if="questions.length && !finished">
 				<view class="practice-job-bar">
 					<view class="practice-job-info">
 						<text class="practice-job-title">{{ currentJob.jobTitle }}</text>
