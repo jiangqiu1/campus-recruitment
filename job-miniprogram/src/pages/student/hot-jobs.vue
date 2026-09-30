@@ -138,14 +138,14 @@ const goToJobDetail = (id) => uni.navigateTo({ url: '/pages/student/job-detail?i
 const goBack = () => uni.navigateBack()
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .sub-title {
 	flex-direction: row;
 	align-items: center;
 	gap: 6px;
 	padding: 16px 16px 8px;
 	font-size: 13px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 }
 .job-list {
 	padding: 8px 16px;
@@ -157,12 +157,12 @@ const goBack = () => uni.navigateBack()
 	gap: 8px;
 	padding: 16px;
 	font-size: 13px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 }
 .no-more {
 	align-items: center;
 	padding: 16px;
 	font-size: 13px;
-	color: #C9CDD4;
+	color: $uni-text-color-placeholder;
 }
 </style>

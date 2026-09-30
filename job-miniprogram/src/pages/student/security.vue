@@ -91,7 +91,7 @@ const handleDeleteAccount = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .menu-list {
 	background: white;
 	border-radius: 12px;
@@ -113,7 +113,7 @@ const handleDeleteAccount = () => {
 	right: 0;
 	bottom: 0;
 	height: 0.5px;
-	background: #F2F3F5;
+	background: $uni-border-color-divider;
 }
 .menu-item:last-child::after { display: none; }
 .menu-icon {
@@ -125,13 +125,13 @@ const handleDeleteAccount = () => {
 	align-items: center;
 	justify-content: center;
 }
-.menu-icon.blue { background: rgba(22,93,255,0.08); }
-.menu-icon.green { background: rgba(0,180,42,0.08); }
-.menu-icon.orange { background: rgba(255,125,0,0.08); }
-.menu-icon.red { background: rgba(245,63,63,0.08); }
-.menu-text { flex: 1; font-size: 15px; color: #1D2129; font-weight: 500; }
-.menu-value { font-size: 14px; color: #86909C; margin-right: 8px; }
-.menu-item:active { background: #F7F8FA; }
+.menu-icon.blue { background: $uni-color-primary-light; }
+.menu-icon.green { background: $uni-color-success-light; }
+.menu-icon.orange { background: $uni-color-warning-light; }
+.menu-icon.red { background: $uni-color-error-light; }
+.menu-text { flex: 1; font-size: 15px; color: $uni-text-color-title; font-weight: 500; }
+.menu-value { font-size: 14px; color: $uni-text-color-secondary; margin-right: 8px; }
+.menu-item:active { background: $uni-bg-color-page; }
 .info-card {
 	background: white;
 	border-radius: 12px;
@@ -139,6 +139,6 @@ const handleDeleteAccount = () => {
 	padding: 16px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
-.info-title { font-size: 15px; font-weight: 600; color: #1D2129; margin-bottom: 12px; display: block; }
-.info-text { font-size: 13px; color: #86909C; line-height: 1.8; display: block; }
+.info-title { font-size: 15px; font-weight: 600; color: $uni-text-color-title; margin-bottom: 12px; display: block; }
+.info-text { font-size: 13px; color: $uni-text-color-secondary; line-height: 1.8; display: block; }
 </style>

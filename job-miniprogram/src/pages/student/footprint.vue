@@ -124,18 +124,18 @@ const goToDetail = (id) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .batch-bar {
 	padding: 12px 16px;
-	background: #FFFFFF;
-	border-bottom: 0.5px solid #F2F3F5;
+	background: $uni-bg-color;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 }
 .batch-btn {
 	padding: 8px 16px;
-	background: rgba(245, 63, 63, 0.08);
-	color: #F53F3F;
+	background: $uni-color-error-light;
+	color: $uni-color-error;
 	border: none;
-	border-radius: 6px;
+	border-radius: 8px;
 	font-size: 13px;
 	font-weight: 500;
 }
@@ -143,14 +143,14 @@ const goToDetail = (id) => {
 	flex-direction: row;
 	align-items: center;
 	padding: 0 16px;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	gap: 20px;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 	height: 44px;
 }
 .sort-tab {
 	font-size: 14px;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-weight: 600;
 	position: relative;
 	padding-bottom: 4px;
@@ -163,13 +163,13 @@ const goToDetail = (id) => {
 	transform: translateX(-50%);
 	width: 20px;
 	height: 3px;
-	background: #165DFF;
-	border-radius: 2px;
+	background: $uni-color-primary;
+	border-radius: 4px;
 }
 .edit-text {
 	margin-left: auto;
 	font-size: 14px;
-	color: #165DFF;
+	color: $uni-color-primary;
 	font-weight: 500;
 }
 .card-list {
@@ -178,7 +178,7 @@ const goToDetail = (id) => {
 }
 .card-item {
 	flex-direction: row;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 14px;
 	gap: 12px;
@@ -200,17 +200,17 @@ const goToDetail = (id) => {
 .card-title {
 	font-size: 15px;
 	font-weight: 600;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	flex: 1;
 }
 .card-salary {
 	font-size: 15px;
 	font-weight: 600;
-	color: #165DFF;
+	color: $uni-color-primary;
 }
 .card-sub {
 	font-size: 13px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 }
 .card-meta {
 	flex-direction: row;
@@ -219,12 +219,12 @@ const goToDetail = (id) => {
 }
 .meta-text {
 	font-size: 12px;
-	color: #C9CDD4;
+	color: $uni-text-color-placeholder;
 }
 .meta-date {
-	font-size: 11px;
-	color: #C9CDD4;
+	font-size: 12px;
+	color: $uni-text-color-placeholder;
 	margin-left: auto;
 }
-.card-item:active { background: #F7F8FA; }
+.card-item:active { background: $uni-bg-color-page; }
 </style>

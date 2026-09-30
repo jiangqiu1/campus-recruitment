@@ -162,16 +162,16 @@ const goToJob = (id) => uni.navigateTo({ url: '/pages/student/job-detail?id=' + 
 const goBack = () => uni.navigateBack()
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* ===== 顶部背景 ===== */
 .header-bg {
 	height: 110px;
-	background: linear-gradient(135deg, #165DFF 0%, #2563EB 100%);
+	background: $uni-gradient-primary;
 }
 
 /* ===== 悬浮企业名片 ===== */
 .company-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 16px;
 	margin: -50px 16px 0;
 	padding: 24px 16px 20px;
@@ -181,85 +181,85 @@ const goBack = () => uni.navigateBack()
 	z-index: 2;
 }
 .company-logo {
-	width: 72px; height: 72px; border-radius: 20px;
-	background: linear-gradient(135deg, #165DFF 0%, #2563EB 100%);
+	width: 72px; height: 72px; border-radius: 999px;
+	background: $uni-gradient-primary;
 	align-items: center; justify-content: center;
 	font-size: 32px; color: white; font-weight: 700;
-	box-shadow: 0 4px 12px rgba(22,93,255,0.3);
+	box-shadow: 0 4px 12px $uni-color-primary-light;
 	margin-bottom: 12px;
 }
-.company-name { font-size: 19px; font-weight: 700; color: #1D2129; }
-.company-short { font-size: 13px; color: #86909C; margin-top: 4px; }
+.company-name { font-size: 19px; font-weight: 700; color: $uni-text-color-title; }
+.company-short { font-size: 13px; color: $uni-text-color-secondary; margin-top: 4px; }
 .company-tags {
 	flex-direction: row; flex-wrap: wrap;
 	gap: 6px; margin-top: 10px;
 	justify-content: center;
 }
 .company-tag {
-	font-size: 11px; padding: 3px 10px; border-radius: 12px;
-	background: rgba(22,93,255,0.08); color: #165DFF;
+	font-size: 12px; padding: 3px 10px; border-radius: 12px;
+	background: $uni-color-primary-light; color: $uni-color-primary;
 }
 
 /* ===== 信息卡片 ===== */
 .info-card {
-	background: #FFFFFF; border-radius: 12px;
+	background: $uni-bg-color; border-radius: 12px;
 	margin: 12px 16px 0; padding: 18px 16px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 .info-title-row {
 	flex-direction: row; justify-content: space-between;
 	align-items: center; margin-bottom: 12px;
-	padding-bottom: 12px; border-bottom: 0.5px solid #F2F3F5;
+	padding-bottom: 12px; border-bottom: 0.5px solid $uni-border-color-divider;
 }
 .info-title-left { flex-direction: row; align-items: center; gap: 8px; }
-.title-dot { width: 4px; height: 16px; border-radius: 2px; background: #165DFF; }
-.info-title { font-size: 16px; font-weight: 700; color: #1D2129; }
+.title-dot { width: 4px; height: 16px; border-radius: 4px; background: $uni-color-primary; }
+.info-title { font-size: 16px; font-weight: 700; color: $uni-text-color-title; }
 
 /* ===== 字段行 ===== */
 .info-list { gap: 0; }
 .info-item {
 	flex-direction: row; padding: 12px 0;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 	align-items: center; justify-content: space-between;
 }
 .info-item:last-child { border-bottom: none; }
 .info-label {
-	width: 72px; font-size: 14px; color: #86909C;
+	width: 72px; font-size: 14px; color: $uni-text-color-secondary;
 	flex-shrink: 0; font-weight: 500;
 }
 .info-right { flex: 1; flex-direction: row; justify-content: flex-end; }
 .info-value {
-	font-size: 14px; color: #1D2129;
+	font-size: 14px; color: $uni-text-color-title;
 	font-weight: 500; text-align: right;
 }
-.info-value.empty { color: #C9CDD4; }
+.info-value.empty { color: $uni-text-color-placeholder; }
 
 /* ===== 公司简介 ===== */
 .desc-text {
-	font-size: 13px; color: #4E5969; line-height: 1.8;
+	font-size: 13px; color: $uni-text-color; line-height: 1.8;
 	display: block;
 }
-.desc-text.empty { color: #C9CDD4; font-style: normal; }
+.desc-text.empty { color: $uni-text-color-placeholder; font-style: normal; }
 
 /* ===== 合作等级标签 ===== */
 .coop-tag {
-	font-size: 12px; padding: 3px 12px; border-radius: 10px;
+	font-size: 12px; padding: 3px 12px; border-radius: 12px;
 	font-weight: 500;
 }
-.coop-0 { background: #F2F3F5; color: #86909C; }
-.coop-1 { background: rgba(22,93,255,0.08); color: #165DFF; }
-.coop-2 { background: rgba(0,180,42,0.08); color: #00B42A; }
-.coop-3 { background: rgba(139,92,246,0.1); color: #7C3AED; }
+.coop-0 { background: $uni-border-color-divider; color: $uni-text-color-secondary; }
+.coop-1 { background: $uni-color-primary-light; color: $uni-color-primary; }
+.coop-2 { background: $uni-color-success-light; color: $uni-color-success; }
+.coop-3 { background: rgba(139, 92, 246, 0.1); color: #8B5CF6; }
 
 /* ===== 岗位卡片 ===== */
 .job-card {
 	padding: 14px 0;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 }
 .job-card:last-child { border-bottom: none; }
-.job-card:active { background: #F7F8FA; margin: 0 -16px; padding: 14px 16px; }
+.job-card:active { background: $uni-bg-color-page; margin: 0 -16px; padding: 14px 16px; }
 .job-top { flex-direction: row; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.job-title { font-size: 14px; font-weight: 600; color: #1D2129; flex: 1; }
-.job-salary { font-size: 13px; color: #F53F3F; font-weight: 600; }
-.job-location { font-size: 12px; color: #86909C; }
+.job-title { font-size: 14px; font-weight: 600; color: $uni-text-color-title; flex: 1; }
+.job-salary { font-size: 13px; color: $uni-color-error; font-weight: 600; }
+.job-location { font-size: 12px; color: $uni-text-color-secondary; }
 </style>

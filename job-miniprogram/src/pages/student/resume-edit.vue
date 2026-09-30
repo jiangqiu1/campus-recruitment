@@ -379,7 +379,7 @@ const handleSave = async () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .scroll-area { flex: 1; overflow-y: auto; padding-bottom: 80px; }
 .form-section {
 	background: white;
@@ -397,78 +397,78 @@ const handleSave = async () => {
 .form-section-title {
 	font-size: 15px;
 	font-weight: 600;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	margin-bottom: 12px;
 }
 .form-section-header .form-section-title { margin-bottom: 0; }
 .form-section-action {
 	font-size: 14px;
-	color: #165DFF;
+	color: $uni-color-primary;
 	font-weight: 500;
 	padding: 4px;
 }
 .form-group { margin-bottom: 14px; }
 .form-label {
 	font-size: 13px;
-	color: #4E5969;
+	color: $uni-text-color;
 	margin-bottom: 6px;
 	display: block;
 }
 .form-input {
 	width: 100%;
 	height: 44px;
-	border: 1px solid #E5E6EB;
+	border: 1px solid $uni-border-color;
 	border-radius: 8px;
 	padding: 0 12px;
 	font-size: 15px;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 	box-sizing: border-box;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 .form-input:focus {
-	border-color: #165DFF;
-	background: #FFFFFF;
+	border-color: $uni-color-primary;
+	background: $uni-bg-color;
 }
 .form-textarea {
 	width: 100%;
 	min-height: 100px;
-	border: 1px solid #E5E6EB;
+	border: 1px solid $uni-border-color;
 	border-radius: 8px;
 	padding: 12px;
 	font-size: 15px;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 	box-sizing: border-box;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	line-height: 1.6;
 }
 .form-textarea:focus {
-	border-color: #165DFF;
-	background: #FFFFFF;
+	border-color: $uni-color-primary;
+	background: $uni-bg-color;
 }
 .form-row { flex-direction: row; gap: 12px; }
 .form-input.half { flex: 1; }
 .mb-8 { margin-bottom: 8px; }
-.empty-hint { font-size: 13px; color: #C9CDD4; }
+.empty-hint { font-size: 13px; color: $uni-text-color-placeholder; }
 .radio-group {
 	flex-direction: row;
 	gap: 12px;
 }
 .radio-item {
 	padding: 10px 24px;
-	border: 1px solid #E5E6EB;
+	border: 1px solid $uni-border-color;
 	border-radius: 8px;
 	font-size: 14px;
-	color: #4E5969;
-	background: #F7F8FA;
+	color: $uni-text-color;
+	background: $uni-bg-color-page;
 }
 .radio-item.active {
-	border-color: #165DFF;
-	color: #165DFF;
-	background: rgba(22,93,255,0.06);
+	border-color: $uni-color-primary;
+	color: $uni-color-primary;
+	background: $uni-color-primary-light;
 	font-weight: 500;
 }
 .json-item {
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 	border-radius: 8px;
 	padding: 12px;
 	margin-bottom: 12px;
@@ -479,8 +479,8 @@ const handleSave = async () => {
 	align-items: center;
 	margin-bottom: 8px;
 }
-.json-item-title { font-size: 14px; font-weight: 500; color: #4E5969; }
-.json-item-remove { font-size: 13px; color: #F53F3F; padding: 4px; }
+.json-item-title { font-size: 14px; font-weight: 500; color: $uni-text-color; }
+.json-item-remove { font-size: 13px; color: $uni-color-error; padding: 4px; }
 .bottom-bar {
 	position: fixed;
 	bottom: 0;
@@ -490,7 +490,7 @@ const handleSave = async () => {
 	backdrop-filter: blur(20px);
 	-webkit-backdrop-filter: blur(20px);
 	padding: 12px 16px 24px;
-	border-top: 0.5px solid #F2F3F5;
+	border-top: 0.5px solid $uni-border-color-divider;
 	box-shadow: 0 -2px 12px rgba(0,0,0,0.04);
 	padding-bottom: calc(12px + env(safe-area-inset-bottom));
 }
@@ -498,7 +498,7 @@ const handleSave = async () => {
 	width: 100%;
 	height: 48px;
 	border-radius: 12px;
-	background: #165DFF;
+	background: $uni-color-primary;
 	color: white;
 	font-size: 16px;
 	font-weight: 700;
@@ -507,8 +507,8 @@ const handleSave = async () => {
 	border: none;
 }
 .save-btn[disabled] {
-	background: #E5E6EB !important;
-	color: #A9AEB8 !important;
+	background: $uni-border-color !important;
+	color: $uni-text-color-placeholder !important;
 	border: none !important;
 }
 .save-btn:active { opacity: 0.9; }
@@ -518,24 +518,24 @@ const handleSave = async () => {
 	flex-direction: row;
 	align-items: center;
 	gap: 12px;
-	background: rgba(22,93,255,0.04);
-	border: 1px dashed rgba(22,93,255,0.3);
+	background: $uni-color-primary-light;
+	border: 1px dashed $uni-color-primary-light;
 	border-radius: 12px;
 	padding: 14px 16px;
 	margin: 12px 16px;
 }
 .import-section:active {
-	background: rgba(22,93,255,0.08);
+	background: $uni-color-primary-light;
 }
 .import-texts { flex: 1; }
 .import-title {
 	font-size: 14px;
 	font-weight: 600;
-	color: #165DFF;
+	color: $uni-color-primary;
 }
 .import-desc {
 	font-size: 12px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	margin-top: 2px;
 }
 </style>

@@ -105,25 +105,25 @@ const isToday = (t) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .msg-tabs {
 	flex-direction: row;
 	padding: 0 16px;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	gap: 24px;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 	height: 44px;
 	align-items: center;
 }
 .msg-tab {
 	font-size: 14px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	font-weight: 500;
 	position: relative;
 	padding-bottom: 4px;
 }
 .msg-tab.active {
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-weight: 600;
 }
 .msg-tab.active::after {
@@ -134,8 +134,8 @@ const isToday = (t) => {
 	transform: translateX(-50%);
 	width: 20px;
 	height: 3px;
-	background: #165DFF;
-	border-radius: 2px;
+	background: $uni-color-primary;
+	border-radius: 4px;
 }
 .msg-tabs:active { opacity: 0.7; }
 .msg-list {
@@ -144,12 +144,12 @@ const isToday = (t) => {
 }
 .msg-item {
 	flex-direction: row;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	padding: 14px 14px 14px 0;
 	gap: 12px;
 	align-items: flex-start;
 	position: relative;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 }
 .msg-item:last-child {
 	border-bottom: none;
@@ -157,8 +157,8 @@ const isToday = (t) => {
 .msg-icon {
 	width: 40px;
 	height: 40px;
-	border-radius: 10px;
-	background: #F7F8FA;
+	border-radius: 12px;
+	background: $uni-bg-color-page;
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
@@ -175,7 +175,7 @@ const isToday = (t) => {
 .msg-title {
 	font-size: 15px;
 	font-weight: 500;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 .msg-item.unread .msg-title {
 	font-weight: 700;
@@ -185,11 +185,11 @@ const isToday = (t) => {
 }
 .msg-time {
 	font-size: 12px;
-	color: #C9CDD4;
+	color: $uni-text-color-placeholder;
 }
 .msg-text {
 	font-size: 13px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	line-height: 1.5;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -203,9 +203,9 @@ const isToday = (t) => {
 	right: 4px;
 	width: 8px;
 	height: 8px;
-	background: #F53F3F;
+	background: $uni-color-error;
 	border-radius: 50%;
 }
 .msg-tab:active { opacity: 0.7; }
-.msg-item:active { background: #F7F8FA; }
+.msg-item:active { background: $uni-bg-color-page; }
 </style>

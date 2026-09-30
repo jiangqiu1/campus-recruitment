@@ -343,13 +343,13 @@ const handleLogout = () => {
 	width: 100%;
 	height: 4px;
 	background: rgba(255,255,255,0.2);
-	border-radius: 2px;
+	border-radius: 4px;
 	overflow: hidden;
 }
 .progress-fill {
 	height: 100%;
 	background: linear-gradient(90deg, $uni-color-success 0%, color.adjust($uni-color-success, $lightness: 8%) 100%);
-	border-radius: 2px;
+	border-radius: 4px;
 	transition: width 0.3s ease;
 }
 
@@ -368,7 +368,7 @@ const handleLogout = () => {
 	width: 32px;
 	height: 32px;
 	border-radius: $uni-border-radius-sm;
-	background: rgba(14, 165, 233, 0.25);
+	background: $uni-color-ai-light;
 	display: flex;
 	align-items: center;
 	justify-content: center;

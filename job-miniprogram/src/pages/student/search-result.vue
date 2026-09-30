@@ -161,18 +161,18 @@ const handleDeliver = async (job) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .search-bar {
 	padding: 8px 16px;
-	background: #FFFFFF;
-	border-bottom: 0.5px solid #F2F3F5;
+	background: $uni-bg-color;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 }
 .search-input {
 	flex-direction: row;
 	align-items: center;
 	gap: 8px;
-	background: #F7F8FA;
-	border-radius: 20px;
+	background: $uni-bg-color-page;
+	border-radius: 999px;
 	padding: 0 16px;
 	height: 36px;
 }
@@ -181,7 +181,7 @@ const handleDeliver = async (job) => {
 	font-size: 14px;
 	background: transparent;
 	border: none;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 .clear-btn {
 	line-height: 1;
@@ -189,21 +189,21 @@ const handleDeliver = async (job) => {
 .filter-tabs {
 	flex-direction: row;
 	padding: 0 16px;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	gap: 24px;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 	height: 44px;
 	align-items: center;
 }
 .filter-tab {
 	font-size: 14px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	font-weight: 500;
 	position: relative;
 	padding-bottom: 4px;
 }
 .filter-tab.active {
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-weight: 600;
 }
 .filter-tab.active::after {
@@ -214,8 +214,8 @@ const handleDeliver = async (job) => {
 	transform: translateX(-50%);
 	width: 20px;
 	height: 3px;
-	background: #165DFF;
-	border-radius: 2px;
+	background: $uni-color-primary;
+	border-radius: 4px;
 }
 .content-scrollable {
 	flex: 1;

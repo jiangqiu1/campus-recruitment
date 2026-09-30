@@ -155,11 +155,11 @@ const goToAgreement = () => uni.navigateTo({ url: '/pages/common/agreement' })
 const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 /* ===== 页面背景：平滑蓝色渐变，无硬分割 ===== */
 .page-wrapper {
 	min-height: 100vh;
-	background: linear-gradient(170deg, #165DFF 0%, #3B7AFF 55%, #E8EDFF 80%, #F7F8FA 100%);
+	background: linear-gradient(170deg, $uni-color-primary 0%, $uni-color-primary-hover 55%, #E8EDFF 80%, $uni-bg-color-page 100%);
 }
 .login-container {
 	padding: 60px 32px 32px;
@@ -183,18 +183,18 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	justify-content: center;
 	margin-bottom: 8px;
 	backdrop-filter: blur(4px);
-	box-shadow: 0 4px 16px rgba(22,93,255,0.15);
+	box-shadow: 0 4px 16px $uni-color-primary-light;
 }
 .badge-letter {
 	font-size: 28px;
 	font-weight: 700;
-	color: #165DFF;
+	color: $uni-color-primary;
 	line-height: 1;
 }
 .login-title {
 	font-size: 22px;
 	font-weight: 700;
-	color: #FFFFFF;
+	color: $uni-text-color-inverse;
 	letter-spacing: 0.05em;
 }
 .login-subtitle {
@@ -220,9 +220,9 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	gap: 6px;
 }
 .role-card.active {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-color: transparent;
-	box-shadow: 0 4px 16px rgba(22,93,255,0.15);
+	box-shadow: 0 4px 16px $uni-color-primary-light;
 	transform: scale(1.03);
 }
 .role-card:active { transform: scale(0.97); }
@@ -234,7 +234,7 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	justify-content: center;
 }
 .role-card.active .role-icon-wrap {
-	background: #165DFF;
+	background: $uni-color-primary;
 }
 .role-name {
 	font-size: 13px;
@@ -242,16 +242,16 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	color: rgba(255,255,255,0.8);
 }
 .role-name.active {
-	color: #1D2129;
+	color: $uni-text-color-title;
 	font-weight: 600;
 }
 
 /* ===== 表单卡片 ===== */
 .form-card {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 16px;
 	padding: 24px 20px;
-	box-shadow: 0 4px 24px rgba(22,93,255,0.08);
+	box-shadow: 0 4px 24px $uni-color-primary-light;
 	margin-bottom: 24px;
 }
 .input-wrap {
@@ -259,30 +259,30 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	align-items: center;
 	gap: 10px;
 	height: 48px;
-	border: 1px solid #E5E6EB;
-	border-radius: 10px;
+	border: 1px solid $uni-border-color;
+	border-radius: 12px;
 	padding: 0 14px;
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 	margin-bottom: 14px;
 	transition: all 0.2s;
 }
 .input-wrap:focus-within {
-	border-color: #165DFF;
-	background: #FFFFFF;
-	box-shadow: 0 0 0 3px rgba(22,93,255,0.08);
+	border-color: $uni-color-primary;
+	background: $uni-bg-color;
+	box-shadow: 0 0 0 3px $uni-color-primary-light;
 }
 .input-field {
 	flex: 1;
 	height: 100%;
 	font-size: 15px;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	border: none;
 	background: transparent;
 	padding: 0;
 }
 .input-wrap.pwd-visible {
-	border-color: #165DFF;
-	background: #FFFFFF;
+	border-color: $uni-color-primary;
+	background: $uni-bg-color;
 }
 
 /* 协议行 */
@@ -293,16 +293,16 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	gap: 4px;
 	flex-wrap: wrap;
 }
-.agree-text { font-size: 12px; color: #86909C; }
-.agree-link { font-size: 12px; color: #165DFF; }
+.agree-text { font-size: 12px; color: $uni-text-color-secondary; }
+.agree-link { font-size: 12px; color: $uni-color-primary; }
 
 /* 登录按钮 */
 .login-btn {
 	width: 100%;
 	height: 48px;
 	border-radius: 12px;
-	background: linear-gradient(135deg, #165DFF, #3B7AFF);
-	color: #FFFFFF;
+	background: linear-gradient(135deg, $uni-color-primary, $uni-color-primary-hover);
+	color: $uni-text-color-inverse;
 	font-size: 16px;
 	font-weight: 700;
 	border: none;
@@ -313,12 +313,12 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	align-items: center;
 	justify-content: center;
 	line-height: 48px;
-	box-shadow: 0 4px 14px rgba(22,93,255,0.3);
+	box-shadow: 0 4px 14px $uni-color-primary-light;
 	letter-spacing: 0.1em;
 }
 .login-btn[disabled] {
-	background: #E5E6EB !important;
-	color: #A9AEB8 !important;
+	background: $uni-border-color !important;
+	color: $uni-text-color-placeholder !important;
 	box-shadow: none !important;
 }
 .login-btn:active { transform: scale(0.98); opacity: 0.9; }
@@ -327,7 +327,7 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	align-items: center;
 	margin-top: 14px;
 }
-.link-text { font-size: 13px; color: #C9CDD4; }
+.link-text { font-size: 13px; color: $uni-text-color-placeholder; }
 
 /* ===== 微信区 ===== */
 .divider-row {
@@ -356,7 +356,7 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	border-radius: 12px;
 	backdrop-filter: blur(4px);
 }
-.wechat-text { font-size: 15px; color: #1D2129; font-weight: 500; }
+.wechat-text { font-size: 15px; color: $uni-text-color-title; font-weight: 500; }
 .wechat-btn:active { transform: scale(0.98); }
 
 /* ===== 底部 ===== */
@@ -365,7 +365,7 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	margin-top: 24px;
 }
 .footer-text {
-	font-size: 11px;
+	font-size: 12px;
 	color: rgba(255,255,255,0.4);
 }
 </style>
