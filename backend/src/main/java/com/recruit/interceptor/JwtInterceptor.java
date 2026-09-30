@@ -66,7 +66,16 @@ public class JwtInterceptor implements HandlerInterceptor {
             return false;
         }
         
-        // 5. 从 Redis 中检查 Token 是否存在
+        // 5. 检查 Token 是否在黑名单（已登出）
+        String blacklistKey = "blacklist:" + token;
+        if (Objects.nonNull(redisUtil.get(blacklistKey))) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"code\":401,\"message\":\"Token 已失效，请重新登录\",\"data\":null}");
+            return false;
+        }
+        
+        // 6. 从 Redis 中检查 Token 是否存在
         Long userId = jwtUtil.getUserIdFromToken(token);
         String redisKey = "token:" + userId;
         String cachedToken = redisUtil.get(redisKey);
@@ -78,7 +87,7 @@ public class JwtInterceptor implements HandlerInterceptor {
             return false;
         }
         
-        // 6. 检查 Token 版本号（修改密码后旧 Token 失效）
+        // 7. 检查 Token 版本号（修改密码后旧 Token 失效）
         String versionKey = "token:version:" + userId;
         String storedVersion = redisUtil.get(versionKey);
         String tokenVersion = jwtUtil.getClaimFromToken(token, "tokenVersion");

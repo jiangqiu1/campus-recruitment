@@ -59,7 +59,6 @@ export const authAPI = {
     return request.post('/auth/logout', { token: token ? 'Bearer ' + token : '' })
   },
   changePassword: (data) => request.put('/auth/update-password', data),
-  checkToken: () => request.get('/auth/check'),
   // 个人信息
   getProfile: () => request.get('/auth/userinfo'),
   updateProfile: (data) => request.put('/auth/profile', data)
@@ -72,7 +71,6 @@ export const userAPI = {
   createUser: (data) => request.post('/admin/users', data),
   updateUser: (id, data) => request.put('/admin/users/' + id, data),
   deleteUser: (id) => request.delete('/admin/users/' + id),
-  batchDeleteUsers: (ids) => request.post('/admin/users/batch-delete', ids),
   updateUserStatus: (id, status) => request.put('/admin/users/' + id + '/status', status),
   getUserInfo: () => request.get('/auth/userinfo'),
   updateUserInfo: (data) => request.put('/auth/profile', data)
@@ -104,14 +102,9 @@ export const jobAPI = {
   createJob: (data) => request.post('/jobs', data),
   updateJob: (id, data) => request.put('/jobs/' + id, data),
   deleteJob: (id) => request.delete('/jobs/' + id),
-  batchDeleteJobs: (ids) => request.post('/jobs/batch-delete', ids),
-  updateJobStatus: (id, status) => request.put('/jobs/' + id + '/status', status),
   getJobsByCompany: (companyId, params) => request.get('/jobs/by-company/' + companyId, { params }),
   searchJobs: (keyword, params) => request.get('/jobs/search', { params: { ...params, keyword } }),
-  fetchHotJobs: (limit) => request.get('/jobs/hot', { params: { limit } }),
   fetchRecommendJobs: (studentId, limit) => request.get('/jobs/recommend', { params: { studentId, limit } }),
-  fetchJobStatistics: () => request.get('/jobs/statistics'),
-  getJobAnalysis: () => request.get('/hr/job-analysis'),
   getJobsByCreator: (creatorId) => request.get('/jobs/by-creator/' + creatorId),
   publishJob: (id) => request.put('/jobs/' + id + '/publish'),
   closeJob: (id) => request.put('/jobs/' + id + '/close'),
@@ -124,16 +117,12 @@ export const resumeAPI = {
   getResumeDetail: (id) => request.get('/resumes/' + id),
   getResumeByStudent: (studentId) => request.get('/resumes/student/' + studentId),
   createResume: (data) => request.post('/resumes', data),
-  updateResume: (id, data) => request.put('/resumes/' + id, data),
   deleteResume: (id) => request.delete('/resumes/' + id),
-  batchDeleteResumes: (ids) => request.post('/resumes/batch-delete', ids),
-  updateResumeStatus: (id, status) => request.put('/resumes/' + id + '/status', { status }),
-  searchResumes: (keyword, params) => request.get('/resumes/search', { params: { ...params, keyword } }),
   uploadResume: (studentId, file) => {
     const fd = new FormData()
     fd.append('file', file)
-    fd.append('type', 'resume')
-    return request.post('/files/upload', fd, {
+    return request.post('/resumes/upload-pdf', fd, {
+      params: { studentId },
       headers: { 'Content-Type': 'multipart/form-data' }
     })
   }
@@ -142,7 +131,6 @@ export const resumeAPI = {
 // ==================== 投递管理模块 ====================
 export const deliveryAPI = {
   getDeliveries: (params) => request.get('/deliveries', { params }),
-  createDelivery: (data) => request.post('/deliveries', data),
   updateDeliveryStatus: (id, status) => request.put('/deliveries/' + id + '/status', { status }),
   deleteDelivery: (id) => request.delete('/deliveries/' + id),
   getDeliveriesByJob: (jobId) => request.get('/deliveries/by-job/' + jobId),
@@ -204,7 +192,6 @@ export const resumeScoreAPI = {
 // ==================== AI 解析日志模块 ====================
 export const aiParseAPI = {
   getParseLogs: (params) => request.get('/ai-parse/logs', { params }),
-  deleteParseLog: (id) => request.delete('/ai-parse/logs/' + id),
   analyzeResume: (studentId) => request.post('/ai-parse/analyze-resume', { studentId }),
   parseJob: (rawMessage) => request.post('/ai-parse/parse-job', { rawMessage })
 }

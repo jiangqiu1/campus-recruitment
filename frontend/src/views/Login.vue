@@ -266,7 +266,7 @@ const handleLogin = async () => {
               userId: data.userId,
               username: data.username,
               realName: data.realName,
-              role: roleName,
+              role: data.role,
               avatarUrl: data.avatarUrl,
               companyId: data.companyId,
             })

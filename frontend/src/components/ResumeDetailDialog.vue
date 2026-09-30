@@ -317,10 +317,6 @@ const hrDimColor = (val) => {
   if (val >= 60) return '#F59E0B'
   return '#EF4444'
 }
-const hasResumeData = computed(() => {
-  const r = parsedResume.value
-  return !!(r.jobTarget || r.education || r.internship || r.skills || r.selfEvaluation)
-})
 </script>
 
 <style scoped>

@@ -70,7 +70,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import { aiParseAPI, jobMatchAPI, resumeScoreAPI, statisticsAPI, userAPI } from '@/api'
+import { aiParseAPI, jobMatchAPI, resumeScoreAPI, userAPI } from '@/api'
 import * as echarts from 'echarts'
 
 const loading = ref(false)
@@ -99,12 +99,11 @@ const loadData = async () => {
   loading.value = true
   try {
     // 并发获取各种数据
-    const [parseRes, allUsersRes, matchRes, scoreRes, overviewRes] = await Promise.all([
+    const [parseRes, allUsersRes, matchRes, scoreRes] = await Promise.all([
       aiParseAPI.getParseLogs({ page: 1, size: 500 }),
       userAPI.getUsers({ page: 1, size: 500 }),
       jobMatchAPI.getMatches({ page: 1, size: 500 }),
-      resumeScoreAPI.getScores({ page: 1, size: 500 }),
-      statisticsAPI.getOverview()
+      resumeScoreAPI.getScores({ page: 1, size: 500 })
     ])
 
     // 1. 解析AI解析日志
@@ -209,7 +208,7 @@ const renderCharts = () => {
     for (let i = 6; i >= 0; i--) {
       const d = new Date()
       d.setDate(d.getDate() - i)
-      const key = d.toISOString().substring(0, 10)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
       const label = key.substring(5) // MM-DD
       days.push(label)
       const count = allTimes.filter(t => {

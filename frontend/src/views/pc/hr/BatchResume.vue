@@ -137,6 +137,7 @@ import { useUserStore } from '@/stores/user.js'
 import { deliveryAPI, resumeScoreAPI, jobAPI } from '@/api/index.js'
 import ResumeDetailDialog from '@/components/ResumeDetailDialog.vue'
 import { formatDate } from '@/utils/formatDate'
+import { scoreColor, parseScoreDetail } from '@/utils/score'
 import { ElMessage } from 'element-plus'
 
 const userStore = useUserStore()
@@ -239,21 +240,13 @@ const viewResume = async (row) => {
       const sr = await resumeScoreAPI.getByDelivery(row.id)
       if (sr.code === 200 && sr.data) {
         fillHrScoreData(sr.data)
+      } else {
+        // 无评分记录 → 自动触发单条 AI 评分
+        await autoScore(row)
       }
     } catch (e) {
-      // 没有评分 → 自动触发单条 AI 评分（1 token）
-      if (row.jobId && row.id) {
-        try {
-          const scoreRes = await resumeScoreAPI.scoreResume({ jobId: row.jobId, deliveryId: row.id })
-          if (scoreRes.code === 200) {
-            // 评分成功后重新加载
-            const sr2 = await resumeScoreAPI.getByDelivery(row.id)
-            if (sr2.code === 200 && sr2.data) {
-              fillHrScoreData(sr2.data)
-            }
-          }
-        } catch (e2) { /* auto score failed */ }
-      }
+      // 查询异常时也尝试自动评分（兜底）
+      await autoScore(row)
     }
   }
   // 投递记录行中已有的 score 作为兜底
@@ -263,24 +256,27 @@ const viewResume = async (row) => {
   viewDialogVisible.value = true
 }
 
-// 填充 HR 评分数据到 dialog 状态和维度数据
-const fillHrScoreData = (data) => {
-  let sd = data.scoreDetail || data
-  if (typeof sd === 'string') {
-    try { sd = JSON.parse(sd) } catch (e) { sd = {} }
-  }
-  if (sd && typeof sd === 'object') {
-    currentHrScore.value = data.score || sd.总分 || sd.totalScore || null
-    currentHrComment.value = sd.评语 || sd.comment || data.analysis || ''
-    const dims = []
-    const dimMap = { 技能得分: '技能匹配', 经验得分: '经验匹配', 教育得分: '学历匹配' }
-    for (const key of Object.keys(dimMap)) {
-      if (sd[key] !== undefined && sd[key] !== null) {
-        dims.push({ label: dimMap[key], score: Math.round(sd[key]) })
+// 无评分记录时自动触发单条 AI 评分
+const autoScore = async (row) => {
+  if (!row.jobId || !row.id) return
+  try {
+    const scoreRes = await resumeScoreAPI.scoreResume({ jobId: row.jobId, deliveryId: row.id })
+    if (scoreRes.code === 200) {
+      const sr2 = await resumeScoreAPI.getByDelivery(row.id)
+      if (sr2.code === 200 && sr2.data) {
+        fillHrScoreData(sr2.data)
       }
     }
-    if (dims.length) currentHrDims.value = dims
-  }
+  } catch (e) { /* auto score failed */ }
+}
+
+// 填充 HR 评分数据到 dialog 状态和维度数据
+const fillHrScoreData = (data) => {
+  const parsed = parseScoreDetail(data.scoreDetail, data.score)
+  if (parsed.total !== null) currentHrScore.value = parsed.total
+  currentHrComment.value = parsed.comment || data.analysis || ''
+  const dims = parsed.dims.map(d => ({ label: d.label, score: d.score }))
+  if (dims.length) currentHrDims.value = dims
 }
 
 const showScoreDialog = async (row) => {
@@ -305,20 +301,10 @@ const showScoreDialog = async (row) => {
       const sr = await resumeScoreAPI.getByDelivery(row.id)
       if (sr.code === 200 && sr.data) {
         const data = sr.data
-        let sd = data.scoreDetail || data
-        if (typeof sd === 'string') {
-          try { sd = JSON.parse(sd) } catch (e) { sd = {} }
-        }
-        const dims = []
-        const dimMap = { 技能得分: '技能匹配', 经验得分: '经验匹配', 教育得分: '学历匹配' }
-        for (const key of Object.keys(dimMap)) {
-          if (sd[key] !== undefined && sd[key] !== null) {
-            dims.push({ key, label: dimMap[key], score: Math.round(sd[key]) })
-          }
-        }
-        scoreData.value.total = data.score || 0
-        scoreData.value.dims = dims
-        scoreData.value.comment = sd.评语 || sd.comment || data.analysis || ''
+        const parsed = parseScoreDetail(data.scoreDetail, data.score)
+        scoreData.value.total = parsed.total ?? 0
+        scoreData.value.dims = parsed.dims.map(d => ({ key: d.key, label: d.label, score: d.score }))
+        scoreData.value.comment = parsed.comment || data.analysis || ''
         scoreData.value.scoreLogId = data.id || null
         scoreData.value.isAiGenerated = true
       }
@@ -404,7 +390,6 @@ const exportToExcel = () => {
 
 const statusText = (s) => ({ 0: '已投递', 1: '企业已查看', 2: '待面试', 3: '已录用', 4: '不合适' })[s] || '未知'
 const statusTagType = (s) => ({ 0: 'info', 1: '', 2: 'warning', 3: 'success', 4: 'danger' })[s] || 'info'
-const scoreColor = (s) => s >= 90 ? '#67C23A' : (s >= 75 ? '#E6A23C' : '#F56C6C')
 </script>
 
 <style scoped>

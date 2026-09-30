@@ -4,6 +4,7 @@ import com.recruit.entity.Delivery;
 import com.recruit.entity.Class;
 import com.recruit.entity.Job;
 import com.recruit.entity.OperationLog;
+import com.recruit.entity.ResumeScoreLog;
 import com.recruit.entity.SysUser;
 import com.recruit.service.*;
 import com.recruit.utils.Result;
@@ -53,6 +54,9 @@ public class StatisticsController extends BaseController {
 
     @Autowired(required = false)
     private MessageService messageService;
+
+    @Autowired
+    private ResumeScoreLogService resumeScoreLogService;
 
     /**
      * 学生端首页概览统计
@@ -440,12 +444,40 @@ public class StatisticsController extends BaseController {
      */
     @GetMapping("/hr/score-distribution")
     public Result<List<Map<String, Object>>> getScoreDistribution(@RequestParam(required = false) Long userId) {
-        List<Map<String, Object>> distribution = new ArrayList<>();
+        // 确定统计范围：指定用户或当前 HR 所属企业
+        Long targetUserId = (userId != null) ? userId : getCurrentUserId();
+        SysUser targetUser = userService.getById(targetUserId);
+        Long companyId = targetUser != null ? targetUser.getCompanyId() : null;
+
+        List<ResumeScoreLog> scoreLogs = new ArrayList<>();
+        if (companyId != null) {
+            List<Job> companyJobs = jobService.lambdaQuery().eq(Job::getCompanyId, companyId).list();
+            if (companyJobs != null && !companyJobs.isEmpty()) {
+                List<Long> jobIds = companyJobs.stream().map(Job::getId).collect(java.util.stream.Collectors.toList());
+                scoreLogs = resumeScoreLogService.lambdaQuery().in(ResumeScoreLog::getJobId, jobIds).list();
+            }
+        }
+
+        // 按分数区间统计真实评分分布
         String[] ranges = {"0-59", "60-69", "70-79", "80-89", "90-100"};
-        for (String range : ranges) {
+        int[][] boundaries = {{0, 59}, {60, 69}, {70, 79}, {80, 89}, {90, 100}};
+        long[] counts = new long[ranges.length];
+        for (ResumeScoreLog log : scoreLogs) {
+            Integer score = log.getScore();
+            if (score == null) continue;
+            for (int i = 0; i < boundaries.length; i++) {
+                if (score >= boundaries[i][0] && score <= boundaries[i][1]) {
+                    counts[i]++;
+                    break;
+                }
+            }
+        }
+
+        List<Map<String, Object>> distribution = new ArrayList<>();
+        for (int i = 0; i < ranges.length; i++) {
             Map<String, Object> item = new HashMap<>();
-            item.put("name", range);
-            item.put("value", (long) Math.floor(Math.random() * 20) + 3);
+            item.put("name", ranges[i]);
+            item.put("value", counts[i]);
             distribution.add(item);
         }
         return Result.success(distribution);
@@ -530,11 +562,11 @@ public class StatisticsController extends BaseController {
 
     private int getStatusValue(String name) {
         switch (name) {
-            case "已录用": return 4;
-            case "面试中": return 3;
-            case "已查看": return 2;
-            case "未录用": return 5;
-            default: return 1;
+            case "已录用": return 3;   // ACCEPTED
+            case "面试中": return 2;   // INTERVIEW
+            case "待查看": return 0;   // PENDING
+            case "未录用": return 4;   // REJECTED
+            default: return 0;
         }
     }
 

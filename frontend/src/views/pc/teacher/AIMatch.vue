@@ -133,14 +133,14 @@
             <el-popover placement="bottom" :width="210" trigger="hover" :disabled="!row.scoreDetail || Object.keys(row.scoreDetail).length === 0">
               <template #reference>
                 <div style="cursor:pointer; padding:4px 0;">
-                  <el-progress :percentage="matchPercent(row.matchScore)" :color="scoreColor(row.matchScore)" :stroke-width="10" />
+                  <el-progress :percentage="matchPercent(row.matchScore)" :color="scoreColor(matchPercent(row.matchScore))" :stroke-width="10" />
                 </div>
               </template>
               <div class="dimension-popover">
                 <div class="dimension-title">子维度匹配详情</div>
                 <div v-for="(val, key) in row.scoreDetail" :key="key" class="dimension-row">
                   <span class="dimension-label">{{ dimLabel(key) }}</span>
-                  <el-progress :percentage="val" :stroke-width="8" :color="scoreColor(val / 100)" style="width:110px" />
+                  <el-progress :percentage="val" :stroke-width="8" :color="scoreColor(val)" style="width:110px" />
                 </div>
               </div>
             </el-popover>
@@ -178,14 +178,14 @@
             <el-popover placement="bottom" :width="210" trigger="hover" :disabled="!row.scoreDetail || Object.keys(row.scoreDetail).length === 0">
               <template #reference>
                 <div style="cursor:pointer; padding:4px 0;">
-                  <el-progress :percentage="matchPercent(row.matchScore)" :color="scoreColor(row.matchScore)" :stroke-width="10" />
+                  <el-progress :percentage="matchPercent(row.matchScore)" :color="scoreColor(matchPercent(row.matchScore))" :stroke-width="10" />
                 </div>
               </template>
               <div class="dimension-popover">
                 <div class="dimension-title">子维度匹配详情</div>
                 <div v-for="(val, key) in row.scoreDetail" :key="key" class="dimension-row">
                   <span class="dimension-label">{{ dimLabel(key) }}</span>
-                  <el-progress :percentage="val" :stroke-width="8" :color="scoreColor(val / 100)" style="width:110px" />
+                  <el-progress :percentage="val" :stroke-width="8" :color="scoreColor(val)" style="width:110px" />
                 </div>
               </div>
             </el-popover>
@@ -278,11 +278,9 @@ import { ref, watch, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { MagicStick } from '@element-plus/icons-vue'
 import { jobAPI, classAPI, jobMatchAPI, userAPI } from '@/api'
-import { useUserStore } from '@/stores/user'
 import { formatDate } from '@/utils/formatDate'
+import { matchScoreToPercent as matchPercent, dimLabel, scoreColor } from '@/utils/score'
 import * as echarts from 'echarts'
-
-const userStore = useUserStore()
 
 const loading = ref(false)
 const generating = ref(false)
@@ -292,6 +290,7 @@ const jobList = ref([])
 const classList = ref([])
 const studentList = ref([])
 const matchList = ref([])
+const allMatchList = ref([])  // 全量匹配数据（用于统计，避免分页后统计失真）
 const matchStats = ref({ matched: 0, pushed: 0, viewed: 0 })
 const selectedJobId = ref('')
 const selectedClassId = ref('')
@@ -305,7 +304,6 @@ const createForm = ref({ jobId: null, studentId: null })
 // 模式切换
 const matchMode = ref('job')
 const selectedStudentId = ref('')
-const selectedStudentObj = ref(null)
 const studentModeStudents = ref([])
 const selectedStudentClassId = ref('')
 
@@ -403,7 +401,8 @@ const generateMatch = async () => {
       )
       await jobMatchAPI.deleteMatchesByJob(selectedJobId.value)
     } catch (e) {
-      if (e !== 'cancel') ElMessage.error('删除旧记录失败')
+      // 用户取消或关闭对话框时不弹错误，仅真实删除失败才提示
+      if (e !== 'cancel' && e !== 'close') ElMessage.error('删除旧记录失败')
       return
     }
   }
@@ -471,6 +470,7 @@ const loadResults = async () => {
         pushTime: m.pushTime || '',
         className: m.className || ''
       }))
+      allMatchList.value = fullList
       updateStats(fullList)
       // 前端分页
       const start = (currentPage.value - 1) * pageSize.value
@@ -504,7 +504,6 @@ const switchMode = (mode) => {
 // ===== 学生模式 =====
 const onStudentClassChange = async () => {
   selectedStudentId.value = ''
-  selectedStudentObj.value = null
   studentModeStudents.value = []
   matchList.value = []
   total.value = 0
@@ -589,7 +588,7 @@ const onPageChange = () => {
 }
 
 const updateStats = (list) => {
-  list = list || matchList.value
+  list = list || allMatchList.value || matchList.value
   const matched = list.length
   const pushed = list.filter(m => m.pushed).length
   const viewed = list.filter(m => m.viewed || m.isClicked).length
@@ -621,6 +620,9 @@ const pushSingle = async (row) => {
     if (res.code === 200) {
       row.pushed = true
       row.isPushed = 1
+      // 同步更新全量数据中的对应记录，再基于全量重算统计
+      const fullRow = allMatchList.value.find(m => m.id === row.id)
+      if (fullRow) { fullRow.pushed = true; fullRow.isPushed = 1 }
       updateStats()
       ElMessage.success('推送成功')
     }
@@ -736,20 +738,6 @@ const cellClass = (s, dim) => {
   if (val >= 80) return 'dim-high'
   if (val >= 60) return 'dim-mid'
   return 'dim-low'
-}
-
-const matchPercent = (score) => Math.round((typeof score === 'number' ? score : parseFloat(score || 0)) * 100)
-
-const scoreColor = (score) => {
-  const p = matchPercent(score)
-  if (p >= 80) return '#10B981'
-  if (p >= 60) return '#F59E0B'
-  return '#EF4444'
-}
-
-const dimLabel = (key) => {
-  const labels = { skillMatch: '技能匹配', eduMatch: '学历匹配', expMatch: '经验匹配', majorFit: '专业契合' }
-  return labels[key] || key
 }
 
 const distPct = (tier) => {

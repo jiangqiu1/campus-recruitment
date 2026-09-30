@@ -8,7 +8,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import java.security.SecureRandom;
 
 /**
  * AES 加密工具类（标准Java实现）
@@ -18,23 +18,30 @@ import java.util.Base64;
 @Component
 public class AESUtil {
     
-    @Value("${aes.key:recruitment-aes-key-12}")
+    @Value("${aes.key}")
     private String key;
     
-    @Value("${aes.iv:recruitment-iv123}")
-    private String iv;
+    @Value("${aes.iv:}")
+    private String legacyIv;
     
     private SecretKeySpec secretKey;
-    private IvParameterSpec ivParameterSpec;
+    private IvParameterSpec legacyIvParameterSpec;
+    
+    private static final String PREFIX = "v1:";
+    private static final SecureRandom RANDOM = new SecureRandom();
     
     @PostConstruct
     public void init() {
-        // 初始化密钥和IV（确保长度正确）
+        // 校验密钥长度（AES 至少 16 字节）
+        if (key == null || key.getBytes(StandardCharsets.UTF_8).length < 16) {
+            throw new IllegalStateException("aes.key 未配置或长度不足 16 字节，请在 application.yml 中配置");
+        }
         byte[] keyBytes = padKey(key.getBytes(StandardCharsets.UTF_8), 16);
-        byte[] ivBytes = padKey(iv.getBytes(StandardCharsets.UTF_8), 16);
-        
         this.secretKey = new SecretKeySpec(keyBytes, "AES");
-        this.ivParameterSpec = new IvParameterSpec(ivBytes);
+        // 旧数据兼容用的固定 IV（可选，仅用于解密历史数据）
+        if (legacyIv != null && !legacyIv.isEmpty()) {
+            this.legacyIvParameterSpec = new IvParameterSpec(padKey(legacyIv.getBytes(StandardCharsets.UTF_8), 16));
+        }
     }
     
     /**
@@ -54,10 +61,13 @@ public class AESUtil {
             return null;
         }
         try {
+            // 每次加密生成随机 IV，避免相同明文产生相同密文
+            byte[] ivBytes = new byte[16];
+            RANDOM.nextBytes(ivBytes);
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec);
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey, new IvParameterSpec(ivBytes));
             byte[] encrypted = cipher.doFinal(content.getBytes(StandardCharsets.UTF_8));
-            return bytesToHex(encrypted);
+            return PREFIX + bytesToHex(ivBytes) + bytesToHex(encrypted);
         } catch (Exception e) {
             throw new RuntimeException("AES加密失败", e);
         }
@@ -71,43 +81,24 @@ public class AESUtil {
             return null;
         }
         try {
+            byte[] ivBytes;
+            byte[] cipherBytes;
+            if (encrypted.startsWith(PREFIX)) {
+                // 新格式：v1: + IV(32 hex) + 密文
+                String body = encrypted.substring(PREFIX.length());
+                ivBytes = hexToBytes(body.substring(0, 32));
+                cipherBytes = hexToBytes(body.substring(32));
+            } else {
+                // 旧格式：固定 IV 密文（兼容历史数据）
+                if (legacyIvParameterSpec == null) {
+                    throw new IllegalStateException("旧数据需配置 aes.iv 才能解密");
+                }
+                ivBytes = legacyIvParameterSpec.getIV();
+                cipherBytes = hexToBytes(encrypted);
+            }
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec);
-            byte[] decrypted = cipher.doFinal(hexToBytes(encrypted));
-            return new String(decrypted, StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            throw new RuntimeException("AES解密失败", e);
-        }
-    }
-    
-    /**
-     * 加密（返回Base64字符串）
-     */
-    public String encryptBase64(String content) {
-        if (content == null) {
-            return null;
-        }
-        try {
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivParameterSpec);
-            byte[] encrypted = cipher.doFinal(content.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(encrypted);
-        } catch (Exception e) {
-            throw new RuntimeException("AES加密失败", e);
-        }
-    }
-    
-    /**
-     * 解密（Base64字符串）
-     */
-    public String decryptBase64(String encrypted) {
-        if (encrypted == null) {
-            return null;
-        }
-        try {
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec);
-            byte[] decrypted = cipher.doFinal(Base64.getDecoder().decode(encrypted));
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, new IvParameterSpec(ivBytes));
+            byte[] decrypted = cipher.doFinal(cipherBytes);
             return new String(decrypted, StandardCharsets.UTF_8);
         } catch (Exception e) {
             throw new RuntimeException("AES解密失败", e);

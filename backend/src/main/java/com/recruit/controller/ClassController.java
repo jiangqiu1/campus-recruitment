@@ -148,10 +148,9 @@ public class ClassController extends BaseController {
      */
     @GetMapping("/{id}")
     public Result<Class> getClassById(@PathVariable Long id) {
+        // 校验归属：教师只能查自己班，管理员不受限
+        checkClassOwnership(id);
         Class clazz = classService.getById(id);
-        if (clazz == null) {
-            return Result.error(404, "班级不存在");
-        }
         return Result.success(clazz);
     }
     
@@ -175,7 +174,19 @@ public class ClassController extends BaseController {
      */
     @GetMapping("/by-major/{major}")
     public Result<List<Class>> getClassesByMajor(@PathVariable String major) {
-        List<Class> classes = classService.selectByMajor(major);
+        Integer role = getCurrentRole();
+        List<Class> classes;
+        if (Objects.equals(role, 3)) {
+            // 管理员：查看全部
+            classes = classService.selectByMajor(major);
+        } else if (Objects.equals(role, 1)) {
+            // 教师：只查看自己的班级
+            classes = classService.selectByTeacherId(getCurrentUserId()).stream()
+                    .filter(c -> major.equals(c.getMajor()))
+                    .collect(Collectors.toList());
+        } else {
+            return Result.error(403, "无权限访问");
+        }
         return Result.success(classes);
     }
     
@@ -184,7 +195,19 @@ public class ClassController extends BaseController {
      */
     @GetMapping("/by-grade/{grade}")
     public Result<List<Class>> getClassesByGrade(@PathVariable String grade) {
-        List<Class> classes = classService.selectByGrade(grade);
+        Integer role = getCurrentRole();
+        List<Class> classes;
+        if (Objects.equals(role, 3)) {
+            // 管理员：查看全部
+            classes = classService.selectByGrade(grade);
+        } else if (Objects.equals(role, 1)) {
+            // 教师：只查看自己的班级
+            classes = classService.selectByTeacherId(getCurrentUserId()).stream()
+                    .filter(c -> grade.equals(c.getGrade()))
+                    .collect(Collectors.toList());
+        } else {
+            return Result.error(403, "无权限访问");
+        }
         return Result.success(classes);
     }
     
@@ -243,7 +266,37 @@ public class ClassController extends BaseController {
         }
         return Result.success("班级删除成功");
     }
-    
+
+    /**
+     * 批量删除班级（逻辑删除）
+     * 逐个复用单删的归属校验（非管理员只能删自己的班级），全部通过后统一删除
+     */
+    @LogOperation("批量删除班级")
+    @Transactional(rollbackFor = Exception.class)
+    @PostMapping("/batch-delete")
+    public Result<String> batchDeleteClasses(@RequestBody List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Result.error("请选择要删除的班级");
+        }
+        Integer role = getCurrentRole();
+        Long userId = getCurrentUserId();
+        for (Long id : ids) {
+            Class clazz = classService.getById(id);
+            if (clazz == null) {
+                return Result.error(404, "班级不存在");
+            }
+            // 非管理员只能删除自己的班级
+            if (!Objects.equals(role, 3) && !Objects.equals(clazz.getTeacherId(), userId)) {
+                return Result.error(403, "无权删除其他教师的班级");
+            }
+        }
+        boolean success = classService.removeByIds(ids);
+        if (!success) {
+            return Result.error("批量删除班级失败");
+        }
+        return Result.success("批量删除成功");
+    }
+
     /**
      * 添加学生到班级（校验班级所属权）
      */

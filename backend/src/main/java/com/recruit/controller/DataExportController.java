@@ -12,6 +12,7 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.recruit.entity.*;
 import com.recruit.service.*;
+import com.recruit.utils.AESUtil;
 import com.recruit.utils.Result;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -49,6 +50,9 @@ public class DataExportController extends BaseController {
 
     @Autowired
     private ResumeService resumeService;
+
+    @Autowired
+    private AESUtil aesUtil;
 
     @PostMapping
     public void export(@RequestBody ExportRequest request, HttpServletResponse response) throws Exception {
@@ -272,6 +276,18 @@ public class DataExportController extends BaseController {
 
     // ==================== 数据获取 ====================
 
+    /**
+     * 解密敏感字段（手机号/联系电话），为空或解密失败时返回原值
+     */
+    private String decryptSafely(String value) {
+        if (value == null || value.isEmpty()) return "";
+        try {
+            return aesUtil.decrypt(value);
+        } catch (Exception e) {
+            return value;
+        }
+    }
+
     private List<String[]> getExportData(String type, String filter) {
         List<String[]> rows = new ArrayList<>();
         String lowerFilter = filter.toLowerCase();
@@ -286,10 +302,10 @@ public class DataExportController extends BaseController {
                         .filter(u -> filter.isEmpty()
                                 || u.getRealName() != null && u.getRealName().toLowerCase().contains(lowerFilter)
                                 || u.getUsername() != null && u.getUsername().toLowerCase().contains(lowerFilter)
-                                || u.getPhone() != null && u.getPhone().contains(filter))
+                                || decryptSafely(u.getPhone()).contains(filter))
                         .forEach(u -> rows.add(new String[]{
                                 String.valueOf(u.getId()), u.getUsername(), u.getRealName(),
-                                "学生", u.getPhone() != null ? u.getPhone() : "",
+                                "学生", decryptSafely(u.getPhone()),
                                 u.getStatus() == 1 ? "启用" : "禁用",
                                 u.getCreateTime() != null ? u.getCreateTime().toString().replace("T", " ") : ""
                         }));
@@ -307,7 +323,7 @@ public class DataExportController extends BaseController {
                                 String.valueOf(c.getId()), c.getName(),
                                 c.getIndustry() != null ? c.getIndustry() : "",
                                 c.getContactPerson() != null ? c.getContactPerson() : "",
-                                c.getContactPhone() != null ? c.getContactPhone() : "",
+                                decryptSafely(c.getContactPhone()),
                                 c.getStatus() != null ? (c.getStatus() == 1 ? "通过" : c.getStatus() == 0 ? "待审核" : "拒绝") : "",
                                 c.getCooperationLevel() != null ? String.valueOf(c.getCooperationLevel()) : "",
                                 c.getCreateTime() != null ? c.getCreateTime().toString().replace("T", " ") : ""

@@ -4,11 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.recruit.entity.Class;
+import com.recruit.entity.Delivery;
+import com.recruit.entity.Job;
 import com.recruit.entity.Resume;
 import com.recruit.entity.SysUser;
 import com.recruit.service.ClassService;
+import com.recruit.service.DeliveryService;
+import com.recruit.service.JobService;
 import com.recruit.service.ResumeService;
 import com.recruit.service.UserService;
+import com.recruit.utils.AESUtil;
 import com.recruit.utils.AiService;
 import com.recruit.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 简历管理控制器
@@ -36,6 +42,15 @@ public class ResumeController extends BaseController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AESUtil aesUtil;
+
+    @Autowired
+    private JobService jobService;
+
+    @Autowired
+    private DeliveryService deliveryService;
     
     /**
      * 获取简历列表（教师/管理员）
@@ -63,8 +78,12 @@ public class ResumeController extends BaseController {
      */
     @GetMapping("/my")
     public Result<Resume> getMyResume(@RequestParam(required = false) Long studentId) {
-        if (studentId == null) studentId = getCurrentUserId();
-        Resume resume = resumeService.selectByStudentId(studentId);
+        // 强制使用当前登录用户，忽略外部传入的 studentId，防止越权访问他人简历
+        Long currentUserId = getCurrentUserId();
+        if (currentUserId == null) {
+            return Result.error(401, "未授权");
+        }
+        Resume resume = resumeService.selectByStudentId(currentUserId);
         if (resume == null) {
             return Result.error(404, "简历不存在");
         }
@@ -109,7 +128,7 @@ public class ResumeController extends BaseController {
             SysUser user = userService.getById(studentId);
             if (user != null) {
                 if (name != null) user.setRealName(name.toString());
-                if (phone != null) user.setPhone(phone.toString());
+                if (phone != null) user.setPhone(aesUtil.encrypt(phone.toString()));
                 if (email != null) user.setEmail(email.toString());
                 if (gender != null) {
                     try { user.setGender(Integer.valueOf(gender.toString())); } catch (Exception ignored) {}
@@ -306,17 +325,48 @@ public class ResumeController extends BaseController {
     @GetMapping("/student/{studentId}")
     public Result<Resume> getStudentResume(@PathVariable Long studentId) {
         Integer role = getCurrentRole();
+        Long currentUserId = getCurrentUserId();
+
         if (Objects.equals(role, 1)) {
+            // 教师：只能查看本班学生
             boolean inMyClass = false;
             try {
-                List<Class> myClasses = classService.selectByTeacherId(getCurrentUserId());
+                List<Class> myClasses = classService.selectByTeacherId(currentUserId);
                 for (Class cls : myClasses) {
                     List<Long> ids = classService.getStudentIdsByClassId(cls.getId());
                     if (ids != null && ids.contains(studentId)) { inMyClass = true; break; }
                 }
             } catch (Exception ignored) {}
             if (!inMyClass) return Result.error(403, "无权查看该学生简历");
+        } else if (Objects.equals(role, 0)) {
+            // 学生：只能查看自己的简历
+            if (!Objects.equals(studentId, currentUserId)) {
+                return Result.error(403, "无权查看该学生简历");
+            }
+        } else if (Objects.equals(role, 2)) {
+            // HR：只能查看投递了本企业岗位的学生
+            boolean allowed = false;
+            try {
+                SysUser hr = userService.getById(currentUserId);
+                Long companyId = hr != null ? hr.getCompanyId() : null;
+                if (companyId != null) {
+                    List<Job> companyJobs = jobService.lambdaQuery()
+                            .eq(Job::getCompanyId, companyId)
+                            .list();
+                    if (companyJobs != null && !companyJobs.isEmpty()) {
+                        List<Long> jobIds = companyJobs.stream().map(Job::getId).collect(Collectors.toList());
+                        long deliveryCount = deliveryService.lambdaQuery()
+                                .eq(Delivery::getStudentId, studentId)
+                                .in(Delivery::getJobId, jobIds)
+                                .count();
+                        allowed = deliveryCount > 0;
+                    }
+                }
+            } catch (Exception ignored) {}
+            if (!allowed) return Result.error(403, "无权查看该学生简历");
         }
+        // 管理员（role=3）：无限制
+
         Resume resume = resumeService.selectByStudentId(studentId);
         if (resume == null) {
             return Result.error(404, "该学生简历不存在");

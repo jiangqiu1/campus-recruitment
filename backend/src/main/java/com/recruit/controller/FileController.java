@@ -110,18 +110,34 @@ public class FileController {
      */
     @DeleteMapping("/delete")
     public Result<String> delete(@RequestParam String fileUrl) {
+        // 1. 校验 URL 必须以访问前缀开头（白名单前缀）
+        if (fileUrl == null || !fileUrl.startsWith(accessUrl)) {
+            return Result.error(400, "非法的文件路径");
+        }
+        // 2. 拒绝路径穿越字符
+        if (fileUrl.contains("..") || fileUrl.contains("\\")) {
+            return Result.error(400, "非法的文件路径");
+        }
         try {
-            // 将URL路径转换为本地路径
-            String localPath = fileUrl.replace(accessUrl, uploadPath);
-            File file = new File(localPath);
-            
+            // 3. 转换为本地路径并规范化（getCanonicalPath 会解析 .. 和符号链接）
+            String relativePath = fileUrl.substring(accessUrl.length());
+            File file = new File(uploadPath, relativePath);
+            String canonicalUploadPath = new File(uploadPath).getCanonicalPath();
+            String canonicalFilePath = file.getCanonicalPath();
+            // 4. 规范化后校验仍在上传目录内
+            if (!canonicalFilePath.startsWith(canonicalUploadPath + File.separator)) {
+                return Result.error(400, "非法的文件路径");
+            }
+            // 5. 只允许删除文件，不允许删除目录
+            if (file.isDirectory()) {
+                return Result.error(400, "不能删除目录");
+            }
             if (file.exists() && file.delete()) {
                 return Result.success("删除成功");
             } else {
                 return Result.error(404, "文件不存在或删除失败");
             }
         } catch (Exception e) {
-            e.printStackTrace();
             return Result.error(500, "删除失败：" + e.getMessage());
         }
     }

@@ -161,20 +161,6 @@ export const useUserStore = defineStore('user', () => {
     return roles.value.includes(role) || userRole.value === role
   }
 
-  async function checkToken() {
-    if (!token.value) return false
-    try {
-      const res = await authAPI.checkToken()
-      return res.code === 200
-    } catch (error) {
-      if (error.response?.status === 401) {
-        clearToken()
-        clearUserInfo()
-      }
-      return false
-    }
-  }
-
   // ==================== 工具方法 ====================
   function setToken(newToken) {
     token.value = newToken
@@ -209,6 +195,6 @@ export const useUserStore = defineStore('user', () => {
     isLoggedIn, userId, companyId, username, realName, userRole,
     isAdmin, isTeacher, isHR, isStudent,
     login, logout, getUserInfo, updateUserInfo, changePassword,
-    hasPermission, hasRole, checkToken
+    hasPermission, hasRole
   }
 })

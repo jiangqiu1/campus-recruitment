@@ -23,7 +23,7 @@
       <div class="chart-title">各岗位评分概况</div>
       <el-table :data="jobScores" stripe style="width: 100%;">
         <el-table-column prop="title" label="岗位名称" />
-        <el-table-column prop="total" label="投递总数" width="100" />
+        <el-table-column prop="total" label="浏览次数" width="100" />
         <el-table-column prop="scored" label="已评分" width="100" />
         <el-table-column prop="avgScore" label="平均分" width="120">
           <template #default="{ row }">
@@ -91,6 +91,7 @@ import { useUserStore } from '@/stores/user.js'
 import { jobAPI, resumeScoreAPI } from '@/api/index.js'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
+import { scoreColor, scoreTag, parseScoreDetail } from '@/utils/score'
 
 const userStore = useUserStore()
 
@@ -144,11 +145,9 @@ const loadJobScores = async () => {
         const avgScore = avgRes.code === 200 ? Math.round(avgRes.data.averageScore) : 0
         const dist = distRes.code === 200 ? distRes.data : {}
 
-        let total = 0
         let scored = 0
         if (dist) {
           Object.values(dist).forEach(v => {
-            total += v
             if (v > 0) scored += v
           })
         }
@@ -185,16 +184,9 @@ const loadJobScores = async () => {
         dimensionAvg.stability || 0,
         dimensionAvg.overall || 0
       ]
-    } else if (data.length > 0) {
-      const avg = data.reduce((s, d) => s + d.avgScore, 0) / data.length
-      radarData.value.value = [
-        Math.min(100, avg + 15),
-        Math.min(100, avg + 5),
-        Math.min(100, avg - 5),
-        Math.min(100, avg - 10),
-        Math.min(100, avg),
-        Math.min(100, avg + 10)
-      ]
+    } else {
+      // 无真实维度数据时清空雷达图，不伪造数据
+      radarData.value.value = []
     }
   } catch (e) {
     console.error('加载评分数据失败', e)
@@ -210,23 +202,16 @@ const viewJobDetail = async (row) => {
     const res = await resumeScoreAPI.getScoresByJobId(row.id)
     if (res.code === 200 && Array.isArray(res.data)) {
       detailData.value = res.data.map(log => {
-        let skillScore = '-', expScore = '-', eduScore = '-', salaryScore = '-'
-        if (log.scoreDetail) {
-          try {
-            const dims = JSON.parse(log.scoreDetail)
-            skillScore = dims['技能得分'] ?? dims.skills ?? '-'
-            expScore = dims['经验得分'] ?? dims.experience ?? '-'
-            eduScore = dims['教育得分'] ?? dims.education ?? '-'
-            salaryScore = dims['薪资匹配'] ?? dims.salary ?? '-'
-          } catch {}
-        }
+        const parsed = parseScoreDetail(log.scoreDetail)
+        const dimMap = {}
+        parsed.dims.forEach(d => { dimMap[d.key] = d.score })
         return {
           studentName: log.studentName || '学生 #' + (log.deliveryId || log.id),
           score: log.score,
-          skillScore,
-          expScore,
-          eduScore,
-          salaryScore,
+          skillScore: dimMap.skill ?? '-',
+          expScore: dimMap.exp ?? '-',
+          eduScore: dimMap.edu ?? '-',
+          salaryScore: dimMap.salary ?? '-',
           createTime: log.createTime
         }
       })
@@ -236,18 +221,6 @@ const viewJobDetail = async (row) => {
   } finally {
     detailLoading.value = false
   }
-}
-
-const scoreColor = (score) => {
-  if (score >= 90) return '#67C23A'
-  if (score >= 75) return '#E6A23C'
-  return '#F56C6C'
-}
-
-const scoreTag = (score) => {
-  if (score >= 90) return 'success'
-  if (score >= 75) return 'warning'
-  return 'danger'
 }
 
 const renderCharts = () => {

@@ -1,9 +1,11 @@
 package com.recruit.utils;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,6 +22,7 @@ import java.util.*;
 public class AiService {
 
     private static final Logger log = LoggerFactory.getLogger(AiService.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Value("${ai.api.key:}")
     private String apiKey;
@@ -30,7 +33,17 @@ public class AiService {
     @Value("${ai.api.model:deepseek-chat}")
     private String model;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = buildRestTemplate();
+
+    /**
+     * 构建带连接/读取超时的 RestTemplate（AI 生成最长可达 30s+，读取超时需放宽到 60s）
+     */
+    private static RestTemplate buildRestTemplate() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(10_000);
+        factory.setReadTimeout(60_000);
+        return new RestTemplate(factory);
+    }
 
     /**
      * 简历评分：根据岗位描述和简历内容打分
@@ -211,8 +224,7 @@ public class AiService {
                 json = json.substring(start, end);
             }
 
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            return mapper.readValue(json, Map.class);
+            return OBJECT_MAPPER.readValue(json, Map.class);
         } catch (Exception e) {
             log.error("[AiService] JSON 解析失败 (task={}), content={}", taskName, content, e);
             return fallbackMock(taskName);

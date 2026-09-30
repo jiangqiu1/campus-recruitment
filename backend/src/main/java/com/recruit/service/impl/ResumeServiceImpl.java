@@ -45,6 +45,11 @@ public class ResumeServiceImpl extends ServiceImpl<ResumeMapper, Resume> impleme
         return updateById(resume);
     }
     
+    /**
+     * 遗留假实现（⚠️ 勿用于真实场景）：返回硬编码模拟解析结果。
+     * 真实 AI 简历解析走 ResumeController.upload-and-parse / AiParseController（DeepSeek），
+     * 本方法对应 POST /resumes/{id}/parse，PC 前端无调用方，保留仅为兼容可能的小程序端。
+     */
     @Override
     public String parseResumePdf(String pdfUrl) {
         // TODO：调用AI解析服务（讯飞星火OCR + NLP）
@@ -52,6 +57,10 @@ public class ResumeServiceImpl extends ServiceImpl<ResumeMapper, Resume> impleme
         return "{\"education\":\"本科\",\"skills\":[\"Java\",\"Spring\",\"MySQL\"],\"experience\":\"2年开发经验\"}";
     }
     
+    /**
+     * 遗留假实现（⚠️ 勿用于真实场景）：写死技能标签/求职意向。
+     * 与 parseResumePdf 配套，同属 POST /resumes/{id}/parse 的 mock 链路。
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateSkillTags(Long resumeId) {
