@@ -194,7 +194,9 @@ export const aiParseAPI = {
   getParseLogs: (params) => request.get('/ai-parse/logs', { params }),
   // force=true 强制重新调用 AI；默认简历未变更时后端直接返回缓存诊断结果
   analyzeResume: (studentId, force) => request.post('/ai-parse/analyze-resume', { studentId, force }),
-  parseJob: (rawMessage) => request.post('/ai-parse/parse-job', { rawMessage })
+  parseJob: (rawMessage) => request.post('/ai-parse/parse-job', { rawMessage }),
+  // 多模型对比统计（毕设实验看板：按 provider/任务聚合 ai_parse_log）
+  getModelComparison: () => request.get('/statistics/ai/model-comparison')
 }
 
 // ==================== 操作日志模块 ====================

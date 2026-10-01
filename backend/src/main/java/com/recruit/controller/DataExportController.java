@@ -57,6 +57,9 @@ public class DataExportController extends BaseController {
     private ResumeService resumeService;
 
     @Autowired
+    private AiParseLogService aiParseLogService;
+
+    @Autowired
     private AESUtil aesUtil;
 
     @PostMapping
@@ -426,6 +429,23 @@ public class DataExportController extends BaseController {
                             r.getUpdateTime() != null ? r.getUpdateTime().toString().replace("T", " ") : ""
                     });
                 }
+                break;
+
+            case "ai":
+                rows.add(new String[]{"ID", "调用时间", "AI提供方", "任务类型", "耗时(ms)", "是否降级", "用户ID"});
+                aiParseLogService.lambdaQuery()
+                        .orderByDesc(AiParseLog::getCreateTime)
+                        .last("LIMIT " + MAX_EXPORT_ROWS)
+                        .list()
+                        .forEach(l -> rows.add(new String[]{
+                                String.valueOf(l.getId()),
+                                l.getCreateTime() != null ? l.getCreateTime().toString().replace("T", " ") : "",
+                                l.getProvider() != null ? l.getProvider() : "",
+                                l.getTaskName() != null ? l.getTaskName() : "",
+                                l.getLatencyMs() != null ? String.valueOf(l.getLatencyMs()) : "",
+                                l.getMockFlag() != null && l.getMockFlag() == 1 ? "是" : "否",
+                                l.getUserId() != null ? String.valueOf(l.getUserId()) : ""
+                        }));
                 break;
 
             default:

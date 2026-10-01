@@ -2,7 +2,40 @@
   <div class="ai-stats fade-in">
     <div class="page-header">
       <h2>AI使用统计</h2>
-      <p>全局 AI 功能使用情况 · 教师使用排行</p>
+      <p>全局 AI 功能使用情况 · 多模型对比实验数据</p>
+    </div>
+
+    <!-- 多模型对比看板（毕设实验数据，来源 ai_parse_log） -->
+    <div class="content-card compare-card">
+      <div class="content-card-header">
+        <span class="content-card-title">多模型对比看板</span>
+        <span class="compare-sub">每次 AI 调用自动记录提供方与耗时，智谱 GLM 接入后自动纳入对比</span>
+      </div>
+      <el-table v-if="modelStats.providers.length" :data="modelStats.providers" stripe>
+        <el-table-column label="AI 提供方" width="160">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.provider === 'glm' ? 'success' : row.provider === 'deepseek' ? 'primary' : 'info'">{{ providerLabel(row.provider) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="调用次数" width="110" align="center">
+          <template #default="{ row }">{{ row.calls }}</template>
+        </el-table-column>
+        <el-table-column label="平均耗时" width="130" align="center">
+          <template #default="{ row }">{{ row.avgLatency }} ms</template>
+        </el-table-column>
+        <el-table-column label="降级（mock）次数" width="150" align="center">
+          <template #default="{ row }">{{ row.mockCount }}</template>
+        </el-table-column>
+        <el-table-column label="降级率" min-width="180">
+          <template #default="{ row }">
+            <el-progress :percentage="row.calls ? Math.round(row.mockCount / row.calls * 100) : 0" :stroke-width="10" />
+          </template>
+        </el-table-column>
+      </el-table>
+      <div v-else class="empty-state">
+        <el-empty :image-size="80" description="暂无 AI 调用记录" />
+      </div>
+      <div v-if="modelStats.providers.length" ref="compareChart" style="height:260px;margin-top:20px"></div>
     </div>
 
     <div class="stat-grid">
@@ -81,8 +114,15 @@ const matchRecords = ref([])
 const scoreRecords = ref([])
 const trendChart = ref(null)
 const pieChart = ref(null)
+const compareChart = ref(null)
 let trendInstance = null
 let pieInstance = null
+let compareInstance = null
+
+// 多模型对比统计（后端聚合 ai_parse_log）
+const modelStats = ref({ providers: [], tasks: [], total: 0, mockCount: 0 })
+
+const providerLabel = (p) => ({ deepseek: 'DeepSeek', glm: '智谱 GLM', unknown: '未记录' }[p] || p)
 
 onMounted(async () => {
   await loadData()
@@ -93,18 +133,25 @@ onMounted(async () => {
 onUnmounted(() => {
   trendInstance?.dispose()
   pieInstance?.dispose()
+  compareInstance?.dispose()
 })
 
 const loadData = async () => {
   loading.value = true
   try {
     // 并发获取各种数据
-    const [parseRes, allUsersRes, matchRes, scoreRes] = await Promise.all([
+    const [parseRes, allUsersRes, matchRes, scoreRes, compareRes] = await Promise.all([
       aiParseAPI.getParseLogs({ page: 1, size: 500 }),
       userAPI.getUsers({ page: 1, size: 500 }),
       jobMatchAPI.getMatches({ page: 1, size: 500 }),
-      resumeScoreAPI.getScores({ page: 1, size: 500 })
+      resumeScoreAPI.getScores({ page: 1, size: 500 }),
+      aiParseAPI.getModelComparison().catch(() => null)
     ])
+
+    // 0. 多模型对比统计
+    if (compareRes && compareRes.code === 200 && compareRes.data) {
+      modelStats.value = { providers: [], tasks: [], total: 0, mockCount: 0, ...compareRes.data }
+    }
 
     // 1. 解析AI解析日志
     if (parseRes.code === 200) {
@@ -249,10 +296,41 @@ const renderCharts = () => {
       }]
     })
   }
+
+  // 多模型对比：调用量柱状图 + 平均耗时折线（双轴）
+  if (compareChart.value && modelStats.value.providers.length) {
+    compareInstance = echarts.init(compareChart.value)
+    const names = modelStats.value.providers.map(p => providerLabel(p.provider))
+    compareInstance.setOption({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['调用次数', '平均耗时(ms)'], bottom: 0 },
+      grid: { left: 55, right: 60, top: 30, bottom: 45 },
+      xAxis: { type: 'category', data: names, axisLabel: { fontSize: 12, color: '#86909C' } },
+      yAxis: [
+        { type: 'value', name: '调用次数', minInterval: 1, axisLabel: { fontSize: 12, color: '#86909C' } },
+        { type: 'value', name: '耗时(ms)', axisLabel: { fontSize: 12, color: '#86909C' } }
+      ],
+      series: [
+        {
+          name: '调用次数', type: 'bar', barWidth: 40,
+          data: modelStats.value.providers.map(p => p.calls),
+          itemStyle: { color: '#8B5CF6', borderRadius: [4, 4, 0, 0] }
+        },
+        {
+          name: '平均耗时(ms)', type: 'line', yAxisIndex: 1, smooth: true,
+          data: modelStats.value.providers.map(p => p.avgLatency),
+          lineStyle: { color: '#165DFF', width: 3 },
+          itemStyle: { color: '#165DFF' }
+        }
+      ]
+    })
+  }
 }
 </script>
 
 <style scoped>
+.compare-card { margin-bottom: 28px; }
+.compare-sub { font-size: 12px; color: #86909C; }
 .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; }
 .chart-box { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 6px 16px rgba(0,0,0,0.06); position: relative; overflow: hidden; }
 .chart-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg,#8B5CF6,#A78BFA,transparent); border-radius: 16px 16px 0 0; }

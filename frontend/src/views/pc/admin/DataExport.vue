@@ -14,6 +14,7 @@
             <el-option label="投递记录" value="delivery" />
             <el-option label="企业信息" value="company" />
             <el-option label="岗位信息" value="job" />
+            <el-option label="AI调用记录（多模型对比）" value="ai" />
           </el-select>
         </el-form-item>
         
@@ -57,7 +58,8 @@ const filterPlaceholder = computed(() => {
     company: '按企业名称 / 行业 / 联系人筛选',
     job: '按岗位名称 / 学历要求 / 工作地点筛选',
     delivery: '按学生ID / 岗位ID筛选',
-    resume: '按学生ID / 学历 / 求职意向筛选'
+    resume: '按学生ID / 学历 / 求职意向筛选',
+    ai: 'AI调用记录导出最近5000条（含模型、耗时、降级标记），筛选条件不适用'
   }
   return tips[exportForm.value.type] || '输入筛选条件（可选）'
 })

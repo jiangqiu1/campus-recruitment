@@ -1,6 +1,7 @@
 package com.recruit.controller;
 
 import com.recruit.entity.Delivery;
+import com.recruit.entity.AiParseLog;
 import com.recruit.entity.Class;
 import com.recruit.entity.Job;
 import com.recruit.entity.OperationLog;
@@ -59,6 +60,9 @@ public class StatisticsController extends BaseController {
 
     @Autowired
     private ResumeScoreLogService resumeScoreLogService;
+
+    @Autowired(required = false)
+    private AiParseLogService aiParseLogService;
 
     /**
      * 学生端首页概览统计
@@ -450,7 +454,7 @@ public class StatisticsController extends BaseController {
             Map<String, Object> item = new HashMap<>();
             item.put("name", e.getValue());
             long count = cntByStatus.getOrDefault(getStatusValue(e.getKey()), 0L);
-            item.put("value", count == 0 ? (long) Math.floor(Math.random() * 10) + 1 : count);
+            item.put("value", count);
             distribution.add(item);
         }
         return Result.success(distribution);
@@ -600,6 +604,53 @@ public class StatisticsController extends BaseController {
             }
         }
         return Result.success(activities);
+    }
+
+    /**
+     * AI 多模型对比统计（毕设对比实验数据看板）
+     * 按 provider 汇总调用量/平均耗时/降级次数，按任务汇总调用量
+     */
+    @GetMapping("/ai/model-comparison")
+    public Result<Map<String, Object>> getAiModelComparison() {
+        requireAdmin();
+
+        // CAST 绕开 MySQL 驱动把 TINYINT(1) 读成 Boolean 的问题
+        List<Map<String, Object>> providerRows = aiParseLogService.getBaseMapper().selectMaps(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AiParseLog>()
+                        .select("provider, COUNT(*) AS calls, AVG(latency_ms) AS avgLatency, SUM(CAST(mock_flag AS SIGNED)) AS mockCount")
+                        .groupBy("provider"));
+        List<Map<String, Object>> providers = new ArrayList<>();
+        for (Map<String, Object> row : providerRows) {
+            Map<String, Object> p = new HashMap<>();
+            p.put("provider", row.get("provider") != null ? row.get("provider").toString() : "unknown");
+            p.put("calls", row.get("calls") != null ? Integer.parseInt(row.get("calls").toString()) : 0);
+            p.put("avgLatency", row.get("avgLatency") != null ? (int) Math.round(Double.parseDouble(row.get("avgLatency").toString())) : 0);
+            p.put("mockCount", row.get("mockCount") != null ? Integer.parseInt(row.get("mockCount").toString()) : 0);
+            providers.add(p);
+        }
+
+        List<Map<String, Object>> taskRows = aiParseLogService.getBaseMapper().selectMaps(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AiParseLog>()
+                        .select("task_name, COUNT(*) AS calls")
+                        .groupBy("task_name"));
+        List<Map<String, Object>> tasks = new ArrayList<>();
+        for (Map<String, Object> row : taskRows) {
+            if (row.get("task_name") == null) continue;
+            Map<String, Object> t = new HashMap<>();
+            t.put("task", row.get("task_name").toString());
+            t.put("calls", row.get("calls") != null ? Integer.parseInt(row.get("calls").toString()) : 0);
+            tasks.add(t);
+        }
+
+        long total = providers.stream().mapToLong(p -> ((Number) p.get("calls")).longValue()).sum();
+        long mockTotal = providers.stream().mapToLong(p -> ((Number) p.get("mockCount")).longValue()).sum();
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("providers", providers);
+        data.put("tasks", tasks);
+        data.put("total", total);
+        data.put("mockCount", mockTotal);
+        return Result.success(data);
     }
 
     private int getStatusValue(String name) {
