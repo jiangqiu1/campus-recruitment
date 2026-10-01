@@ -12,6 +12,9 @@
 						<text class="profile-name" @click="editProfile">{{ userInfo.realName || '学生用户' }}</text>
 						<text class="profile-desc">{{ userInfo.school || '职业院校' }} · {{ userInfo.major || '未设置专业' }}</text>
 						<text v-if="classInfo" class="profile-class" @click="editProfile">{{ classInfo.name }}{{ classInfo.teacherName ? ' · ' + classInfo.teacherName + '老师' : '' }}</text>
+						<view class="profile-status-badge">
+							<text class="profile-status-text">求职状态：{{ jobStatus }}</text>
+						</view>
 					</view>
 				</view>
 
@@ -32,9 +35,25 @@
 						</view>
 						<view class="ai-content">
 							<text class="tool-label">AI简历诊断</text>
-							<text class="tool-val">{{ aiScore }}分</text>
+							<text class="tool-val">{{ aiScore > 0 ? aiScore + '分' : '未诊断' }}</text>
 						</view>
 						<uni-icons type="arrowright" size="14" color="rgba(255,255,255,0.7)" />
+					</view>
+				</view>
+			</view>
+
+			<!-- 简历清单：告诉用户缺什么、下一步做什么 -->
+			<view class="checklist-card">
+				<view class="checklist-header">
+					<text class="card-title">简历清单</text>
+					<text class="checklist-edit" @click="gotoFunc('/pages/student/resume-edit')">去完善 ›</text>
+				</view>
+				<view class="checklist-grid">
+					<view v-for="(item, i) in fieldStatuses" :key="i" class="checklist-item" @click="gotoFunc('/pages/student/resume-edit')">
+						<text class="checklist-label">{{ item.label }}</text>
+						<view class="checklist-status" :class="{ done: item.done }">
+							<text>{{ item.done ? '已完成' : '待补充' }}</text>
+						</view>
 					</view>
 				</view>
 			</view>
@@ -132,10 +151,20 @@ const refreshing = ref(false)
 const userInfo = ref({})
 const completeness = ref(0)
 const aiScore = ref(0)
+const fieldStatuses = ref([])
 const classInfo = ref(null) // {id, name, major, grade, teacherName, studentCount}
 const statusBarHeight = ref(0)
 
 const avatarText = computed(() => (userInfo.value.realName || '学').charAt(0))
+
+// 求职状态：按投递推进阶段生成
+const jobStatus = computed(() => {
+	const d = stats.value || {}
+	if ((d.offersCount || 0) > 0) return '已获录用通知'
+	if ((d.interviewCount || 0) > 0) return '面试推进中'
+	if ((d.myDeliveries || 0) > 0) return '积极求职中'
+	return '完善简历中'
+})
 
 onMounted(() => {
 	try {
@@ -184,21 +213,33 @@ const loadStats = async () => {
 		stats.value = statsRes.data || {}
 		const r = resumeRes.data
 		if (r) {
-			const resumeFields = [r.jobTarget, r.education, r.internship, r.skills, r.selfEvaluation]
-			let filled = resumeFields.filter(Boolean).length
-			let total = resumeFields.length
-			try {
-				const raw = uni.getStorageSync('userInfo')
-				if (raw) {
-					const ui = JSON.parse(raw)
-					if (ui.realName) filled++
-					if (ui.phone) filled++
-					if (ui.email) filled++
-				}
-			} catch (e) {}
-			total += 3
-			completeness.value = Math.round((filled / total) * 100)
-			aiScore.value = Math.min(completeness.value + 5, 95)
+			// 字段级清单（与简历页完整度口径一致，9 项）
+			const raw = uni.getStorageSync('userInfo')
+			let ui = {}
+			try { if (raw) ui = JSON.parse(raw) } catch (e) {}
+			const hasContent = (v) => !!v && String(v).trim() && v !== '[]'
+			fieldStatuses.value = [
+				{ label: '基本信息', done: !!(ui.realName && ui.phone && ui.email) },
+				{ label: '求职意向', done: hasContent(r.jobTarget) },
+				{ label: '教育经历', done: hasContent(r.education) },
+				{ label: '实习经历', done: hasContent(r.internship) },
+				{ label: '项目经历', done: hasContent(r.project) },
+				{ label: '技能证书', done: hasContent(r.skills) },
+				{ label: '自我评价', done: hasContent(r.selfEvaluation) }
+			]
+			const filled = fieldStatuses.value.filter(f => f.done).length
+			completeness.value = Math.round((filled / fieldStatuses.value.length) * 100)
+			// AI 诊断分数：读真实诊断结果（教师评估或学生自诊写入 aiAnalysis）
+			if (r.aiAnalysis) {
+				try {
+					const analysis = typeof r.aiAnalysis === 'string' ? JSON.parse(r.aiAnalysis) : r.aiAnalysis
+					aiScore.value = Number(analysis.overallScore) || 0
+				} catch (e) { aiScore.value = 0 }
+			}
+		} else {
+			fieldStatuses.value = []
+			completeness.value = 0
+			aiScore.value = 0
 		}
 	} catch (e) {
 		stats.value = { myDeliveries: 0, interviewCount: 0, offersCount: 0 }
@@ -227,7 +268,7 @@ const gotoFunc = (path) => {
 }
 
 const editProfile = () => uni.navigateTo({ url: '/pages/student/edit-profile' })
-const goToAIDiagnosis = () => uni.navigateTo({ url: '/pages/student/ai-matches' })
+const goToAIDiagnosis = () => uni.navigateTo({ url: '/pages/student/resume' })
 
 const handleLogout = () => {
 	uni.showModal({
@@ -307,6 +348,66 @@ const handleLogout = () => {
 	font-size: 12px;
 	opacity: 0.7;
 	margin-top: 2px;
+}
+.profile-status-badge {
+	margin-top: 8px;
+	align-self: flex-start;
+	background: rgba(255,255,255,0.18);
+	border: 1px solid rgba(255,255,255,0.25);
+	border-radius: 999px;
+	padding: 3px 10px;
+}
+.profile-status-text {
+	font-size: 11px;
+	color: $uni-text-color-inverse;
+	font-weight: 500;
+}
+
+/* 简历清单 */
+.checklist-card {
+	background: $uni-bg-color;
+	border-radius: $uni-border-radius-xl;
+	margin: $uni-spacing-lg $uni-spacing-lg 0;
+	padding: $uni-spacing-lg;
+	box-shadow: $uni-shadow-base;
+}
+.checklist-header {
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: $uni-spacing-base;
+}
+.checklist-edit {
+	font-size: 12px;
+	color: $uni-color-primary;
+	font-weight: 500;
+}
+.checklist-grid {
+	flex-direction: row;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+.checklist-item {
+	width: calc(50% - 4px);
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	background: $uni-bg-color-page;
+	border-radius: $uni-border-radius-base;
+	padding: 10px 12px;
+	box-sizing: border-box;
+}
+.checklist-label {
+	font-size: 13px;
+	color: $uni-text-color-title;
+}
+.checklist-status text {
+	font-size: 11px;
+	color: $uni-color-warning;
+	font-weight: 500;
+}
+.checklist-status.done text {
+	color: $uni-color-success;
 }
 
 /* 工具区：左右边距和下方卡片对齐，不再整体右缩 */
