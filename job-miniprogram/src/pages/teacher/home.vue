@@ -9,34 +9,51 @@
 						<text class="role-badge">就业指导老师</text>
 					</view>
 				</view>
+				<!-- 本班概览 -->
+				<view class="header-stats">
+					<view class="hs-item">
+						<text class="hs-num">{{ dashboard.deliveryCount || 0 }}</text>
+						<text class="hs-label">累计投递</text>
+					</view>
+					<view class="hs-divider" />
+					<view class="hs-item">
+						<text class="hs-num">{{ dashboard.studentCount || 0 }}</text>
+						<text class="hs-label">班级学生</text>
+					</view>
+					<view class="hs-divider" />
+					<view class="hs-item">
+						<text class="hs-num">{{ dashboard.jobCount || 0 }}</text>
+						<text class="hs-label">发布岗位</text>
+					</view>
+				</view>
 			</view>
 
 			<!-- 待办快捷区（2×2卡片，替换原快捷入口） -->
 			<view class="todo-grid">
 				<view class="todo-card" @click="goToApprovals">
 					<view class="todo-top">
-						<text class="todo-num">{{ (dashboard.pendingApprovalCount || 0) > 99 ? '99+' : dashboard.pendingApprovalCount || 0 }}</text>
+						<text class="todo-num" :class="{ zero: !(dashboard.pendingApprovalCount || 0) }">{{ (dashboard.pendingApprovalCount || 0) > 99 ? '99+' : dashboard.pendingApprovalCount || 0 }}</text>
 						<view class="todo-icon"><uni-icons type="auth" size="18" color="#FF7D00" /></view>
 					</view>
 					<text class="todo-label">待审批</text>
 				</view>
 				<view class="todo-card" @click="goToDeliveries">
 					<view class="todo-top">
-						<text class="todo-num">{{ (dashboard.unreadResumeCount || 0) > 99 ? '99+' : dashboard.unreadResumeCount || 0 }}</text>
+						<text class="todo-num" :class="{ zero: !(dashboard.todayDeliveryCount || 0) }">{{ (dashboard.todayDeliveryCount || 0) > 99 ? '99+' : dashboard.todayDeliveryCount || 0 }}</text>
 						<view class="todo-icon"><uni-icons type="bars" size="18" color="#165DFF" /></view>
 					</view>
-					<text class="todo-label">新增投递</text>
+					<text class="todo-label">今日新增投递</text>
 				</view>
 				<view class="todo-card" @click="goToResumes">
 					<view class="todo-top">
-						<text class="todo-num">{{ (dashboard.unreadResumeCount || 0) > 99 ? '99+' : dashboard.unreadResumeCount || 0 }}</text>
+						<text class="todo-num" :class="{ zero: !(dashboard.unreadResumeCount || 0) }">{{ (dashboard.unreadResumeCount || 0) > 99 ? '99+' : dashboard.unreadResumeCount || 0 }}</text>
 						<view class="todo-icon"><uni-icons type="paperplane" size="18" color="#00B42A" /></view>
 					</view>
 					<text class="todo-label">未读简历</text>
 				</view>
 				<view class="todo-card" @click="goToUrgentJobs">
 					<view class="todo-top">
-						<text class="todo-num">{{ (dashboard.urgentJobCount || 0) > 99 ? '99+' : dashboard.urgentJobCount || 0 }}</text>
+						<text class="todo-num" :class="{ zero: !(dashboard.urgentJobCount || 0) }">{{ (dashboard.urgentJobCount || 0) > 99 ? '99+' : dashboard.urgentJobCount || 0 }}</text>
 						<view class="todo-icon"><uni-icons type="star" size="18" color="#F53F3F" /></view>
 					</view>
 					<text class="todo-label">急招岗位</text>
@@ -169,6 +186,38 @@ const goToActivityDetail = (act) => {
 	border-radius: 12px;
 }
 
+/* 本班概览（头部内半透明指标行） */
+.header-stats {
+	flex-direction: row;
+	align-items: center;
+	margin-top: 16px;
+	background: rgba(255,255,255,0.14);
+	border: 1px solid rgba(255,255,255,0.2);
+	border-radius: 12px;
+	padding: 12px 0;
+	position: relative;
+	z-index: 1;
+}
+.hs-item {
+	flex: 1;
+	align-items: center;
+	gap: 2px;
+}
+.hs-num {
+	font-size: 20px;
+	font-weight: 800;
+	color: $uni-text-color-inverse;
+}
+.hs-label {
+	font-size: 11px;
+	color: rgba(255,255,255,0.8);
+}
+.hs-divider {
+	width: 0.5px;
+	height: 28px;
+	background: rgba(255,255,255,0.25);
+}
+
 /* ========== 待办快捷区（2×2卡片） ========== */
 .todo-grid {
 	flex-direction: row;
@@ -196,6 +245,10 @@ const goToActivityDetail = (act) => {
 	font-size: 28px;
 	font-weight: 800;
 	color: $uni-text-color-title;
+}
+/* 待办数为 0 时弱化显示，>0 才有"待办感" */
+.todo-num.zero {
+	color: $uni-text-color-placeholder;
 }
 .todo-icon {
 	width: 36px;
