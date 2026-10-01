@@ -18,26 +18,31 @@
 					</view>
 				</view>
 
-				<!-- 工具区：全宽显示，不避让胶囊（位置在胶囊下方，不会被挡） -->
+				<!-- 成长概览卡：完整度 + AI 诊断 + 继续完善 -->
 				<view class="header-tools">
-					<view class="tool-card">
-						<view class="tool-top">
-							<text class="tool-label">简历完整度</text>
-							<text class="tool-val">{{ completeness }}%</text>
+					<view class="grow-card">
+						<view class="grow-item">
+							<view class="grow-num-row">
+								<text class="grow-num">{{ completeness }}</text>
+								<text class="grow-unit">%</text>
+							</view>
+							<text class="grow-label">简历完整度</text>
 						</view>
-						<view class="progress-bar">
-							<view class="progress-fill" :style="{ width: completeness + '%' }" />
+						<view class="grow-divider" />
+						<view class="grow-item" @click="goToAIDiagnosis">
+							<view class="grow-num-row">
+								<text class="grow-num" :class="{ 'grow-num--empty': !aiScore }">{{ aiScore > 0 ? aiScore : '—' }}</text>
+								<text v-if="aiScore > 0" class="grow-unit">分</text>
+							</view>
+							<text class="grow-label">AI 简历诊断</text>
 						</view>
-					</view>
-					<view class="tool-card tool-card--ai" @click="goToAIDiagnosis">
-						<view class="ai-icon">
-							<uni-icons type="star" size="16" color="#0EA5E9" />
+						<view class="grow-divider" />
+						<view class="grow-item" @click="gotoFunc('/pages/student/resume-edit')">
+							<view class="grow-action-icon">
+								<uni-icons type="compose" size="20" color="#FFFFFF" />
+							</view>
+							<text class="grow-label">继续完善</text>
 						</view>
-						<view class="ai-content">
-							<text class="tool-label">AI简历诊断</text>
-							<text class="tool-val">{{ aiScore > 0 ? aiScore + '分' : '未诊断' }}</text>
-						</view>
-						<uni-icons type="arrowright" size="14" color="rgba(255,255,255,0.7)" />
 					</view>
 				</view>
 			</view>
@@ -46,7 +51,7 @@
 			<view class="checklist-card">
 				<view class="checklist-header">
 					<text class="card-title">简历清单</text>
-					<text class="checklist-edit" @click="gotoFunc('/pages/student/resume-edit')">去完善 ›</text>
+					<text class="checklist-edit" @click="gotoFunc('/pages/student/resume-edit')">{{ checklistDone }}/{{ fieldStatuses.length }} 已完善 · 去完善 ›</text>
 				</view>
 				<view class="checklist-grid">
 					<view v-for="(item, i) in fieldStatuses" :key="i" class="checklist-item" @click="gotoFunc('/pages/student/resume-edit')">
@@ -58,9 +63,9 @@
 				</view>
 			</view>
 
-			<!-- 功能服务 -->
+			<!-- 常用功能（4合1） -->
 			<view class="func-card">
-				<text class="card-title">功能服务</text>
+				<text class="card-title">常用功能</text>
 				<view class="func-grid">
 					<view class="func-item" @click="gotoFunc('/pages/student/resume')">
 						<view class="func-icon func-icon--blue">
@@ -68,25 +73,12 @@
 						</view>
 						<text class="func-text">在线简历</text>
 					</view>
-					<view class="func-item" @click="gotoFunc('/pages/student/resume-edit')">
-						<view class="func-icon func-icon--blue">
-							<uni-icons type="compose" size="22" color="#165DFF" />
-						</view>
-						<text class="func-text">编辑简历</text>
-					</view>
 					<view class="func-item" @click="gotoFunc('/pages/student/ai-matches')">
-						<view class="func-icon func-icon--purple">
-							<uni-icons type="star" size="22" color="#975FE4" />
+						<view class="func-icon func-icon--ai">
+							<uni-icons type="star" size="22" color="#0EA5E9" />
 						</view>
 						<text class="func-text">AI人岗匹配</text>
 					</view>
-				</view>
-			</view>
-
-			<!-- 我的记录 -->
-			<view class="func-card">
-				<text class="card-title">我的记录</text>
-				<view class="func-grid func-grid--2col">
 					<view class="func-item" @click="gotoFunc('/pages/student/collect')">
 						<view class="func-icon func-icon--orange">
 							<uni-icons type="star-filled" size="22" color="#FF7D00" />
@@ -97,7 +89,7 @@
 						<view class="func-icon func-icon--blue">
 							<uni-icons type="eye" size="22" color="#165DFF" />
 						</view>
-						<text class="func-text">浏览记录</text>
+						<text class="func-text">浏览足迹</text>
 					</view>
 				</view>
 			</view>
@@ -165,6 +157,8 @@ const jobStatus = computed(() => {
 	if ((d.myDeliveries || 0) > 0) return '积极求职中'
 	return '完善简历中'
 })
+
+const checklistDone = computed(() => fieldStatuses.value.filter(f => f.done).length)
 
 onMounted(() => {
 	try {
@@ -299,14 +293,29 @@ const handleLogout = () => {
 	background: $uni-bg-color-page;
 }
 
-/* ========== 头部区域：分层避让 ========== */
+/* ========== 头部区域：深色 Hero（对齐三端工作台） ========== */
 .profile-header {
-	background: linear-gradient(170deg, $uni-color-primary 0%, $uni-color-primary-hover 100%);
+	background: $uni-gradient-hero;
 	color: $uni-text-color-inverse;
 	padding: 0 0 24px;
+	position: relative;
+	overflow: hidden;
+}
+.profile-header::after {
+	content: '';
+	position: absolute;
+	top: -30px;
+	right: -30px;
+	width: 160px;
+	height: 160px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.1);
+	pointer-events: none;
 }
 /* 仅顶部用户信息行避让右侧胶囊 */
 .profile-main--safe {
+	position: relative;
+	z-index: 1;
 	padding: 0 $uni-spacing-lg;
 	padding-right: 106px;
 }
@@ -369,7 +378,7 @@ const handleLogout = () => {
 	border-radius: $uni-border-radius-xl;
 	margin: $uni-spacing-lg $uni-spacing-lg 0;
 	padding: $uni-spacing-lg;
-	box-shadow: $uni-shadow-base;
+	box-shadow: $uni-shadow-card;
 }
 .checklist-header {
 	flex-direction: row;
@@ -410,77 +419,69 @@ const handleLogout = () => {
 	color: $uni-color-success;
 }
 
-/* 工具区：左右边距和下方卡片对齐，不再整体右缩 */
+/* 成长概览卡：完整度 + AI 诊断 + 继续完善（玻璃拟态，对齐三端概览行） */
 .header-tools {
 	width: auto;
 	margin: 0 $uni-spacing-lg;
 	display: flex;
 	flex-direction: column;
 	gap: $uni-spacing-sm;
+	position: relative;
+	z-index: 1;
 }
-.tool-card {
-	background: rgba(255,255,255,0.18);
-	border-radius: $uni-border-radius-base;
-	padding: 10px 12px;
-	border: 1px solid rgba(255,255,255,0.2);
-}
-.tool-top {
+.grow-card {
+	background: rgba(255,255,255,0.14);
+	border: 1px solid rgba(255,255,255,0.22);
+	border-radius: 12px;
+	padding: 14px 0;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
-	justify-content: space-between;
-	margin-bottom: 6px;
 }
-.tool-label {
-	font-size: $uni-font-size-sm;
-	color: rgba(255,255,255,0.9);
+.grow-item {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 4px;
 }
-.tool-val {
-	font-size: $uni-font-size-sm;
-	font-weight: $uni-font-weight-semibold;
+.grow-item:active { opacity: 0.75; }
+.grow-num-row {
+	display: flex;
+	flex-direction: row;
+	align-items: baseline;
+	gap: 1px;
+}
+.grow-num {
+	font-size: 24px;
+	font-weight: 800;
 	color: $uni-text-color-inverse;
+	line-height: 1.1;
 }
-.progress-bar {
-	width: 100%;
-	height: 4px;
+.grow-num--empty {
+	color: rgba(255,255,255,0.5);
+}
+.grow-unit {
+	font-size: 12px;
+	color: rgba(255,255,255,0.85);
+}
+.grow-label {
+	font-size: 11px;
+	color: rgba(255,255,255,0.85);
+}
+.grow-divider {
+	width: 0.5px;
+	height: 30px;
+	background: rgba(255,255,255,0.25);
+}
+.grow-action-icon {
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
 	background: rgba(255,255,255,0.2);
-	border-radius: 4px;
-	overflow: hidden;
-}
-.progress-fill {
-	height: 100%;
-	background: linear-gradient(90deg, $uni-color-success 0%, color.adjust($uni-color-success, $lightness: 8%) 100%);
-	border-radius: 4px;
-	transition: width 0.3s ease;
-}
-
-/* AI诊断卡片 */
-.tool-card--ai {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	gap: 10px;
-	transition: opacity 0.2s ease;
-}
-.tool-card--ai:active {
-	opacity: 0.8;
-}
-.ai-icon {
-	width: 32px;
-	height: 32px;
-	border-radius: $uni-border-radius-sm;
-	background: $uni-color-ai-light;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	flex-shrink: 0;
-}
-.ai-content {
-	flex: 1;
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: space-between;
 }
 
 /* ========== 功能卡片 ========== */
@@ -489,7 +490,7 @@ const handleLogout = () => {
 	border-radius: $uni-border-radius-xl;
 	margin: $uni-spacing-lg $uni-spacing-lg 0;
 	padding: $uni-spacing-lg $uni-spacing-lg $uni-spacing-xs;
-	box-shadow: $uni-shadow-base;
+	box-shadow: $uni-shadow-card;
 }
 .card-title {
 	font-size: $uni-font-size-h3;
@@ -527,7 +528,7 @@ const handleLogout = () => {
 	justify-content: center;
 }
 .func-icon--blue { background: $uni-color-primary-light; }
-.func-icon--purple { background: rgba(151, 95, 228, 0.08); }
+.func-icon--ai { background: $uni-color-ai-light; }
 .func-icon--orange { background: $uni-color-warning-light; }
 .func-text {
 	font-size: $uni-font-size-sm;
@@ -541,7 +542,7 @@ const handleLogout = () => {
 	border-radius: $uni-border-radius-xl;
 	margin: $uni-spacing-lg $uni-spacing-lg 0;
 	padding: 4px 0;
-	box-shadow: $uni-shadow-base;
+	box-shadow: $uni-shadow-card;
 }
 .settings-item {
 	display: flex;
