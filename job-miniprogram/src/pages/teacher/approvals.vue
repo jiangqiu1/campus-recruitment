@@ -160,28 +160,42 @@ const switchTab = (val) => {
 	loadList().finally(() => { loading.value = false })
 }
 
-const handleApprove = async (item) => {
-	try {
-		await teacherAPI.approveJobChange(item.id)
-		uni.showToast({ title: '已通过', icon: 'success' })
-		list.value = list.value.filter(x => x.id !== item.id)
-		pendingCount.value = list.value.filter(x => x.status === 0).length
-	} catch (e) {
-		console.error('审批通过失败:', e)
-		uni.showToast({ title: '操作失败', icon: 'none' })
-	}
+const handleApprove = (item) => {
+	uni.showModal({
+		title: '通过变更申请',
+		content: '确定通过该岗位的变更申请吗？通过后立即生效。',
+		success: async (r) => {
+			if (!r.confirm) return
+			try {
+				await teacherAPI.approveJobChange(item.id)
+				uni.showToast({ title: '已通过', icon: 'success' })
+				list.value = list.value.filter(x => x.id !== item.id)
+				pendingCount.value = list.value.filter(x => x.status === 0).length
+			} catch (e) {
+				console.error('审批通过失败:', e)
+				uni.showToast({ title: '操作失败', icon: 'none' })
+			}
+		}
+	})
 }
 
-const handleReject = async (item) => {
-	try {
-		await teacherAPI.rejectJobChange(item.id)
-		uni.showToast({ title: '已拒绝', icon: 'success' })
-		list.value = list.value.filter(x => x.id !== item.id)
-		pendingCount.value = list.value.filter(x => x.status === 0).length
-	} catch (e) {
-		console.error('拒绝失败:', e)
-		uni.showToast({ title: '操作失败', icon: 'none' })
-	}
+const handleReject = (item) => {
+	uni.showModal({
+		title: '拒绝变更申请',
+		content: '确定拒绝该岗位的变更申请吗？拒绝后将通知企业HR。',
+		success: async (r) => {
+			if (!r.confirm) return
+			try {
+				await teacherAPI.rejectJobChange(item.id)
+				uni.showToast({ title: '已拒绝', icon: 'success' })
+				list.value = list.value.filter(x => x.id !== item.id)
+				pendingCount.value = list.value.filter(x => x.status === 0).length
+			} catch (e) {
+				console.error('拒绝失败:', e)
+				uni.showToast({ title: '操作失败', icon: 'none' })
+			}
+		}
+	})
 }
 
 const loadMore = () => {}

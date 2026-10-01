@@ -9,6 +9,24 @@
 			<uni-icons type="arrowdown" size="12" color="#C9CDD4" />
 		</view>
 
+		<!-- 关键指标（点击即筛选） -->
+		<view class="key-stats">
+			<view class="key-stat" @click="filterByStatus(null)">
+				<text class="ks-num">{{ deliveries.length }}</text>
+				<text class="ks-label">总投递</text>
+			</view>
+			<view class="ks-divider" />
+			<view class="key-stat" @click="filterByStatus('pending')">
+				<text class="ks-num" :class="{ 'ks-warn': pendingCount > 0 }">{{ pendingCount }}</text>
+				<text class="ks-label">待查看</text>
+			</view>
+			<view class="ks-divider" />
+			<view class="key-stat" @click="filterByStatus('accepted')">
+				<text class="ks-num" :class="{ 'ks-ok': acceptedCount > 0 }">{{ acceptedCount }}</text>
+				<text class="ks-label">已录用</text>
+			</view>
+		</view>
+
 		<!-- 状态分布卡片 -->
 		<view class="chart-card">
 			<text class="section-title">就业状态分布</text>
@@ -28,7 +46,7 @@
 		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
 			<view class="delivery-list">
 				<text class="section-title">投递明细</text>
-				<view v-for="d in filteredDeliveries" :key="d.id" class="delivery-card">
+				<view v-for="d in filteredDeliveries" :key="d.id" class="delivery-card" :class="{ 'is-pending': d.status === 'pending' }">
 					<view class="delivery-top">
 						<view class="delivery-avatar">
 							<text>{{ (d.studentName || '学').charAt(0) }}</text>
@@ -195,6 +213,10 @@ const selectJob = (id, title) => {
 	loadDeliveries().finally(() => loading.value = false)
 }
 
+// 关键指标
+const pendingCount = computed(() => deliveries.value.filter(d => d.status === 'pending').length)
+const acceptedCount = computed(() => deliveries.value.filter(d => d.status === 'accepted').length)
+
 const filterByStatus = (status) => {
 	if (selectedStatus.value === status) {
 		selectedStatus.value = null
@@ -257,6 +279,43 @@ const goToStudentResume = (d) => {
 	padding: 16px;
 	margin-bottom: 12px;
 	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+/* 待查看 = 教师的待办，左侧橙色标识条 */
+.delivery-card.is-pending {
+	border-left: 3px solid $uni-color-warning;
+}
+
+/* 关键指标行 */
+.key-stats {
+	flex-direction: row;
+	align-items: center;
+	background: white;
+	border-radius: 12px;
+	margin: 12px 16px 0;
+	padding: 12px 0;
+	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.key-stat {
+	flex: 1;
+	align-items: center;
+	gap: 2px;
+}
+.key-stat:active { opacity: 0.7; }
+.ks-num {
+	font-size: 20px;
+	font-weight: 800;
+	color: $uni-text-color-title;
+}
+.ks-num.ks-warn { color: $uni-color-warning; }
+.ks-num.ks-ok { color: $uni-color-success; }
+.ks-label {
+	font-size: 12px;
+	color: $uni-text-color-secondary;
+}
+.ks-divider {
+	width: 0.5px;
+	height: 26px;
+	background: $uni-border-color-divider;
 }
 .delivery-top {
 	flex-direction: row;
