@@ -9,6 +9,23 @@
 						<text class="role-badge">企业招聘方</text>
 					</view>
 				</view>
+				<!-- 招聘概览 -->
+				<view class="header-stats">
+					<view class="hs-item">
+						<text class="hs-num">{{ formatNum(dashboard.resumeCount) }}</text>
+						<text class="hs-label">收到简历</text>
+					</view>
+					<view class="hs-divider" />
+					<view class="hs-item">
+						<text class="hs-num">{{ formatNum(dashboard.interviewCount) }}</text>
+						<text class="hs-label">已发面试</text>
+					</view>
+					<view class="hs-divider" />
+					<view class="hs-item">
+						<text class="hs-num">{{ formatNum(dashboard.hiredCount) }}</text>
+						<text class="hs-label">已录用</text>
+					</view>
+				</view>
 			</view>
 
 			<!-- 2. 2×2 待办数据网格（对齐教师端 todo-grid 规范） -->
@@ -226,6 +243,38 @@ const formatTime = (time, type) => {
 	padding: 4px 12px;
 	border-radius: 999px;
 	font-weight: 500;
+}
+
+/* 招聘概览（头部内半透明指标行，对齐教师端） */
+.header-stats {
+	flex-direction: row;
+	align-items: center;
+	margin-top: 16px;
+	background: rgba(255,255,255,0.14);
+	border: 1px solid rgba(255,255,255,0.2);
+	border-radius: 12px;
+	padding: 12px 0;
+	position: relative;
+	z-index: 1;
+}
+.hs-item {
+	flex: 1;
+	align-items: center;
+	gap: 2px;
+}
+.hs-num {
+	font-size: 20px;
+	font-weight: 800;
+	color: $uni-text-color-inverse;
+}
+.hs-label {
+	font-size: 11px;
+	color: rgba(255,255,255,0.8);
+}
+.hs-divider {
+	width: 0.5px;
+	height: 28px;
+	background: rgba(255,255,255,0.25);
 }
 .header-action-btn {
 	width: 36px;

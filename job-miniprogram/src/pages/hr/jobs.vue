@@ -171,13 +171,20 @@ const handlePublish = async (id) => {
 	} catch (e) { uni.showToast({ title: '操作失败', icon: 'none' }) }
 }
 
-const handleClose = async (id) => {
-	try {
-		await hrAPI.closeJob(id)
-		uni.showToast({ title: '已下架', icon: 'success' })
-		const idx = jobs.value.findIndex(j => j.id === id)
-		if (idx > -1) { jobs.value[idx].status = 'closed'; jobs.value[idx].statusText = '已关闭' }
-	} catch (e) { uni.showToast({ title: '操作失败', icon: 'none' }) }
+const handleClose = (id) => {
+	uni.showModal({
+		title: '确认下架',
+		content: '下架后候选人将无法再投递该岗位，确定下架吗？',
+		success: async (r) => {
+			if (!r.confirm) return
+			try {
+				await hrAPI.closeJob(id)
+				uni.showToast({ title: '已下架', icon: 'success' })
+				const idx = jobs.value.findIndex(j => j.id === id)
+				if (idx > -1) { jobs.value[idx].status = 'closed'; jobs.value[idx].statusText = '已关闭' }
+			} catch (e) { uni.showToast({ title: '操作失败', icon: 'none' }) }
+		}
+	})
 }
 
 const goToEdit = (job) => {
