@@ -126,6 +126,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { resumeAPI, aiAssistantAPI } from '@/utils/request'
+import { buildResumeChecklist, resumeCompleteness } from '@/utils/resumeCheck'
 import NavBar from '@/components/NavBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import LoadingState from '@/components/LoadingState.vue'
@@ -199,21 +200,9 @@ const loadResume = async () => {
 const calcCompleteness = () => {
 	const r = resume.value
 	if (!r) return
-	// Resume 实体没有 name/phone/email 字段，从 userInfo（localStorage）获取
-	const { realName, phone, email } = userInfo.value
-	const fields = [
-		realName || r.realName || r.name,
-		phone,
-		email,
-		r.jobTarget,
-		r.education,
-		r.internship,
-		r.project,
-		r.skills,
-		r.selfEvaluation
-	]
-	const filled = fields.filter(Boolean).length
-	completeness.value = Math.round((filled / fields.length) * 100)
+	// 统一口径：7 分组项（与个人页简历清单一致），见 utils/resumeCheck.js
+	const checklist = buildResumeChecklist(r, userInfo.value)
+	completeness.value = resumeCompleteness(checklist)
 }
 
 const goEdit = () => uni.navigateTo({ url: '/pages/student/resume-edit' })

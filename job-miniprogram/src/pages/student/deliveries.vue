@@ -28,7 +28,7 @@
 				<view class="nic-top">
 					<view class="nic-badge">
 						<uni-icons type="calendar-filled" size="12" color="#FFFFFF" />
-						<text class="nic-badge-text">下一场面试</text>
+						<text class="nic-badge-text">{{ nextInterview.past ? '最近面试' : '下一场面试' }}</text>
 					</view>
 					<text class="nic-time">{{ nextInterview.interviewTime }}</text>
 				</view>
@@ -227,13 +227,17 @@ const filteredList = computed(() => {
 })
 
 const nextInterview = computed(() => {
-	const interviews = deliveries.value
+	const list = deliveries.value
 		.filter(d => d.status === 'interview' && d.interviewTime)
-		.sort((a, b) => {
-			if (!a.interviewTime || !b.interviewTime) return 0
-			return a.interviewTime.localeCompare(b.interviewTime)
-		})
-	return interviews.length > 0 ? interviews[0] : null
+	const parse = (t) => new Date(String(t).replace(' ', 'T')).getTime()
+	// 优先展示未过期的面试；全部过期时回退最近一场，徽标改叫"最近面试"
+	const upcoming = list
+		.filter(d => parse(d.interviewTime) >= Date.now())
+		.sort((a, b) => a.interviewTime.localeCompare(b.interviewTime))
+	if (upcoming.length) return { ...upcoming[0], past: false }
+	if (!list.length) return null
+	const latest = [...list].sort((a, b) => b.interviewTime.localeCompare(a.interviewTime))
+	return { ...latest[0], past: true }
 })
 
 const stats = computed(() => {

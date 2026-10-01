@@ -142,15 +142,17 @@ async function loadData() {
 	try {
 		const res = await matchAPI.getByStudent(studentId)
 		const raw = res.data || []
-		const enriched = await Promise.all(raw.map(async (m) => {
+		const enriched = (await Promise.all(raw.map(async (m) => {
 			try {
 				const jRes = await jobAPI.getJobDetail(m.jobId)
 				const j = jRes.data || {}
+				// 岗位已被删除/不可见时不再显示"岗位#N"裸标题，直接过滤
+				if (!j.id && !m.jobTitle) return null
 				return { ...m, jobTitle: j.title || j.jobTitle || m.jobTitle, companyName: j.companyName || m.companyName }
 			} catch (e) {
-				return { ...m, jobTitle: m.jobTitle || ('岗位#' + m.jobId) }
+				return m.jobTitle ? { ...m } : null
 			}
-		}))
+		}))).filter(Boolean)
 		matches.value = enriched
 	} catch (e) {
 		console.error('加载匹配结果失败', e)

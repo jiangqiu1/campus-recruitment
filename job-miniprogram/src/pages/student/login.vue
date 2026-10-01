@@ -41,9 +41,12 @@
 					<uni-icons type="person" size="16" color="#C9CDD4" />
 					<input class="input-field" v-model="username" :placeholder="'请输入' + roleLabel" @confirm="handleLogin" />
 				</view>
-				<view class="input-wrap" :class="{ 'pwd-visible': showPwd }" @click="showPwd = !showPwd">
+				<view class="input-wrap" :class="{ 'pwd-visible': showPwd }">
 					<uni-icons type="locked" size="16" color="#C9CDD4" />
-					<input class="input-field" v-model="password" :password="!showPwd" placeholder="点击切换明文/密文" @confirm="handleLogin" />
+					<input class="input-field" v-model="password" :password="!showPwd" placeholder="请输入密码" @confirm="handleLogin" />
+					<view class="pwd-toggle" @click="showPwd = !showPwd">
+						<uni-icons :type="showPwd ? 'eye-filled' : 'eye'" size="16" color="#C9CDD4" />
+					</view>
 				</view>
 				<view class="form-options">
 					<view class="agree-row" @click="agree = !agree">
@@ -334,9 +337,13 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	align-items: center;
 	margin-top: 14px;
 }
-.link-text { font-size: 13px; color: $uni-text-color-placeholder; }
+.link-text { font-size: 13px; color: $uni-text-color-secondary; }
+.pwd-toggle {
+	flex-shrink: 0;
+	padding-left: 6px;
+}
 
-/* ===== 微信区 ===== */
+/* ===== 微信区：位于浅色渐变上，用深色系保证可读 ===== */
 .divider-row {
 	flex-direction: row;
 	align-items: center;
@@ -346,11 +353,11 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 .divider-line {
 	flex: 1;
 	height: 1px;
-	background: rgba(255,255,255,0.35);
+	background: $uni-border-color;
 }
 .divider-text {
 	font-size: 12px;
-	color: rgba(255,255,255,0.6);
+	color: $uni-text-color-secondary;
 	flex-shrink: 0;
 }
 .wechat-btn {
@@ -373,6 +380,6 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 }
 .footer-text {
 	font-size: 12px;
-	color: rgba(255,255,255,0.4);
+	color: $uni-text-color-placeholder;
 }
 </style>

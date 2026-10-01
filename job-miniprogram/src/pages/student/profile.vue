@@ -11,7 +11,7 @@
 					<view class="profile-info-wrap">
 						<text class="profile-name" @click="editProfile">{{ userInfo.realName || '学生用户' }}</text>
 						<text class="profile-desc">{{ userInfo.school || '职业院校' }} · {{ userInfo.major || '未设置专业' }}</text>
-						<text v-if="classInfo" class="profile-class" @click="editProfile">{{ classInfo.name }}{{ classInfo.teacherName ? ' · ' + classInfo.teacherName + '老师' : '' }}</text>
+						<text v-if="classInfo" class="profile-class" @click="editProfile">{{ classInfo.name }}{{ classInfo.teacherName ? ' · ' + (classInfo.teacherName.endsWith('老师') ? classInfo.teacherName : classInfo.teacherName + '老师') : '' }}</text>
 						<view class="profile-status-badge">
 							<text class="profile-status-text">求职状态：{{ jobStatus }}</text>
 						</view>
@@ -136,6 +136,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { onShow } from '@/utils/page-lifecycle'
 import { statisticsAPI, resumeAPI, classAPI } from '@/utils/request'
+import { buildResumeChecklist, resumeCompleteness } from '@/utils/resumeCheck'
 import TabBar from '@/components/TabBar.vue'
 
 const stats = ref({})
@@ -207,22 +208,12 @@ const loadStats = async () => {
 		stats.value = statsRes.data || {}
 		const r = resumeRes.data
 		if (r) {
-			// 字段级清单（与简历页完整度口径一致，9 项）
+			// 字段级清单（统一口径见 utils/resumeCheck.js）
 			const raw = uni.getStorageSync('userInfo')
 			let ui = {}
 			try { if (raw) ui = JSON.parse(raw) } catch (e) {}
-			const hasContent = (v) => !!v && String(v).trim() && v !== '[]'
-			fieldStatuses.value = [
-				{ label: '基本信息', done: !!(ui.realName && ui.phone && ui.email) },
-				{ label: '求职意向', done: hasContent(r.jobTarget) },
-				{ label: '教育经历', done: hasContent(r.education) },
-				{ label: '实习经历', done: hasContent(r.internship) },
-				{ label: '项目经历', done: hasContent(r.project) },
-				{ label: '技能证书', done: hasContent(r.skills) },
-				{ label: '自我评价', done: hasContent(r.selfEvaluation) }
-			]
-			const filled = fieldStatuses.value.filter(f => f.done).length
-			completeness.value = Math.round((filled / fieldStatuses.value.length) * 100)
+			fieldStatuses.value = buildResumeChecklist(r, ui)
+			completeness.value = resumeCompleteness(fieldStatuses.value)
 			// AI 诊断分数：读真实诊断结果（教师评估或学生自诊写入 aiAnalysis）
 			if (r.aiAnalysis) {
 				try {

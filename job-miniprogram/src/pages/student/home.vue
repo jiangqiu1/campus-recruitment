@@ -26,7 +26,7 @@
 						v-for="(step, i) in funnelSteps"
 						:key="i"
 						class="funnel-step"
-						:class="{ done: step.done, current: i === currentStep }"
+						:class="{ done: step.done, current: i === currentStep, success: step.done && i === funnelSteps.length - 1 }"
 					>
 						<view class="funnel-dot" />
 						<text class="funnel-num">{{ step.num }}</text>
@@ -186,7 +186,7 @@ const actions = computed(() => {
 		list.push({ icon: 'chat', color: '#0EA5E9', bg: 'rgba(14,165,233,0.1)', text: '有面试在推进，先练几道模拟题', sub: 'AI 出题 + 逐题点评', url: '/pages/student/interview-practice' })
 	}
 	if (matchCount.value > 0) {
-		list.push({ icon: 'star', color: '#00B42A', bg: 'rgba(0,180,42,0.08)', text: '查看 AI 为你匹配的 ' + matchCount.value + ' 个岗位', sub: '最高匹配 ' + topMatchScore.value + '%', url: '/pages/student/ai-matches' })
+		list.push({ icon: 'star', color: '#0EA5E9', bg: 'rgba(14,165,233,0.1)', text: '查看 AI 为你匹配的 ' + matchCount.value + ' 个岗位', sub: '最高匹配 ' + topMatchScore.value + '%', url: '/pages/student/ai-matches' })
 	}
 	if (!list.length) {
 		list.push({ icon: 'list', color: '#165DFF', bg: 'rgba(22,93,255,0.08)', text: '去热门岗位看看今天的机会', sub: '', url: '/pages/student/hot-jobs' })
@@ -477,6 +477,13 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 .funnel-step.current .funnel-dot {
 	background: $uni-color-primary;
 	box-shadow: 0 0 0 4px $uni-color-primary-light;
+}
+/* 录用节点：成功绿收尾 */
+.funnel-step.success .funnel-dot {
+	background: $uni-color-success;
+}
+.funnel-step.success .funnel-num {
+	color: $uni-color-success;
 }
 .funnel-num {
 	font-size: 16px;
