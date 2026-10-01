@@ -75,6 +75,14 @@ public class AuthController {
         response.setRole(user.getRole());
         response.setAvatarUrl(user.getAvatarUrl());
         response.setCompanyId(user.getCompanyId());
+        // 返回完整资料（手机号解密），保证小程序本地存储的基本信息完整，
+        // 否则每次重新登录后简历完整度/个人信息会出现"待补充"假象
+        if (user.getPhone() != null && !user.getPhone().isEmpty()) {
+            try { response.setPhone(aesUtil.decrypt(user.getPhone())); } catch (Exception ignored) { response.setPhone(user.getPhone()); }
+        }
+        response.setEmail(user.getEmail());
+        response.setSchool(user.getSchool());
+        response.setMajor(user.getMajor());
 
         return Result.success(response);
     }
