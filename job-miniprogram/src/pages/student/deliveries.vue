@@ -1,7 +1,7 @@
 <template>
 	<view class="page-wrapper">
 		<NavBar title="投递记录" :showBack="false" />
-		<!-- 统计卡片 -->
+		<!-- 状态概览（点击即筛选） -->
 		<view class="stats-row">
 			<view class="stat-card" :class="{ active: currentTab === 'all' }" @click="currentTab = 'all'">
 				<text class="stat-num">{{ stats.all }}</text>
@@ -20,23 +20,24 @@
 				<text class="stat-label">已结束</text>
 			</view>
 		</view>
-		<view class="filter-tabs">
-			<text 
-				v-for="(tab, i) in tabs" 
-				:key="i" 
-				class="filter-tab" 
-				:class="{ active: currentTab === tab.value }" 
-				@click="currentTab = tab.value"
-			>{{ tab.label }}</text>
-		</view>
 		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
 			<LoadingState type="skeleton" :rows="4" v-if="loading" />
 			<view v-if="!loading">
-			<!-- 最近面试快捷入口 -->
-			<view v-if="nextInterview" class="interview-banner" @click="currentTab = 'interview'">
-				<uni-icons type="calendar-filled" size="20" color="#165DFF" />
-				<text class="banner-text">最近面试：<text class="banner-count">{{ nextInterview.interviewTime }}</text></text>
-				<text class="banner-link">{{ nextInterview.companyName }} ›</text>
+			<!-- 下一场面试：行动大卡 -->
+			<view v-if="nextInterview" class="next-interview-card" @click="goToJobDetail(nextInterview.jobId)">
+				<view class="nic-top">
+					<view class="nic-badge">
+						<uni-icons type="calendar-filled" size="12" color="#FFFFFF" />
+						<text class="nic-badge-text">下一场面试</text>
+					</view>
+					<text class="nic-time">{{ nextInterview.interviewTime }}</text>
+				</view>
+				<text class="nic-title">{{ nextInterview.jobTitle }}</text>
+				<text class="nic-company">{{ nextInterview.companyName }}<text v-if="nextInterview.interviewLocation"> · {{ nextInterview.interviewLocation }}</text></text>
+				<view class="nic-actions">
+					<button class="nic-btn nic-btn-primary" @click.stop="goToInterviewPractice">准备面试</button>
+					<button class="nic-btn nic-btn-ghost" @click.stop="currentTab = 'interview'">查看全部面试</button>
+				</view>
 			</view>
 			<view class="delivery-list">
 				<view 
@@ -143,13 +144,6 @@ import TabBar from '@/components/TabBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import PopupDrawer from '@/components/PopupDrawer.vue'
 
-const tabs = [
-	{ label: '全部', value: 'all' },
-	{ label: '待查看', value: 'pending' },
-	{ label: '进行中', value: 'viewed' },
-	{ label: '面试', value: 'interview' },
-	{ label: '已结束', value: 'ended' }
-]
 const currentTab = ref('all')
 const deliveries = ref([])
 const resultPopup = ref(false)
@@ -314,6 +308,7 @@ const cancelDelivery = async (id) => {
 }
 
 const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/job-detail?id=' + jobId })
+const goToInterviewPractice = () => uni.navigateTo({ url: '/pages/student/interview-practice' })
 </script>
 
 <style scoped lang="scss">
@@ -354,37 +349,6 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 }
 .stat-card.active .stat-label {
 	color: rgba(255,255,255,0.85);
-}
-.filter-tabs {
-	flex-direction: row;
-	padding: 8px 16px 0;
-	background: $uni-bg-color;
-	gap: 24px;
-	border-bottom: 0.5px solid $uni-border-color-divider;
-	height: 44px;
-	align-items: center;
-}
-.filter-tab {
-	font-size: 14px;
-	color: $uni-text-color-secondary;
-	font-weight: 500;
-	position: relative;
-	padding-bottom: 4px;
-}
-.filter-tab.active {
-	color: $uni-text-color-title;
-	font-weight: 600;
-}
-.filter-tab.active::after {
-	content: '';
-	position: absolute;
-	bottom: 0;
-	left: 50%;
-	transform: translateX(-50%);
-	width: 20px;
-	height: 3px;
-	background: $uni-color-primary;
-	border-radius: 4px;
 }
 .delivery-list {
 	padding: 12px 16px;
@@ -483,7 +447,7 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 	flex-shrink: 0;
 }
 .tl-dot.done {
-	background: $uni-color-primary;
+	background: $uni-color-success;
 }
 .tl-dot.current {
 	background: $uni-color-primary;
@@ -503,7 +467,7 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 	flex-shrink: 1;
 }
 .tl-line.done {
-	background: $uni-color-primary;
+	background: $uni-color-success;
 }
 .tl-label {
 	font-size: 12px;
@@ -511,7 +475,7 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 	line-height: 1.3;
 }
 .tl-label.done {
-	color: $uni-color-primary;
+	color: $uni-color-success;
 	font-weight: 500;
 }
 .tl-label.current {
@@ -587,19 +551,72 @@ const goToJobDetail = (jobId) => jobId && uni.navigateTo({ url: '/pages/student/
 	color: $uni-text-color-placeholder;
 	text-align: center;
 }
-/* 面试日程快捷入口 */
-.interview-banner {
+/* 下一场面试：行动大卡 */
+.next-interview-card {
+	background: $uni-gradient-primary;
+	border-radius: 12px;
+	padding: 16px;
+	margin: 12px 16px 0;
+	box-shadow: 0 4px 12px rgba(22, 93, 255, 0.25);
+}
+.next-interview-card:active { opacity: 0.92; }
+.nic-top {
 	flex-direction: row;
 	align-items: center;
-	background: $uni-color-primary-light;
-	border: 1px solid $uni-color-primary-light;
-	border-radius: 12px;
-	padding: 12px 16px;
-	margin: 12px 16px 0;
-	gap: 8px;
+	justify-content: space-between;
+	margin-bottom: 10px;
 }
-.interview-banner:active { background: $uni-color-primary-light; }
-.banner-text { flex: 1; font-size: 14px; color: $uni-text-color-title; }
-.banner-count { font-size: 16px; font-weight: 700; color: $uni-color-primary; }
-.banner-link { font-size: 13px; color: $uni-color-primary; font-weight: 500; }
+.nic-badge {
+	flex-direction: row;
+	align-items: center;
+	gap: 4px;
+	background: rgba(255, 255, 255, 0.2);
+	padding: 3px 10px;
+	border-radius: 999px;
+}
+.nic-badge-text {
+	font-size: 11px;
+	color: $uni-text-color-inverse;
+	font-weight: 500;
+}
+.nic-time {
+	font-size: 14px;
+	font-weight: 700;
+	color: $uni-text-color-inverse;
+}
+.nic-title {
+	font-size: 17px;
+	font-weight: 700;
+	color: $uni-text-color-inverse;
+	display: block;
+}
+.nic-company {
+	font-size: 13px;
+	color: rgba(255, 255, 255, 0.85);
+	margin-top: 2px;
+	display: block;
+}
+.nic-actions {
+	flex-direction: row;
+	gap: 10px;
+	margin-top: 14px;
+}
+.nic-btn {
+	height: 34px;
+	padding: 0 18px;
+	border-radius: 999px;
+	font-size: 13px;
+	font-weight: 600;
+	align-items: center;
+	justify-content: center;
+	border: none;
+}
+.nic-btn-primary {
+	background: $uni-bg-color;
+	color: $uni-color-primary;
+}
+.nic-btn-ghost {
+	background: rgba(255, 255, 255, 0.2);
+	color: $uni-text-color-inverse;
+}
 </style>
