@@ -4,7 +4,10 @@
 			<!-- 顶部导航 -->
 			<view class="header-section" :style="{ paddingTop: (statusBarHeight + 16) + 'px' }">
 				<view class="header-top">
-					<text class="greeting-text">您好，{{ userName }}</text>
+					<view class="greeting-wrap">
+						<text class="greeting-text">您好，{{ userName }}</text>
+						<text class="greeting-sub">今天继续完成你的求职计划</text>
+					</view>
 				</view>
 				<view class="search-box">
 					<uni-icons type="search" size="16" color="#86909C" />
@@ -12,48 +15,77 @@
 				</view>
 			</view>
 
-			<!-- 快捷入口（4个，投递记录已移至TabBar） -->
-			<view class="quick-menu">
-				<view class="quick-item" @click="goToAIMatches">
-					<view class="quick-icon"><uni-icons type="star" size="24" color="#165DFF" /></view>
-					<text>AI智能匹配</text>
+			<!-- 求职进度漏斗 -->
+			<view class="progress-card">
+				<view class="progress-header">
+					<text class="progress-title">求职进度</text>
+					<text class="progress-more" @click="goToDeliveries">投递记录 ›</text>
 				</view>
-				<view class="quick-item" @click="goToInterviewPractice">
-					<view class="quick-icon"><uni-icons type="chat" size="24" color="#0EA5E9" /></view>
-					<text>模拟面试</text>
-				</view>
-				<view class="quick-item" @click="goToHotJobs">
-					<view class="quick-icon"><uni-icons type="list" size="24" color="#165DFF" /></view>
-					<text>热门岗位</text>
-				</view>
-				<view class="quick-item" @click="goToResume">
-					<view class="quick-icon"><uni-icons type="compose" size="24" color="#165DFF" /></view>
-					<text>简历管理</text>
+				<view class="funnel-row">
+					<view
+						v-for="(step, i) in funnelSteps"
+						:key="i"
+						class="funnel-step"
+						:class="{ done: step.done, current: i === currentStep }"
+					>
+						<view class="funnel-dot" />
+						<text class="funnel-num">{{ step.num }}</text>
+						<text class="funnel-label">{{ step.label }}</text>
+					</view>
 				</view>
 			</view>
 
-			<!-- 求职数据 -->
-			<view class="data-section">
-				<view class="section-header">
-					<text class="section-title">求职数据</text>
+			<!-- 优先行动 -->
+			<view class="action-card" v-if="actions.length">
+				<view class="progress-header">
+					<text class="progress-title">优先行动</text>
 				</view>
-				<view class="stat-row">
-					<view class="stat-box">
-						<text class="stat-num">{{ stats.deliveries || 0 }}</text>
-						<text class="stat-label">投递次数</text>
+				<view
+					v-for="(a, i) in actions"
+					:key="i"
+					class="action-item"
+					@click="handleAction(a)"
+				>
+					<view class="action-icon" :style="{ background: a.bg }">
+						<uni-icons :type="a.icon" size="18" :color="a.color" />
 					</view>
-					<view class="stat-box">
-						<text class="stat-num">{{ stats.viewed || 0 }}</text>
-						<text class="stat-label">被查看</text>
+					<view class="action-texts">
+						<text class="action-text">{{ a.text }}</text>
+						<text v-if="a.sub" class="action-sub">{{ a.sub }}</text>
 					</view>
-					<view class="stat-box">
-						<text class="stat-num">{{ stats.interviews || 0 }}</text>
-						<text class="stat-label">面试邀请</text>
-					</view>
-					<view class="stat-box">
-						<text class="stat-num">{{ stats.offers || 0 }}</text>
-						<text class="stat-label">录用通知</text>
-					</view>
+					<uni-icons type="arrowright" size="14" color="#C9CDD4" />
+				</view>
+			</view>
+
+			<!-- AI 智能匹配大入口 -->
+			<view class="ai-entry" @click="goToAIMatches">
+				<view class="ai-entry-icon">
+					<uni-icons type="star-filled" size="24" color="#FFFFFF" />
+				</view>
+				<view class="ai-entry-texts">
+					<text class="ai-entry-title">AI 智能匹配</text>
+					<text class="ai-entry-sub">{{ matchCount > 0 ? '已为你匹配 ' + matchCount + ' 个岗位' : '完善简历后为你智能推荐岗位' }}</text>
+				</view>
+				<view class="ai-entry-score" v-if="topMatchScore > 0">
+					<text class="ai-entry-score-num">{{ topMatchScore }}%</text>
+					<text class="ai-entry-score-label">最高匹配</text>
+				</view>
+				<uni-icons v-else type="arrowright" size="16" color="#FFFFFF" />
+			</view>
+
+			<!-- 次级入口 -->
+			<view class="sub-entries">
+				<view class="sub-entry" @click="goToInterviewPractice">
+					<view class="sub-entry-icon"><uni-icons type="chat" size="22" color="#0EA5E9" /></view>
+					<text>模拟面试</text>
+				</view>
+				<view class="sub-entry" @click="goToHotJobs">
+					<view class="sub-entry-icon"><uni-icons type="list" size="22" color="#165DFF" /></view>
+					<text>热门岗位</text>
+				</view>
+				<view class="sub-entry" @click="goToResume">
+					<view class="sub-entry-icon"><uni-icons type="compose" size="22" color="#165DFF" /></view>
+					<text>简历管理</text>
 				</view>
 			</view>
 
@@ -87,14 +119,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { request, jobAPI, deliveryAPI, statisticsAPI, favoriteAPI, mapJobData, matchAPI } from '@/utils/request'
+import { ref, computed, onMounted } from 'vue'
+import { request, jobAPI, deliveryAPI, statisticsAPI, favoriteAPI, mapJobData, matchAPI, resumeAPI } from '@/utils/request'
 import TabBar from '@/components/TabBar.vue'
 import JobCard from '@/components/JobCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 
 const keyword = ref('')
-const unreadCount = ref(0)
 const recommendJobs = ref([])
 const stats = ref({})
 const deliveredJobIds = ref(new Set())
@@ -102,6 +133,9 @@ const refreshing = ref(false)
 const currentListTab = ref('recommend')
 const statusBarHeight = ref(0)
 const userName = ref('学生用户')
+const resume = ref(null)
+const matchCount = ref(0)
+const topMatchScore = ref(0)
 
 const mockJobs = [
 	{ id: 1, title: '前端开发实习生', salaryRange: '4K-6K', location: '广州', education: '大专及以上', companyName: '广州科技公司', matchScore: 92 },
@@ -115,6 +149,52 @@ const switchListTab = (tab) => {
 	currentListTab.value = tab
 	loadData()
 }
+
+// 求职进度漏斗：建简历 → 投递 → 被查看 → 面试 → 录用
+const funnelSteps = computed(() => [
+	{ label: '建简历', num: resume.value ? '✓' : '0', done: !!resume.value },
+	{ label: '投递', num: String(stats.value.deliveries || 0), done: (stats.value.deliveries || 0) > 0 },
+	{ label: '被查看', num: String(stats.value.viewed || 0), done: (stats.value.viewed || 0) > 0 },
+	{ label: '面试', num: String(stats.value.interviews || 0), done: (stats.value.interviews || 0) > 0 },
+	{ label: '录用', num: String(stats.value.offers || 0), done: (stats.value.offers || 0) > 0 }
+])
+const currentStep = computed(() => funnelSteps.value.findIndex(s => !s.done))
+
+// 简历缺失字段（字段级判断，给"优先行动"用）
+const missingResumeFields = () => {
+	const r = resume.value
+	if (!r) return ['完整简历']
+	const fields = [
+		['求职意向', r.jobTarget], ['教育经历', r.education], ['实习经历', r.internship],
+		['项目经历', r.project], ['技能', r.skills], ['自我评价', r.selfEvaluation]
+	]
+	return fields.filter(([, v]) => !v || !String(v).trim() || v === '[]').map(([label]) => label)
+}
+
+// 优先行动：按数据状态生成最多 3 条建议
+const actions = computed(() => {
+	const list = []
+	if (!resume.value) {
+		list.push({ icon: 'compose', color: '#165DFF', bg: 'rgba(22,93,255,0.08)', text: '创建你的第一份简历', sub: 'AI 匹配和投递都需要一份简历', url: '/pages/student/resume-edit' })
+	} else {
+		const missing = missingResumeFields()
+		if (missing.length) {
+			list.push({ icon: 'compose', color: '#165DFF', bg: 'rgba(22,93,255,0.08)', text: '完善简历：还缺' + missing.slice(0, 2).join('、'), sub: '完整度越高，AI 匹配越精准', url: '/pages/student/resume-edit' })
+		}
+	}
+	if ((stats.value.interviews || 0) > 0) {
+		list.push({ icon: 'chat', color: '#0EA5E9', bg: 'rgba(14,165,233,0.1)', text: '有面试在推进，先练几道模拟题', sub: 'AI 出题 + 逐题点评', url: '/pages/student/interview-practice' })
+	}
+	if (matchCount.value > 0) {
+		list.push({ icon: 'star', color: '#00B42A', bg: 'rgba(0,180,42,0.08)', text: '查看 AI 为你匹配的 ' + matchCount.value + ' 个岗位', sub: '最高匹配 ' + topMatchScore.value + '%', url: '/pages/student/ai-matches' })
+	}
+	if (!list.length) {
+		list.push({ icon: 'list', color: '#165DFF', bg: 'rgba(22,93,255,0.08)', text: '去热门岗位看看今天的机会', sub: '', url: '/pages/student/hot-jobs' })
+	}
+	return list.slice(0, 3)
+})
+
+const handleAction = (a) => uni.navigateTo({ url: a.url })
 
 onMounted(async () => {
 	try {
@@ -133,14 +213,20 @@ onMounted(async () => {
 			statusBarHeight.value = sysInfo.statusBarHeight || 0
 		} catch (e2) { console.error('获取状态栏高度失败', e2) }
 	}
-	await loadData()
-	await loadUserState()
+	await Promise.all([loadData(), loadUserState(), loadResume()])
 })
 
 const onRefresh = async () => {
 	refreshing.value = true
-	await loadData()
+	await Promise.all([loadData(), loadResume()])
 	refreshing.value = false
+}
+
+const loadResume = async () => {
+	try {
+		const res = await resumeAPI.getResume()
+		resume.value = res.data || null
+	} catch (e) { resume.value = null }
 }
 
 const loadData = async () => {
@@ -169,14 +255,18 @@ const loadData = async () => {
 			const studentId = getStudentId()
 			if (studentId) {
 				const matchRes = await matchAPI.getByStudent(studentId)
+				const matches = matchRes.data || []
+				matchCount.value = matches.length
+				const normalize = (v) => (typeof v === 'number' && v > 1 ? Math.round(v) : Math.round((v || 0) * 100))
+				topMatchScore.value = matches.reduce((max, m) => Math.max(max, normalize(m.matchScore)), 0)
 				const matchMap = {}
-				;(matchRes.data || []).forEach(m => { matchMap[m.jobId] = m.matchScore })
+				matches.forEach(m => { matchMap[m.jobId] = m.matchScore })
 				recommendJobs.value = recommendJobs.value.map(j => {
 					const dbScore = matchMap[j.id]
 					if (dbScore) {
 						const score = typeof dbScore === 'number' && dbScore > 1
-							? Math.round(dbScore)      // 已经是百分�?如 88)
-							: Math.round(dbScore * 100)  // 小�?如 0.88)
+							? Math.round(dbScore)      // 已经是百分数(如 88)
+							: Math.round(dbScore * 100)  // 小数(如 0.88)
 						return { ...j, matchScore: score }
 					}
 					// 退化：从 mock 数据取默认匹配度
@@ -191,6 +281,8 @@ const loadData = async () => {
 		console.log('API接口未就绪，使用模拟数据')
 		recommendJobs.value = currentListTab.value === 'latest' ? [...mockJobs].reverse() : mockJobs
 		stats.value = mockStats
+		matchCount.value = mockJobs.length
+		topMatchScore.value = 92
 	}
 }
 
@@ -246,14 +338,12 @@ const handleDeliver = async (job) => {
 }
 
 const goToJobDetail = (id) => uni.navigateTo({ url: '/pages/student/job-detail?id=' + id })
-const goToCollect = () => uni.navigateTo({ url: '/pages/student/collect' })
 const goToProfile = () => uni.navigateTo({ url: '/pages/student/profile' })
-const goToMessages = () => uni.navigateTo({ url: '/pages/student/messages' })
 const goToAIMatches = () => uni.navigateTo({ url: '/pages/student/ai-matches' })
 const goToInterviewPractice = () => uni.navigateTo({ url: '/pages/student/interview-practice' })
 const goToHotJobs = () => uni.navigateTo({ url: '/pages/student/hot-jobs' })
 const goToResume = () => uni.navigateTo({ url: '/pages/student/resume-edit' })
-const goToCityPicker = () => uni.showToast({ title: '选择城市', icon: 'none' })
+const goToDeliveries = () => uni.reLaunch({ url: '/pages/student/deliveries' })
 const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none' })
 </script>
 
@@ -269,12 +359,19 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	flex-direction: row;
 	justify-content: flex-start;
 	align-items: center;
-	margin-bottom: 16px;
+	margin-bottom: 12px;
 }
+.greeting-wrap { flex: 1; }
 .greeting-text {
 	font-size: 20px;
 	font-weight: 700;
 	color: $uni-text-color-inverse;
+	display: block;
+}
+.greeting-sub {
+	font-size: 12px;
+	color: rgba(255, 255, 255, 0.85);
+	margin-top: 4px;
 }
 
 /* 搜索框 */
@@ -298,75 +395,204 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	color: $uni-text-color-title;
 	outline: none;
 }
-/* 快捷入口 */
-.quick-menu {
-	flex-direction: row;
-	justify-content: space-around;
-	padding: 20px 16px;
-	background: white;
-	margin: -12px 16px 0;
+
+/* 求职进度漏斗 */
+.progress-card {
+	background: $uni-bg-color;
 	border-radius: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	margin: -12px 16px 0;
+	padding: 16px;
+	box-shadow: $uni-shadow-sm;
 	position: relative;
 	z-index: 10;
 }
-.quick-item {
+.progress-header {
+	flex-direction: row;
+	justify-content: space-between;
 	align-items: center;
-	gap: 8px;
 }
-.quick-icon {
-	width: 48px;
-	height: 48px;
+.progress-title {
+	font-size: 15px;
+	font-weight: 600;
+	color: $uni-text-color-title;
+}
+.progress-more {
+	font-size: 12px;
+	color: $uni-text-color-secondary;
+}
+.funnel-row {
+	flex-direction: row;
+	align-items: flex-start;
+	margin-top: 16px;
+}
+.funnel-step {
+	flex: 1;
+	align-items: center;
+	position: relative;
+}
+/* 节点间连接线 */
+.funnel-step::after {
+	content: '';
+	position: absolute;
+	top: 5px;
+	left: calc(50% + 12px);
+	width: calc(100% - 24px);
+	height: 2px;
+	background: $uni-border-color-divider;
+}
+.funnel-step:last-child::after {
+	display: none;
+}
+.funnel-step.done::after {
+	background: $uni-color-primary;
+}
+.funnel-dot {
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background: $uni-border-color-divider;
+	margin-bottom: 8px;
+	z-index: 1;
+}
+.funnel-step.done .funnel-dot {
+	background: $uni-color-primary;
+}
+.funnel-step.current .funnel-dot {
+	background: $uni-color-primary;
+	box-shadow: 0 0 0 4px $uni-color-primary-light;
+}
+.funnel-num {
+	font-size: 16px;
+	font-weight: 700;
+	color: $uni-text-color-title;
+}
+.funnel-step.current .funnel-num {
+	color: $uni-color-primary;
+}
+.funnel-label {
+	font-size: 12px;
+	color: $uni-text-color-secondary;
+	margin-top: 2px;
+}
+
+/* 优先行动 */
+.action-card {
+	background: $uni-bg-color;
 	border-radius: 12px;
-	background: $uni-color-primary-light;
+	margin: 12px 16px 0;
+	padding: 16px;
+	box-shadow: $uni-shadow-sm;
+}
+.action-item {
+	flex-direction: row;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 0;
+	border-bottom: 0.5px solid $uni-border-color-divider;
+}
+.action-item:last-child {
+	border-bottom: none;
+	padding-bottom: 0;
+}
+.action-icon {
+	width: 40px;
+	height: 40px;
+	border-radius: 10px;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+.action-texts { flex: 1; }
+.action-text {
+	font-size: 14px;
+	font-weight: 600;
+	color: $uni-text-color-title;
+	display: block;
+}
+.action-sub {
+	font-size: 12px;
+	color: $uni-text-color-secondary;
+	margin-top: 2px;
+	display: block;
+}
+
+/* AI 智能匹配大入口 */
+.ai-entry {
+	flex-direction: row;
+	align-items: center;
+	gap: 12px;
+	background: $uni-gradient-primary;
+	border-radius: 12px;
+	margin: 12px 16px 0;
+	padding: 16px;
+	box-shadow: 0 4px 12px rgba(22, 93, 255, 0.25);
+}
+.ai-entry:active { opacity: 0.9; }
+.ai-entry-icon {
+	width: 44px;
+	height: 44px;
+	border-radius: 12px;
+	background: rgba(255, 255, 255, 0.2);
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+.ai-entry-texts { flex: 1; }
+.ai-entry-title {
+	font-size: 16px;
+	font-weight: 700;
+	color: $uni-text-color-inverse;
+	display: block;
+}
+.ai-entry-sub {
+	font-size: 12px;
+	color: rgba(255, 255, 255, 0.85);
+	margin-top: 2px;
+	display: block;
+}
+.ai-entry-score {
+	align-items: center;
+}
+.ai-entry-score-num {
+	font-size: 22px;
+	font-weight: 800;
+	color: $uni-text-color-inverse;
+}
+.ai-entry-score-label {
+	font-size: 10px;
+	color: rgba(255, 255, 255, 0.85);
+	margin-top: 2px;
+}
+
+/* 次级入口 */
+.sub-entries {
+	flex-direction: row;
+	background: $uni-bg-color;
+	border-radius: 12px;
+	margin: 12px 16px 0;
+	padding: 14px 0;
+	box-shadow: $uni-shadow-sm;
+}
+.sub-entry {
+	flex: 1;
+	align-items: center;
+	gap: 6px;
+}
+.sub-entry:active { opacity: 0.7; }
+.sub-entry-icon {
+	width: 40px;
+	height: 40px;
+	border-radius: 10px;
+	background: $uni-bg-color-page;
 	align-items: center;
 	justify-content: center;
 }
-.quick-item text {
+.sub-entry text {
 	font-size: 12px;
 	color: $uni-text-color;
 	font-weight: 500;
 }
-.quick-item:active {
-	transform: scale(0.95);
-}
-/* Data Section */
-.data-section {
-	padding: 0 16px;
-	margin-top: 20px;
-}
-.section-header {
-	margin-bottom: 12px;
-}
-.section-title {
-	font-size: 16px;
-	font-weight: 600;
-	color: $uni-text-color-title;
-}
-.stat-row {
-	flex-direction: row;
-	flex-wrap: wrap;
-	gap: 12px;
-}
-.stat-box {
-	flex: 1;
-	min-width: calc(50% - 6px);
-	background: white;
-	border-radius: 12px;
-	padding: 16px;
-	align-items: flex-start;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-.stat-num {
-	font-size: 22px;
-	font-weight: 700;
-	color: $uni-text-color-title;
-	margin-bottom: 4px;
-}
-.stat-label {
-	font-size: 12px;
-	color: $uni-text-color-secondary;
-}
+
 /* 列表区 */
 .list-section {
 	padding: 0 16px;

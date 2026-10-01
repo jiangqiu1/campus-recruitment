@@ -167,7 +167,8 @@ export const resumeAPI = {
 /* ======================== 消息模块 ======================== */
 export const messageAPI = {
   getMessages: (params) => request({ url: '/messages', data: params }),
-  readMessage: (id) => request({ url: '/messages/' + id + '/read', method: 'PUT' })
+  readMessage: (id) => request({ url: '/messages/' + id + '/read', method: 'PUT' }),
+  getUnreadCount: (studentId) => request({ url: '/messages/unread-count', data: { studentId } })
 }
 
 /* ======================== 收藏模块 ======================== */
