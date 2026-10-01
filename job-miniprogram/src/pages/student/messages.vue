@@ -7,6 +7,19 @@
 			<view class="msg-tabs">
 				<text v-for="cat in categories" :key="cat.value" class="msg-tab" :class="{ active: currentCat === cat.value }" @click="currentCat = cat.value">{{ cat.label }}</text>
 			</view>
+			<!-- 待办摘要：把"下一步做什么"顶到消息列表上方 -->
+			<view v-if="todoInterview > 0 || todoMatch > 0" class="todo-strip">
+				<view v-if="todoInterview > 0" class="todo-strip-item" @click="goDeliveries">
+					<uni-icons type="calendar-filled" size="16" color="#0EA5E9" />
+					<text class="todo-strip-text">有 <text class="todo-strip-num">{{ todoInterview }}</text> 场面试待确认</text>
+					<uni-icons type="arrowright" size="12" color="#C9CDD4" />
+				</view>
+				<view v-if="todoMatch > 0" class="todo-strip-item" :class="{ divided: todoInterview > 0 }" @click="goMatches">
+					<uni-icons type="star-filled" size="16" color="#165DFF" />
+					<text class="todo-strip-text">AI 新匹配 <text class="todo-strip-num">{{ todoMatch }}</text> 个岗位</text>
+					<uni-icons type="arrowright" size="12" color="#C9CDD4" />
+				</view>
+			</view>
 			<view class="msg-list">
 				<view v-for="(msg, i) in filteredList" :key="i" class="msg-item" :class="{ unread: !msg.isRead, 'msg-today': isToday(msg.createTime || msg.time) }" @click="handleRead(msg)">
 					<view class="msg-icon">
@@ -33,13 +46,15 @@
 <script setup>
 import LoadingState from '@/components/LoadingState.vue'
 import { ref, computed } from 'vue'
-import { messageAPI } from '@/utils/request'
+import { messageAPI, deliveryAPI, matchAPI } from '@/utils/request'
 import TabBar from '@/components/TabBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import NavBar from '@/components/NavBar.vue'
 
 const messages = ref([])
 const currentCat = ref('all')
+const todoInterview = ref(0)
+const todoMatch = ref(0)
 
 const categories = [
 	{ label: '全部', value: 'all' },
@@ -82,7 +97,25 @@ async function loadData() {
 		}))
 	} catch (e) { console.log('加载消息失败', e) }
 	finally { loading.value = false }
+	loadTodos()
 }
+
+// 待办摘要：从投递与匹配数据拼出"下一步做什么"
+const loadTodos = async () => {
+	const sid = getStudentId()
+	if (!sid) return
+	try {
+		const [dRes, mRes] = await Promise.all([
+			deliveryAPI.getDeliveriesByStudentId({ studentId: sid }).catch(() => null),
+			matchAPI.getByStudent(sid).catch(() => null)
+		])
+		todoInterview.value = (dRes && dRes.data || []).filter(d => Number(d.status) === 2).length
+		todoMatch.value = (mRes && mRes.data || []).length
+	} catch (e) { /* 待办数据失败不影响消息列表 */ }
+}
+
+const goDeliveries = () => uni.reLaunch({ url: '/pages/student/deliveries' })
+const goMatches = () => uni.navigateTo({ url: '/pages/student/ai-matches' })
 
 const refreshing = ref(false)
 
@@ -208,4 +241,33 @@ const isToday = (t) => {
 }
 .msg-tab:active { opacity: 0.7; }
 .msg-item:active { background: $uni-bg-color-page; }
+
+/* 待办摘要条 */
+.todo-strip {
+	background: $uni-bg-color;
+	border-radius: 12px;
+	margin: 12px 16px 0;
+	padding: 4px 14px;
+	box-shadow: $uni-shadow-sm;
+}
+.todo-strip-item {
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
+	padding: 11px 0;
+}
+.todo-strip-item.divided {
+	border-top: 0.5px solid $uni-border-color-divider;
+}
+.todo-strip-item:active { opacity: 0.7; }
+.todo-strip-text {
+	flex: 1;
+	font-size: 13px;
+	color: $uni-text-color-title;
+}
+.todo-strip-num {
+	font-size: 15px;
+	font-weight: 700;
+	color: $uni-color-primary;
+}
 </style>
