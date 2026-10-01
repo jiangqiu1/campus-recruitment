@@ -228,11 +228,26 @@ const handleLogout = () => {
 
 /* ========== 头部：对齐全站渐变 + 分层避让胶囊 ========== */
 .profile-header {
-	background: linear-gradient(170deg, $uni-color-primary 0%, $uni-color-primary-hover 100%);
+	position: relative;
+	overflow: hidden;
+	background: $uni-gradient-hero;
 	color: $uni-text-color-inverse;
 	padding: 0 0 36px;
 }
+.profile-header::after {
+	content: '';
+	position: absolute;
+	top: -30px;
+	right: -30px;
+	width: 160px;
+	height: 160px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.1);
+	pointer-events: none;
+}
 .profile-main--safe {
+	position: relative;
+	z-index: 1;
 	padding: 0 $uni-spacing-lg;
 	padding-right: 106px; /* 仅顶部行避让微信胶囊 */
 }
@@ -299,7 +314,7 @@ const handleLogout = () => {
 	flex-direction: column;
 	align-items: center;
 	gap: 4px;
-	box-shadow: $uni-shadow-base;
+	box-shadow: $uni-shadow-card;
 	transition: transform 0.2s ease, opacity 0.2s ease;
 }
 .stat-box:active {
@@ -342,7 +357,7 @@ const handleLogout = () => {
 	border-radius: $uni-border-radius-xl;
 	margin: $uni-spacing-lg $uni-spacing-lg 0;
 	padding: 4px 0;
-	box-shadow: $uni-shadow-base;
+	box-shadow: $uni-shadow-card;
 }
 .settings-item {
 	display: flex;

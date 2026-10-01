@@ -22,38 +22,38 @@
 			</view>
 
 			<!-- 功能快捷入口：对齐登录页卡片质感 -->
-			<view class="func-grid">
-				<view class="func-item" @click="gotoFunc('/pages/teacher/deliveries')">
-					<view class="func-icon func-icon--blue">
-						<uni-icons type="bars" size="22" color="#165DFF" />
+				<view class="func-grid">
+					<view class="func-item" @click="gotoFunc('/pages/teacher/deliveries')">
+						<view class="func-icon func-icon--blue">
+							<uni-icons type="bars" size="22" color="#165DFF" />
+						</view>
+						<text class="func-label">投递看板</text>
 					</view>
-					<text class="func-label">投递看板</text>
-				</view>
-				<view class="func-item" @click="gotoFunc('/pages/teacher/companies')">
-					<view class="func-icon func-icon--amber">
-						<uni-icons type="shop" size="22" color="#D97706" />
+					<view class="func-item" @click="gotoFunc('/pages/teacher/companies')">
+						<view class="func-icon func-icon--amber">
+							<uni-icons type="shop" size="22" color="#FF7D00" />
+						</view>
+						<text class="func-label">企业资源</text>
 					</view>
-					<text class="func-label">企业资源</text>
-				</view>
-				<view class="func-item" @click="gotoFunc('/pages/teacher/ai-matches')">
-					<view class="func-icon func-icon--purple">
-						<uni-icons type="star" size="22" color="#0EA5E9" />
+					<view class="func-item" @click="gotoFunc('/pages/teacher/ai-matches')">
+						<view class="func-icon func-icon--ai">
+							<uni-icons type="star" size="22" color="#0EA5E9" />
+						</view>
+						<text class="func-label">AI人岗匹配</text>
 					</view>
-					<text class="func-label">AI人岗匹配</text>
-				</view>
-				<view class="func-item" @click="gotoFunc('/pages/teacher/resumes')">
-					<view class="func-icon func-icon--emerald">
-						<uni-icons type="scan" size="22" color="#059669" />
+					<view class="func-item" @click="gotoFunc('/pages/teacher/resumes')">
+						<view class="func-icon func-icon--emerald">
+							<uni-icons type="scan" size="22" color="#00B42A" />
+						</view>
+						<text class="func-label">简历分析</text>
 					</view>
-					<text class="func-label">简历分析</text>
-				</view>
-				<view class="func-item" @click="gotoFunc('/pages/teacher/approvals')">
-					<view class="func-icon func-icon--red">
-						<uni-icons type="auth" size="22" color="#DC2626" />
+					<view class="func-item" @click="gotoFunc('/pages/teacher/approvals')">
+						<view class="func-icon func-icon--red">
+							<uni-icons type="auth" size="22" color="#F53F3F" />
+						</view>
+						<text class="func-label">审批管理</text>
 					</view>
-					<text class="func-label">审批管理</text>
 				</view>
-			</view>
 
 			<!-- 管理数据统计 -->
 			<view class="section-header">
@@ -66,10 +66,10 @@
 					<text class="stat-num--large">{{ dashboard.deliveryCount || 0 }}</text>
 					<text class="stat-label">总投递数</text>
 				</view>
-				<view class="stat-card__side">
-					<text class="stat-trend">较上周 +12%</text>
-					<uni-icons type="arrowup" size="14" color="#10B981" />
-				</view>
+					<view class="stat-card__side">
+						<text class="stat-trend" :class="{ 'stat-trend--zero': !(dashboard.todayDeliveryCount || 0) }">今日 +{{ dashboard.todayDeliveryCount || 0 }}</text>
+						<uni-icons v-if="(dashboard.todayDeliveryCount || 0) > 0" type="arrowup" size="14" color="#00B42A" />
+					</view>
 			</view>
 
 			<!-- 次要指标三列网格 -->
@@ -254,15 +254,29 @@ const handleLogout = () => {
 	align-items: center;
 	justify-content: space-between;
 	padding: 16px 20px 28px;
-	background: linear-gradient(170deg, $uni-color-primary 0%, $uni-color-primary-hover 100%);
+	background: $uni-gradient-hero;
 	color: $uni-text-color-inverse;
 	transition: padding 0.25s ease;
+	overflow: hidden;
+}
+.profile-header::after {
+	content: '';
+	position: absolute;
+	top: -30px;
+	right: -30px;
+	width: 160px;
+	height: 160px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.1);
+	pointer-events: none;
 }
 .profile-header--shrink {
 	padding-top: 12px !important;
 	padding-bottom: 16px;
 }
 .profile-header__left {
+	position: relative;
+	z-index: 1;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -307,7 +321,7 @@ const handleLogout = () => {
 	border-radius: 16px;
 	margin: -14px 16px 0;
 	padding: 18px 8px;
-	box-shadow: 0 4px 24px $uni-color-primary-light;
+	box-shadow: $uni-shadow-card;
 	position: relative;
 	z-index: 2;
 }
@@ -331,10 +345,10 @@ const handleLogout = () => {
 	justify-content: center;
 }
 .func-icon--blue { background: $uni-color-primary-light; }
-.func-icon--amber { background: rgba(217, 119, 6, 0.1); }
-.func-icon--purple { background: rgba(124, 58, 237, 0.1); }
-.func-icon--emerald { background: rgba(5, 150, 105, 0.1); }
-.func-icon--red { background: rgba(220, 38, 38, 0.1); }
+.func-icon--amber { background: $uni-color-warning-light; }
+.func-icon--ai { background: $uni-color-ai-light; }
+.func-icon--emerald { background: $uni-color-success-light; }
+.func-icon--red { background: $uni-color-error-light; }
 .func-label {
 	font-size: 12px;
 	color: $uni-text-color;
@@ -363,7 +377,7 @@ const handleLogout = () => {
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
-	box-shadow: 0 4px 24px $uni-color-primary-light;
+	box-shadow: $uni-shadow-card;
 	transition: transform 0.2s ease, opacity 0.2s ease;
 }
 .stat-card:active {
@@ -397,6 +411,9 @@ const handleLogout = () => {
 	color: $uni-color-success;
 	font-weight: 500;
 }
+.stat-trend--zero {
+	color: $uni-text-color-placeholder;
+}
 .stat-label {
 	font-size: 12px;
 	color: $uni-text-color-secondary;
@@ -417,7 +434,7 @@ const handleLogout = () => {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
-	box-shadow: 0 2px 12px $uni-color-primary-light;
+	box-shadow: $uni-shadow-card;
 	transition: transform 0.2s ease, opacity 0.2s ease;
 }
 .stat-box:active {
@@ -438,7 +455,7 @@ const handleLogout = () => {
 	border-radius: 16px;
 	margin: 0 16px;
 	padding: 4px 0;
-	box-shadow: 0 4px 24px $uni-color-primary-light;
+	box-shadow: $uni-shadow-card;
 }
 .settings-item {
 	display: flex;
@@ -468,7 +485,7 @@ const handleLogout = () => {
 	flex-shrink: 0;
 }
 .settings-icon--danger {
-	background: rgba(239, 68, 68, 0.1);
+	background: $uni-color-error-light;
 }
 .settings-label {
 	font-size: 15px;
