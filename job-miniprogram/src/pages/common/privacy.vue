@@ -42,7 +42,7 @@ import NavBar from '@/components/NavBar.vue'
 </script>
 
 <style scoped lang="scss">
-.content-card { background: $uni-bg-color; margin: 16px; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); line-height: 1.8; }
+.content-card { background: $uni-bg-color; margin: 16px; padding: 20px; border-radius: 12px; box-shadow: $uni-shadow-card; line-height: 1.8; }
 .title { font-size: 18px; font-weight: 700; color: $uni-text-color-title; display: block; text-align: center; margin-bottom: 8px; }
 .update-time { font-size: 12px; color: $uni-text-color-placeholder; display: block; text-align: center; margin-bottom: 20px; }
 .section-title { font-size: 15px; font-weight: 600; color: $uni-text-color-title; display: block; margin-top: 20px; margin-bottom: 8px; }

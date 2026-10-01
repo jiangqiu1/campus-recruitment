@@ -341,7 +341,7 @@ const handleAnalyze = async () => {
 	background: white;
 	border-radius: 12px;
 	padding: 20px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 	flex-direction: row;
 	align-items: center;
 	gap: 12px;
@@ -370,7 +370,7 @@ const handleAnalyze = async () => {
 	background: white;
 	border-radius: 12px;
 	padding: 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .section-title { font-size: 15px; font-weight: 700; color: $uni-text-color-title; margin-bottom: 12px; display: block; }
 

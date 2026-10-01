@@ -46,12 +46,12 @@ const handleRemove = (index) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .tag-input {
 	border: 1px solid #E8EAED;
 	border-radius: 8px;
 	padding: 8px 12px;
-	background: #F8F9FC;
+	background: $uni-bg-color-hover;
 }
 .tag-list {
 	flex-direction: row;
@@ -62,14 +62,14 @@ const handleRemove = (index) => {
 .tag-item {
 	flex-direction: row;
 	align-items: center;
-	background: rgba(22, 93, 255, 0.08);
+	background: $uni-color-primary-light;
 	border-radius: 4px;
 	padding: 4px 8px;
 	gap: 4px;
 }
 .tag-text {
 	font-size: 13px;
-	color: #165DFF;
+	color: $uni-color-primary;
 }
 .tag-remove {
 	font-size: 12px;

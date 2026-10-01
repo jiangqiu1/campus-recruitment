@@ -101,6 +101,7 @@ const handleSwitch = (page) => {
 }
 
 .tab-item {
+	position: relative;
 	flex: 1;
 	height: 100%;
 	display: flex;
@@ -122,7 +123,18 @@ const handleSwitch = (page) => {
 .tab-item.active {
 	color: $uni-color-primary;
 	font-weight: 600;
-	transform: scale(1.05);
+}
+/* 选中项顶部指示条 */
+.tab-item.active::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 20px;
+	height: 3px;
+	background: $uni-color-primary;
+	border-radius: 0 0 3px 3px;
 }
 
 .tab-icon-wrap {

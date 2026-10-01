@@ -149,7 +149,7 @@ const getCompanyId = () => {
 	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 20px 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 	align-items: center;
 }
 .stat-num {
@@ -167,7 +167,7 @@ const getCompanyId = () => {
 	border-radius: 12px;
 	margin: 0 16px 12px;
 	padding: 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .section-title {
 	font-size: 15px;

@@ -206,7 +206,7 @@ const goToResume = (stu) => {
 	padding: 0 16px;
 	height: 40px;
 	margin: 12px 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .search-box input { flex: 1; font-size: 14px; background: transparent; border: none; color: $uni-text-color-title; height: 100%; }
 .clear-btn { line-height: 1; }
@@ -253,7 +253,7 @@ const goToResume = (stu) => {
 	border-radius: 12px;
 	padding: 16px;
 	margin-bottom: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 	align-items: center;
 }
 .resume-top {

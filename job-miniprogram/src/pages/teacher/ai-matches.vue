@@ -379,7 +379,7 @@ const scoreTx = (score) => {
 	flex: 1; text-align: center; padding: 12px 0; font-size: 14px; font-weight: 500; color: $uni-text-color-secondary;
 }
 .mode-tab.active { color: $uni-color-primary; background: $uni-color-primary-light; font-weight: 600; }
-.job-select-bar { background: white; padding: 14px 16px; margin: 0 16px 12px; border-radius: 12px; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.job-select-bar { background: white; padding: 14px 16px; margin: 0 16px 12px; border-radius: 12px; gap: 10px; box-shadow: $uni-shadow-card; }
 .select-row { flex-direction: row; align-items: center; gap: 10px; }
 .select-label { font-size: 14px; font-weight: 600; color: $uni-text-color-title; white-space: nowrap; }
 .job-picker { flex: 1; }
@@ -389,7 +389,7 @@ const scoreTx = (score) => {
 .batch-btn[disabled] { background: $uni-border-color !important; color: $uni-text-color-placeholder !important; }
 .loading-hint { padding: 40px 16px; text-align: center; font-size: 13px; color: $uni-text-color-secondary; }
 .stats-row { flex-direction: row; flex-wrap: wrap; padding: 0 16px; gap: 8px; }
-.stat-card { flex: 1; min-width: 70px; background: white; border-radius: 12px; padding: 12px; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.stat-card { flex: 1; min-width: 70px; background: white; border-radius: 12px; padding: 12px; align-items: center; box-shadow: $uni-shadow-card; }
 .stat-num { font-size: 20px; font-weight: 700; color: $uni-text-color-title; }
 .stat-label { font-size: 12px; color: $uni-text-color-secondary; margin-top: 4px; }
 .section { padding: 0 16px; }
@@ -397,7 +397,7 @@ const scoreTx = (score) => {
 .section-title { font-size: 16px; font-weight: 600; color: $uni-text-color-title; }
 .section-count { font-size: 12px; color: $uni-text-color-secondary; }
 .match-list { gap: 12px; }
-.match-card { background: white; border-radius: 12px; padding: 14px; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.match-card { background: white; border-radius: 12px; padding: 14px; gap: 10px; box-shadow: $uni-shadow-card; }
 .match-top { flex-direction: row; justify-content: space-between; align-items: center; }
 .match-info { flex: 1; gap: 4px; }
 .student-name { font-size: 15px; font-weight: 600; color: $uni-text-color-title; }

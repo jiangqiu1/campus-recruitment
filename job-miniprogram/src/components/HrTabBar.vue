@@ -30,7 +30,7 @@ const switchTab = (page) => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .page-wrapper {
 	position: fixed;
 	left: 0;
@@ -44,7 +44,7 @@ const switchTab = (page) => {
 	align-items: center;
 	justify-content: space-around;
 	box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
-	border-top: 0.5px solid #F2F3F5;
+	border-top: 0.5px solid $uni-border-color-divider;
 	z-index: 999;
 	padding-bottom: constant(safe-area-inset-bottom);
 	padding-bottom: env(safe-area-inset-bottom);
@@ -58,7 +58,7 @@ const switchTab = (page) => {
 	align-items: center;
 	justify-content: center;
 	gap: 3px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	font-size: 11px;
 	font-weight: 500;
 	transition: all 0.2s ease;
@@ -69,7 +69,7 @@ const switchTab = (page) => {
 }
 
 .tab-item.active {
-	color: #165DFF;
+	color: $uni-color-primary;
 	font-weight: 600;
 	transform: scale(1.05);
 }

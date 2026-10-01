@@ -18,7 +18,7 @@ defineProps({
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .loading-skeleton {
 	padding: 16px;
 	gap: 16px;
@@ -30,7 +30,7 @@ defineProps({
 	width: 100%;
 	height: 100%;
 	border-radius: 4px;
-	background: linear-gradient(90deg, #F2F3F5 25%, #E8EAED 50%, #F2F3F5 75%);
+	background: linear-gradient(90deg, $uni-border-color-divider 25%, #E8EAED 50%, $uni-border-color-divider 75%);
 	background-size: 200% 100%;
 	animation: shimmer 1.5s infinite;
 }

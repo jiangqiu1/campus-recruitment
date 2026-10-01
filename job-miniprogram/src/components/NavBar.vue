@@ -50,11 +50,11 @@ const handleRightClick = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .nav-bar {
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	flex-shrink: 0;
-	border-bottom: 0.5px solid #F2F3F5;
+	border-bottom: 0.5px solid $uni-border-color-divider;
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 	z-index: 100;
 }
@@ -76,7 +76,7 @@ const handleRightClick = () => {
 	text-align: center;
 	font-size: 16px;
 	font-weight: 600;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 .nav-right {
 	flex-direction: row;
@@ -88,7 +88,7 @@ const handleRightClick = () => {
 }
 .nav-right-text {
 	font-size: 14px;
-	color: #1D2129;
+	color: $uni-text-color-title;
 }
 .nav-left:active, .nav-right:active {
 	opacity: 0.7;

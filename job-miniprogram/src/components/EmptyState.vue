@@ -21,7 +21,7 @@ const handleAction = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .empty-state {
 	flex: 1;
 	align-items: center;
@@ -31,21 +31,21 @@ const handleAction = () => {
 }
 .empty-title {
 	font-size: 15px;
-	color: #4E5969;
+	color: $uni-text-color;
 	font-weight: 500;
 	margin-top: 8px;
 }
 .empty-desc {
 	font-size: 13px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	text-align: center;
 	line-height: 20px;
 }
 .empty-btn {
 	margin-top: 12px;
 	padding: 10px 28px;
-	background: #165DFF;
-	color: #FFFFFF;
+	background: $uni-color-primary;
+	color: $uni-text-color-inverse;
 	border: none;
 	border-radius: 8px;
 	font-size: 14px;

@@ -181,7 +181,7 @@ const goToResumes = () => uni.navigateTo({ url: '/pages/teacher/resumes' })
 	padding: 0 16px;
 	height: 40px;
 	margin: 12px 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .search-box input { flex: 1; font-size: 14px; background: transparent; border: none; color: $uni-text-color-title; height: 100%; }
 .all-resume-link { font-size: 13px; color: $uni-color-primary; font-weight: 500; flex-shrink: 0; }
@@ -192,7 +192,7 @@ const goToResumes = () => uni.navigateTo({ url: '/pages/teacher/resumes' })
 	border-radius: 12px;
 	padding: 16px;
 	margin-bottom: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 	position: relative;
 }
 .class-card-top {

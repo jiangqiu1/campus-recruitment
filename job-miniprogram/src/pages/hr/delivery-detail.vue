@@ -374,7 +374,7 @@ const goBack = () => uni.navigateBack()
 	border-radius: 12px;
 	margin: 12px 16px;
 	padding: 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .profile-top {
 	flex-direction: row;
@@ -406,7 +406,7 @@ const goBack = () => uni.navigateBack()
 .section-card {
 	background: $uni-bg-color; border-radius: 12px;
 	margin: 0 16px 10px; padding: 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .section-title-row {
 	flex-direction: row; justify-content: space-between; align-items: center;

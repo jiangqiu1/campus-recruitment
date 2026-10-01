@@ -70,7 +70,7 @@ import NavBar from '@/components/NavBar.vue'
 	border-radius: 12px;
 	margin: 0 16px 12px;
 	padding: 20px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .about-title {
 	font-size: 15px;

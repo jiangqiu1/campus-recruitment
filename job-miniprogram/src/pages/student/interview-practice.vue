@@ -302,7 +302,7 @@ const scoreColor = (score) => {
 	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 16px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+	box-shadow: $uni-shadow-card;
 }
 .job-info { flex: 1; }
 .job-title { font-size: 16px; font-weight: 600; color: $uni-text-color-title; display: block; }
@@ -320,7 +320,7 @@ const scoreColor = (score) => {
 	padding: 12px 16px;
 	background: $uni-bg-color;
 	border-radius: 12px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+	box-shadow: $uni-shadow-card;
 }
 .practice-job-info { flex: 1; }
 .practice-job-title { font-size: 15px; font-weight: 600; color: $uni-text-color-title; display: block; }
@@ -332,7 +332,7 @@ const scoreColor = (score) => {
 	border-radius: 12px;
 	padding: 20px 16px;
 	margin: 0 16px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+	box-shadow: $uni-shadow-card;
 }
 .question-header { flex-direction: row; align-items: center; gap: 8px; margin-bottom: 10px; }
 .q-index {
@@ -405,7 +405,7 @@ const scoreColor = (score) => {
 	margin: 16px;
 	padding: 32px 20px;
 	align-items: center;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+	box-shadow: $uni-shadow-card;
 }
 .summary-icon { margin-bottom: 12px; }
 .summary-title { font-size: 20px; font-weight: 700; color: $uni-text-color-title; }

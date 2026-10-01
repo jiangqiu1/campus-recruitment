@@ -134,7 +134,7 @@ const handleSave = async () => {
 	border-radius: 12px;
 	margin: 16px;
 	overflow: hidden;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .form-item {
 	flex-direction: row;

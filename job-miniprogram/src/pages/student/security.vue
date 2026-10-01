@@ -97,7 +97,7 @@ const handleDeleteAccount = () => {
 	border-radius: 12px;
 	margin: 16px;
 	overflow: hidden;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .menu-item {
 	flex-direction: row;
@@ -137,7 +137,7 @@ const handleDeleteAccount = () => {
 	border-radius: 12px;
 	margin: 0 16px 16px;
 	padding: 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .info-title { font-size: 15px; font-weight: 600; color: $uni-text-color-title; margin-bottom: 12px; display: block; }
 .info-text { font-size: 13px; color: $uni-text-color-secondary; line-height: 1.8; display: block; }

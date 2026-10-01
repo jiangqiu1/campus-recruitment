@@ -219,11 +219,26 @@ const formatTime = (time, type) => {
 <style scoped lang="scss">
 /* ===== 头部（完全对齐教师端） ===== */
 .header-section {
-	background: $uni-gradient-primary;
+	position: relative;
+	overflow: hidden;
+	background: $uni-gradient-hero;
 	padding: 16px 16px 32px;
 	flex-shrink: 0;
 }
+.header-section::after {
+	content: '';
+	position: absolute;
+	top: -30px;
+	right: -30px;
+	width: 160px;
+	height: 160px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.1);
+	pointer-events: none;
+}
 .header-top {
+	position: relative;
+	z-index: 1;
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: flex-start;
@@ -316,7 +331,7 @@ const formatTime = (time, type) => {
 	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .todo-card:active { background: $uni-bg-color-page; }
 .todo-top {
@@ -363,7 +378,7 @@ const formatTime = (time, type) => {
 	height: 44px;
 	background: $uni-bg-color;
 	border-radius: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .quick-action-item + .quick-action-item {
 	margin-left: 12px;
@@ -491,7 +506,7 @@ const formatTime = (time, type) => {
 	flex-direction: row;
 	align-items: center;
 	gap: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .interview-card:active { background: $uni-bg-color-page; }
 .interview-icon {

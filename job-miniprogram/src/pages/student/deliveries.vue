@@ -357,7 +357,7 @@ const goToInterviewPractice = () => uni.navigateTo({ url: '/pages/student/interv
 .delivery-card {
 	background: $uni-bg-color;
 	border-radius: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .delivery-card:active { background: $uni-bg-color-page; }
 .card-body {

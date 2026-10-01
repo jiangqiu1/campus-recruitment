@@ -339,7 +339,7 @@ export default {
 	border-radius: 12px;
 	padding: 14px 14px 14px 18px;
 	margin-bottom: 10px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 	position: relative;
 	overflow: hidden;
 }

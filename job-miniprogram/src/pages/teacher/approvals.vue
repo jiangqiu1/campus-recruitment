@@ -253,7 +253,7 @@ const loadMore = () => {}
 	border-radius: 12px;
 	padding: 16px 16px 16px 20px;
 	margin-bottom: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 	position: relative;
 	overflow: hidden;
 }

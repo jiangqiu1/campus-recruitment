@@ -247,7 +247,7 @@ const handleAiParse = async () => {
 	border-radius: 12px;
 	padding: 16px;
 	margin-bottom: 10px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .job-card:active { background: $uni-bg-color-page; }
 .job-top { margin-bottom: 12px; }

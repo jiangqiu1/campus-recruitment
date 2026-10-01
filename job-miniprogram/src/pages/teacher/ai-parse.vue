@@ -212,7 +212,7 @@ const formatPercent = (s) => s != null ? Math.round(Number(s) * 100) + '%' : '--
 .result-val { flex: 1; font-size: 13px; color: $uni-text-color-title; }
 
 .log-list { flex-direction: column; gap: 10px; }
-.log-card { background: $uni-bg-color; border-radius: 12px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.log-card { background: $uni-bg-color; border-radius: 12px; padding: 14px; box-shadow: $uni-shadow-card; }
 .log-top { flex-direction: row; justify-content: space-between; margin-bottom: 6px; }
 .log-time { font-size: 12px; color: $uni-text-color-secondary; }
 .log-confidence { font-size: 12px; font-weight: 600; color: $uni-color-primary; }

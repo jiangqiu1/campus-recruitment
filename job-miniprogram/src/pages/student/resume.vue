@@ -286,7 +286,7 @@ const formatTime = (time) => {
 	padding: 16px;
 	background: $uni-bg-color;
 	margin-bottom: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .top-bar-right {
 	flex: 1;
@@ -315,7 +315,7 @@ const formatTime = (time) => {
 	border-radius: 12px;
 	padding: 20px;
 	margin: 0 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .resume-header {
 	flex-direction: row;
@@ -402,7 +402,7 @@ const formatTime = (time) => {
 	border-radius: 12px;
 	padding: 16px;
 	margin: 0 16px 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .section-title-row {
 	flex-direction: row;

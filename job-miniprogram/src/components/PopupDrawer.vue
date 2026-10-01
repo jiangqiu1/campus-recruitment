@@ -35,7 +35,7 @@ const handleMaskClick = () => {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .popup-mask {
 	position: fixed;
 	top: 0;
@@ -57,7 +57,7 @@ const handleMaskClick = () => {
 	left: 0;
 	right: 0;
 	bottom: 0;
-	background: #FFFFFF;
+	background: $uni-bg-color;
 	border-radius: 16px 16px 0 0;
 	z-index: 1001;
 	transform: translateY(100%);
@@ -82,7 +82,7 @@ const handleMaskClick = () => {
 	justify-content: space-between;
 	align-items: center;
 	padding: 16px 20px 12px;
-	border-bottom: 1px solid #F2F3F5;
+	border-bottom: 1px solid $uni-border-color-divider;
 	flex-shrink: 0;
 }
 .popup-title {

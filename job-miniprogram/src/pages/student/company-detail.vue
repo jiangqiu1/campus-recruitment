@@ -204,7 +204,7 @@ const goBack = () => uni.navigateBack()
 .info-card {
 	background: $uni-bg-color; border-radius: 12px;
 	margin: 12px 16px 0; padding: 18px 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .info-title-row {
 	flex-direction: row; justify-content: space-between;

@@ -291,7 +291,7 @@ const goToDetail = (id) => uni.navigateTo({ url: '/pages/hr/delivery-detail?id='
   border-radius: 12px;
   padding: 14px;
   margin-bottom: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: $uni-shadow-card;
 }
 .interview-card:active { background: $uni-bg-color-page; }
 .card-left {

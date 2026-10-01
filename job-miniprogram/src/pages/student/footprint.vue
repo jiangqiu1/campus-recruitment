@@ -182,7 +182,7 @@ const goToDetail = (id) => {
 	border-radius: 12px;
 	padding: 14px;
 	gap: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .check-box {
 	justify-content: center;

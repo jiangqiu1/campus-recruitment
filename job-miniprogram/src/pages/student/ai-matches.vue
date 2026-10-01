@@ -277,7 +277,7 @@ const goToJob = (item) => {
 .section-title { font-size: 16px; font-weight: 700; color: $uni-text-color-title; }
 .section-count { font-size: 13px; color: $uni-text-color-secondary; }
 .match-list { flex-direction: column; gap: 12px; }
-.match-card { background: $uni-bg-color; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.match-card { background: $uni-bg-color; border-radius: 12px; padding: 16px; box-shadow: $uni-shadow-card; }
 .match-top { flex-direction: row; justify-content: space-between; align-items: flex-start; }
 .match-info { flex: 1; }
 .match-job-title { font-size: 16px; font-weight: 600; color: $uni-text-color-title; display: block; }

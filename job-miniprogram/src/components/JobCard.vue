@@ -71,17 +71,29 @@ const matchBadgeBg = computed(() => {
 })
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .job-card {
-	background: #FFFFFF;
+	position: relative;
+	overflow: hidden;
+	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 16px;
 	margin-bottom: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 	transition: background 0.2s;
 }
+/* 顶部渐变细条：品牌识别 + 精致感 */
+.job-card::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 2px;
+	background: linear-gradient(90deg, $uni-color-primary 0%, $uni-color-primary-lighter 60%, rgba(96, 165, 250, 0) 100%);
+}
 .job-card:active {
-	background: #F7F8FA;
+	background: $uni-bg-color-page;
 }
 .card-main {
 	width: 100%;
@@ -98,7 +110,7 @@ const matchBadgeBg = computed(() => {
 .job-title {
 	font-size: 16px;
 	font-weight: 600;
-	color: #1D2129;
+	color: $uni-text-color-title;
 	flex: 1;
 	margin-right: 8px;
 }
@@ -117,17 +129,17 @@ const matchBadgeBg = computed(() => {
 .match-badge-text {
 	font-size: 11px;
 	font-weight: 700;
-	color: #FFFFFF;
+	color: $uni-text-color-inverse;
 }
 .salary {
 	font-size: 16px;
 	font-weight: 700;
-	color: #165DFF;
+	color: $uni-color-primary;
 	flex-shrink: 0;
 }
 .company-name {
 	font-size: 13px;
-	color: #4E5969;
+	color: $uni-text-color;
 }
 .job-tags {
 	flex-direction: row;
@@ -136,8 +148,8 @@ const matchBadgeBg = computed(() => {
 }
 .base-tag {
 	font-size: 12px;
-	color: #86909C;
-	background: #F2F3F5;
+	color: $uni-text-color-secondary;
+	background: $uni-border-color-divider;
 	padding: 2px 8px;
 	border-radius: 4px;
 }
@@ -148,8 +160,8 @@ const matchBadgeBg = computed(() => {
 }
 .welfare-tag {
 	font-size: 12px;
-	color: #165DFF;
-	background: rgba(22, 93, 255, 0.08);
+	color: $uni-color-primary;
+	background: $uni-color-primary-light;
 	padding: 2px 8px;
 	border-radius: 4px;
 }
@@ -158,7 +170,7 @@ const matchBadgeBg = computed(() => {
 	gap: 12px;
 	margin-top: 16px;
 	padding-top: 16px;
-	border-top: 1px solid #F7F8FA;
+	border-top: 1px solid $uni-bg-color-page;
 }
 .action-btn {
 	flex: 1;
@@ -173,17 +185,17 @@ const matchBadgeBg = computed(() => {
 	gap: 4px;
 }
 .btn-primary {
-	background: #165DFF;
-	color: #FFFFFF;
+	background: $uni-color-primary;
+	color: $uni-text-color-inverse;
 }
 .btn-outline {
-	background: #FFFFFF;
-	border: 1px solid #E5E6EB;
-	color: #4E5969;
+	background: $uni-bg-color;
+	border: 1px solid $uni-border-color;
+	color: $uni-text-color;
 }
 .btn-disabled {
-	background: #E5E6EB;
-	color: #A9AEB8;
+	background: $uni-border-color;
+	color: $uni-text-color-placeholder;
 	border: none;
 }
 .btn-primary:active, .btn-outline:active {

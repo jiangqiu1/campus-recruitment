@@ -10,8 +10,8 @@
 					</view>
 				</view>
 				<view class="search-box">
-					<uni-icons type="search" size="16" color="#86909C" />
-					<input v-model="keyword" placeholder="搜索岗位、公司、关键词..." @confirm="handleSearch" />
+					<uni-icons type="search" size="16" color="rgba(255,255,255,0.8)" />
+					<input v-model="keyword" placeholder="搜索岗位、公司、关键词..." placeholder-style="color: rgba(255,255,255,0.65)" @confirm="handleSearch" />
 				</view>
 			</view>
 
@@ -348,18 +348,33 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 </script>
 
 <style scoped lang="scss">
-/* Header */
+/* Header：深色 Hero + 光斑 */
 .header-section {
-	background: $uni-gradient-primary;
+	position: relative;
+	overflow: hidden;
+	background: $uni-gradient-hero;
 	color: white;
 	padding: 16px 16px 24px;
 	flex-shrink: 0;
+}
+.header-section::after {
+	content: '';
+	position: absolute;
+	top: -30px;
+	right: -30px;
+	width: 160px;
+	height: 160px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.1);
+	pointer-events: none;
 }
 .header-top {
 	flex-direction: row;
 	justify-content: flex-start;
 	align-items: center;
 	margin-bottom: 12px;
+	position: relative;
+	z-index: 1;
 }
 .greeting-wrap { flex: 1; }
 .greeting-text {
@@ -374,16 +389,18 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	margin-top: 4px;
 }
 
-/* 搜索框 */
+/* 搜索框：玻璃拟态 */
 .search-box {
 	flex-direction: row;
 	align-items: center;
 	gap: 8px;
-	background: $uni-bg-color;
+	background: rgba(255, 255, 255, 0.16);
+	border: 1px solid rgba(255, 255, 255, 0.3);
 	border-radius: 999px;
 	padding: 0 16px;
 	height: 40px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	position: relative;
+	z-index: 1;
 }
 .search-box input {
 	flex: 1;
@@ -392,7 +409,7 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	padding: 0;
 	font-size: 14px;
 	background: transparent;
-	color: $uni-text-color-title;
+	color: $uni-text-color-inverse;
 	outline: none;
 }
 

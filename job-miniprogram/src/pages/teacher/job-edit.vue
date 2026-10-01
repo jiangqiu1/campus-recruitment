@@ -316,7 +316,7 @@ const handleAiParseJob = async () => {
 	background: white;
 	border-radius: 12px;
 	padding: 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .input-group { margin-bottom: 16px; }
 .input-label { font-size: 14px; font-weight: 600; color: $uni-text-color-title; margin-bottom: 8px; display: block; }

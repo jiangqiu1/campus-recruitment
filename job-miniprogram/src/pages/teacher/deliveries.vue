@@ -253,7 +253,7 @@ const goToStudentResume = (d) => {
 	margin: 0 16px 12px;
 	border-radius: 12px;
 	padding: 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .section-title {
 	font-size: 15px;
@@ -278,7 +278,7 @@ const goToStudentResume = (d) => {
 	border-radius: 12px;
 	padding: 16px;
 	margin-bottom: 12px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 /* 待查看 = 教师的待办，左侧橙色标识条 */
 .delivery-card.is-pending {
@@ -293,7 +293,7 @@ const goToStudentResume = (d) => {
 	border-radius: 12px;
 	margin: 12px 16px 0;
 	padding: 12px 0;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .key-stat {
 	flex: 1;

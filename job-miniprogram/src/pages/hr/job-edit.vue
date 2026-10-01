@@ -222,7 +222,7 @@ const fillFromAiParse = (data) => {
 	border-radius: 16px;
 	margin: 16px;
 	padding: 20px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 	overflow: hidden;
 }
 .form-group {

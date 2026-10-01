@@ -13,7 +13,7 @@ defineProps({
 defineEmits(['retry'])
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .error-state {
 	flex: 1;
 	align-items: center;
@@ -23,14 +23,14 @@ defineEmits(['retry'])
 }
 .error-msg {
 	font-size: 15px;
-	color: #86909C;
+	color: $uni-text-color-secondary;
 	text-align: center;
 }
 .error-retry {
 	margin-top: 8px;
 	padding: 10px 24px;
-	background: #F53F3F;
-	color: #FFFFFF;
+	background: $uni-color-error;
+	color: $uni-text-color-inverse;
 	border: none;
 	border-radius: 8px;
 	font-size: 14px;

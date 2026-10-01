@@ -155,12 +155,23 @@ const goToActivityDetail = (act) => {
 <style scoped lang="scss">
 /* ========== 顶部头部 ========== */
 .header-section {
-	background: $uni-gradient-primary;
+	background: $uni-gradient-hero;
 	color: white;
 	padding: 16px 16px 32px;
 	flex-shrink: 0;
 	position: relative;
 	overflow: hidden;
+}
+.header-section::after {
+	content: '';
+	position: absolute;
+	top: -30px;
+	right: -30px;
+	width: 160px;
+	height: 160px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.1);
+	pointer-events: none;
 }
 .header-top {
 	flex-direction: row;
@@ -233,7 +244,7 @@ const goToActivityDetail = (act) => {
 	background: white;
 	border-radius: 12px;
 	padding: 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .todo-top {
 	flex-direction: row;
@@ -311,7 +322,7 @@ const goToActivityDetail = (act) => {
 	background: white;
 	border-radius: 12px;
 	padding: 0 16px;
-	box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+	box-shadow: $uni-shadow-card;
 }
 .activity-item {
 	flex-direction: row;

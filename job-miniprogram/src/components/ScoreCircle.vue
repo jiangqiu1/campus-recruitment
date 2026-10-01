@@ -50,7 +50,7 @@ onMounted(() => drawCircle())
 watch(() => props.score, () => drawCircle())
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .score-circle {
 	position: relative;
 	align-items: center;
