@@ -20,6 +20,26 @@
 				<view class="job-update-time">更新于 {{ formatDate(job.updateTime) }}</view>
 			</view>
 
+			<!-- AI 匹配结论（决策卡：回答"适不适合我、要不要投"） -->
+			<view v-if="matchRecord" class="match-hero">
+				<view class="match-hero-top">
+					<view class="match-ring" :style="{ borderColor: matchVerdict.color, backgroundColor: matchVerdict.bg }">
+						<text class="match-ring-num" :style="{ color: matchVerdict.color }">{{ matchScore }}%</text>
+					</view>
+					<view class="match-hero-texts">
+						<text class="match-verdict" :style="{ color: matchVerdict.color }">{{ matchVerdict.text }}</text>
+						<text class="match-reason">{{ matchRecord.matchReason || '基于你的简历与岗位要求综合评估' }}</text>
+					</view>
+				</view>
+				<view class="match-dims" v-if="matchDims.length">
+					<view v-for="(d, i) in matchDims" :key="i" class="match-dim-row">
+						<text class="match-dim-label">{{ d.label }}</text>
+						<view class="match-dim-track"><view class="match-dim-fill" :style="{ width: d.value + '%', background: d.color }" /></view>
+						<text class="match-dim-val">{{ d.value }}%</text>
+					</view>
+				</view>
+			</view>
+
 			<!-- 公司信息入口 -->
 			<view class="company-info" @click="goToCompany">
 				<view class="company-icon">{{ companyLogo }}</view>
@@ -41,13 +61,25 @@
 			<!-- 岗位职责 -->
 			<view class="section-card">
 				<text class="section-title">岗位职责</text>
-				<text class="section-text">{{ job.description || '暂无描述' }}</text>
+				<view v-if="descriptionLines.length > 1" class="section-list">
+					<view v-for="(line, i) in descriptionLines" :key="i" class="section-li">
+						<text class="section-li-dot">•</text>
+						<text class="section-li-text">{{ line }}</text>
+					</view>
+				</view>
+				<text v-else class="section-text">{{ job.description || '暂无描述' }}</text>
 			</view>
 
 			<!-- 任职要求 -->
 			<view v-if="job.requirements" class="section-card">
 				<text class="section-title">任职要求</text>
-				<text class="section-text">{{ job.requirements }}</text>
+				<view v-if="requirementLines.length > 1" class="section-list">
+					<view v-for="(line, i) in requirementLines" :key="i" class="section-li">
+						<text class="section-li-dot">•</text>
+						<text class="section-li-text">{{ line }}</text>
+					</view>
+				</view>
+				<text v-else class="section-text">{{ job.requirements }}</text>
 			</view>
 
 			<!-- 投递须知 -->
@@ -61,15 +93,6 @@
 					<text class="info-label">截止日期</text>
 					<text class="info-value">{{ job.deadline || '招满即止' }}</text>
 				</view>
-			</view>
-
-			<!-- AI 匹配度 -->
-			<view class="section-card">
-				<text class="section-title">AI 匹配度</text>
-				<view class="match-bar">
-					<view class="match-fill" :style="{ width: matchScore + '%' }"></view>
-				</view>
-				<text class="match-text">{{ matchScore }}% 匹配 · 基于你的技能和简历分析</text>
 			</view>
 
 			<!-- 工作地点 -->
@@ -110,16 +133,47 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { jobAPI, deliveryAPI, favoriteAPI, resumeAPI, hrAPI } from '@/utils/request'
+import { jobAPI, deliveryAPI, favoriteAPI, resumeAPI, hrAPI, matchAPI } from '@/utils/request'
 import { addBrowseRecord } from '@/utils/browseHistory'
 import NavBar from '@/components/NavBar.vue'
 
 const job = ref({})
 const isFavorited = ref(false)
 const isDelivered = ref(false)
-const matchScore = ref(85)
+const matchRecord = ref(null)
 const jobId = ref('')
 const company = ref({})
+
+// 匹配度：来自真实人岗匹配记录（教师推送/生成），无记录时决策卡整体隐藏
+const matchScore = computed(() => {
+	if (!matchRecord.value) return 0
+	const v = Number(matchRecord.value.matchScore) || 0
+	return v > 1 ? Math.round(v) : Math.round(v * 100)
+})
+
+const matchVerdict = computed(() => {
+	const s = matchScore.value
+	if (s >= 80) return { text: '非常适合投递', color: '#00B42A', bg: 'rgba(0,180,42,0.08)' }
+	if (s >= 60) return { text: '比较匹配', color: '#165DFF', bg: 'rgba(22,93,255,0.08)' }
+	if (s >= 40) return { text: '可以尝试', color: '#FF7D00', bg: 'rgba(255,125,0,0.1)' }
+	return { text: '匹配度较低', color: '#F53F3F', bg: 'rgba(245,63,63,0.08)' }
+})
+
+const matchDims = computed(() => {
+	const sd = (matchRecord.value && matchRecord.value.scoreDetail) || {}
+	if (!Object.keys(sd).length) return []
+	const defs = [['skillMatch', '技能匹配'], ['expMatch', '经验匹配'], ['eduMatch', '学历匹配']]
+	return defs.map(([key, label]) => {
+		const raw = Number(sd[key]) || 0
+		const value = raw > 1 ? Math.round(raw) : Math.round(raw * 100)
+		return { label, value, color: value >= 80 ? '#00B42A' : value >= 60 ? '#165DFF' : '#FF7D00' }
+	})
+})
+
+// JD 结构化：按换行拆成条目，去掉"1."类序号
+const splitLines = (text) => (text || '').split(/\n+/).map(s => s.trim().replace(/^\d+[\.、]\s*/, '')).filter(Boolean)
+const descriptionLines = computed(() => splitLines(job.value.description))
+const requirementLines = computed(() => splitLines(job.value.requirements))
 
 const companyLogo = computed(() => {
 	const name = company.value.name || job.value.companyName || ''
@@ -142,9 +196,22 @@ const loadJobDetail = async (id) => {
 		addBrowseRecord(id)
 		loadUserState()
 		loadCompany()
+		loadMatch()
 	} catch (e) {
 		console.log('加载岗位详情失败', e)
 		uni.showToast({ title: '加载失败', icon: 'none' })
+	}
+}
+
+// 拉当前学生在该岗位的人岗匹配记录
+const loadMatch = async () => {
+	const sid = getStudentId()
+	if (!sid || !job.value.id) return
+	try {
+		const res = await matchAPI.getByStudent(sid)
+		matchRecord.value = (res.data || []).find(m => Number(m.jobId) === Number(job.value.id)) || null
+	} catch (e) {
+		matchRecord.value = null
 	}
 }
 
@@ -286,9 +353,24 @@ const formatDate = (time) => {
 .info-row { flex-direction: row; align-items: center; padding: 8px 0; }
 .info-label { font-size: 14px; color: $uni-text-color-secondary; width: 80px; flex-shrink: 0; }
 .info-value { font-size: 14px; color: $uni-text-color-title; flex: 1; }
-.match-bar { height: 8px; background: $uni-border-color-divider; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-.match-fill { height: 100%; background: linear-gradient(90deg, $uni-color-primary, $uni-color-primary-lighter); border-radius: 4px; }
-.match-text { font-size: 13px; color: $uni-text-color-secondary; }
+/* AI 匹配决策卡 */
+.match-hero { background: $uni-bg-color; padding: 16px; margin-bottom: 12px; }
+.match-hero-top { flex-direction: row; align-items: center; gap: 14px; }
+.match-ring { width: 60px; height: 60px; border-radius: 50%; border-width: 3px; border-style: solid; align-items: center; justify-content: center; flex-shrink: 0; }
+.match-ring-num { font-size: 15px; font-weight: 800; }
+.match-hero-texts { flex: 1; }
+.match-verdict { font-size: 16px; font-weight: 700; display: block; }
+.match-reason { font-size: 12px; color: $uni-text-color-secondary; margin-top: 4px; line-height: 1.5; display: block; }
+.match-dims { margin-top: 14px; gap: 8px; }
+.match-dim-row { flex-direction: row; align-items: center; gap: 8px; }
+.match-dim-label { width: 56px; font-size: 12px; color: $uni-text-color; }
+.match-dim-track { flex: 1; height: 6px; background: $uni-border-color-divider; border-radius: 3px; overflow: hidden; }
+.match-dim-fill { height: 100%; border-radius: 3px; }
+.match-dim-val { width: 36px; font-size: 12px; font-weight: 600; color: $uni-text-color; text-align: right; }
+.section-li { flex-direction: row; gap: 8px; margin-bottom: 6px; }
+.section-li:last-child { margin-bottom: 0; }
+.section-li-dot { color: $uni-color-primary; font-size: 14px; line-height: 1.7; }
+.section-li-text { flex: 1; font-size: 14px; color: $uni-text-color; line-height: 1.7; }
 .address-box { flex-direction: row; align-items: center; gap: 8px; padding: 12px; background: $uni-bg-color-page; border-radius: 8px; }
 .address-text { font-size: 14px; color: $uni-text-color; flex: 1; }
 .safety-tip { margin: 0 16px 16px; padding: 12px 14px; background: $uni-color-warning-light; border-radius: 8px; flex-direction: row; align-items: flex-start; gap: 8px; }

@@ -89,6 +89,17 @@
 						</view>
 					</view>
 				</view>
+				<view class="detail-improve-section">
+					<text class="detail-section-label">待提升</text>
+					<view v-for="(w, i) in weakDims" :key="i" class="improve-item">
+						<text class="improve-mark">△</text>
+						<text class="improve-text">{{ w }}</text>
+					</view>
+					<view v-if="!weakDims.length" class="improve-item">
+						<text class="improve-mark improve-mark--ok">✓</text>
+						<text class="improve-text">各维度均衡，可放心投递</text>
+					</view>
+				</view>
 				<button class="detail-action-btn" @click="goToJob(detailItem)">查看岗位详情</button>
 			</view>
 		</PopupDrawer>
@@ -223,6 +234,26 @@ const formatDim = (val) => {
 	const num = typeof val === 'string' ? parseFloat(val) : val
 	return Math.round(num * 100) + '%'
 }
+// 待提升：从弱项维度生成可解释的改进建议（<70% 视为待提升）
+const DIM_ADVICE = {
+	skill: '补充岗位要求的技术栈，并在项目经历中体现实际应用',
+	exp: '补充与岗位方向相关的实习或项目经历',
+	edu: '在简历中突出与岗位相关的课程、证书与自学成果'
+}
+const weakDims = computed(() => {
+	const item = detailItem.value
+	if (!item) return []
+	const defs = [['skill', '技能匹配'], ['exp', '经验匹配'], ['edu', '学历匹配']]
+	const list = []
+	defs.forEach(([key, label]) => {
+		const val = item[key + 'Score']
+		if (val == null) return
+		const num = typeof val === 'string' ? parseFloat(val) : val
+		if (num < 0.7) list.push(label + ' ' + Math.round(num * 100) + '%：' + DIM_ADVICE[key])
+	})
+	return list
+})
+
 const goToJob = (item) => {
 	showDetail.value = false
 	uni.navigateTo({ url: '/pages/student/job-detail?id=' + item.jobId })
@@ -275,6 +306,12 @@ const goToJob = (item) => {
 .dim-track { flex: 1; height: 8px; background: $uni-border-color-divider; border-radius: 4px; overflow: hidden; }
 .dim-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
 .dim-val { width: 36px; font-size: 12px; font-weight: 600; color: $uni-text-color; text-align: right; }
+.detail-improve-section { margin-bottom: 20px; }
+.improve-item { flex-direction: row; gap: 8px; margin-bottom: 6px; }
+.improve-item:last-child { margin-bottom: 0; }
+.improve-mark { color: $uni-color-warning; font-size: 13px; line-height: 1.6; }
+.improve-mark--ok { color: $uni-color-success; }
+.improve-text { flex: 1; font-size: 13px; color: $uni-text-color; line-height: 1.6; }
 .detail-action-btn { width: 100%; height: 44px; border-radius: 12px; background: $uni-color-primary; color: $uni-text-color-inverse; font-size: 15px; font-weight: 600; align-items: center; justify-content: center; border: none; margin-top: 16px; flex-shrink: 0; }
 .action-btn:active { opacity: 0.85; }
 </style>
