@@ -1,13 +1,16 @@
 <template>
 	<view class="page-wrapper">
 		<view class="login-container">
-			<!-- 头部：品牌区 -->
+			<!-- 头部：品牌区（左对齐，情绪文案主导） -->
 			<view class="login-header">
 				<view class="login-badge">
 					<text class="badge-letter">聘</text>
 				</view>
-				<text class="login-title">职业院校招聘就业平台</text>
-				<text class="login-subtitle">校企协同 · AI 精准匹配</text>
+				<view class="login-headline-wrap">
+					<text class="login-headline">让每一次投递，</text>
+					<text class="login-headline">都更接近理想工作</text>
+				</view>
+				<text class="login-subtitle">职业院校招聘就业平台 · 校企协同 × AI 精准匹配</text>
 			</view>
 
 			<!-- Signature：身份选择器（三个门户） -->
@@ -72,7 +75,7 @@
 			</view>
 
 			<view class="login-footer">
-				<text class="footer-text">{{ roleName }}端 v2.0</text>
+				<text class="footer-text">职业院校招聘就业平台 · v2.0</text>
 			</view>
 		</view>
 	</view>
@@ -90,7 +93,6 @@ const agree = ref(false)
 const showPwd = ref(false)
 
 const roleLabel = computed(() => ['学号', '工号', '企业账号'][role.value] || '账号')
-const roleName = computed(() => ['学生', '教师', '企业HR'][role.value] || '')
 
 const handleLogin = async () => {
 	if (!agree.value) {
@@ -168,9 +170,9 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	padding-bottom: calc(32px + env(safe-area-inset-bottom));
 }
 
-/* ===== 品牌头部 ===== */
+/* ===== 品牌头部：左对齐，情绪文案 ===== */
 .login-header {
-	align-items: center;
+	align-items: flex-start;
 	margin-bottom: 32px;
 	gap: 6px;
 }
@@ -181,7 +183,7 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	background: rgba(255,255,255,0.85);
 	align-items: center;
 	justify-content: center;
-	margin-bottom: 8px;
+	margin-bottom: 12px;
 	backdrop-filter: blur(4px);
 	box-shadow: 0 4px 16px $uni-color-primary-light;
 }
@@ -191,16 +193,21 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	color: $uni-color-primary;
 	line-height: 1;
 }
-.login-title {
-	font-size: 22px;
-	font-weight: 700;
+.login-headline-wrap {
+	margin-bottom: 4px;
+}
+.login-headline {
+	font-size: 26px;
+	font-weight: 800;
 	color: $uni-text-color-inverse;
-	letter-spacing: 0.05em;
+	line-height: 1.4;
+	letter-spacing: 0.02em;
 }
 .login-subtitle {
-	font-size: 13px;
-	color: rgba(255,255,255,0.7);
+	font-size: 12px;
+	color: rgba(255,255,255,0.75);
 	letter-spacing: 0.02em;
+	margin-top: 6px;
 }
 
 /* ===== Signature：三角色卡片式选择器 ===== */
