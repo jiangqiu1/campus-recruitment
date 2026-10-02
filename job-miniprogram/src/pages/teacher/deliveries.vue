@@ -58,7 +58,7 @@
 						<text class="status-tag" :class="'status-' + d.status">{{ d.statusText }}</text>
 					</view>
 					<view class="delivery-bottom">
-						<text class="delivery-time"><uni-icons type="calendar" size="12" color="#C9CDD4" /> {{ d.createTime }}</text>
+						<text class="delivery-time"><uni-icons type="calendar" size="12" color="#C9CDD4" /> {{ d.createTimeText || d.createTime }}</text>
 						<text class="delivery-link" @click.stop="goToStudentResume(d)">查看简历 ›</text>
 					</view>
 				</view>

@@ -30,7 +30,7 @@
 						<uni-icons type="calendar-filled" size="12" color="#FFFFFF" />
 						<text class="nic-badge-text">{{ nextInterview.past ? '最近面试' : '下一场面试' }}</text>
 					</view>
-					<text class="nic-time">{{ nextInterview.interviewTime }}</text>
+					<text class="nic-time">{{ nextInterview.interviewTimeText }}</text>
 				</view>
 				<text class="nic-title">{{ nextInterview.jobTitle }}</text>
 				<text class="nic-company">{{ nextInterview.companyName }}<text v-if="nextInterview.interviewLocation"> · {{ nextInterview.interviewLocation }}</text></text>
@@ -64,7 +64,7 @@
 								<text v-if="item.location && item.salaryText" class="meta-divider">|</text>
 								<text v-if="item.salaryText" class="meta-text meta-salary">{{ item.salaryText }}</text>
 							</view>
-							<text class="meta-time">{{ item.createTime }}</text>
+							<text class="meta-time">投递于 {{ item.createTime }}</text>
 						</view>
 						<!-- 第四层：投递进度时间轴 -->
 						<view class="timeline">
@@ -140,6 +140,7 @@ const loading = ref(true)
 import LoadingState from '@/components/LoadingState.vue'
 import { ref, computed } from 'vue'
 import { deliveryAPI, scoreAPI } from '@/utils/request'
+import { formatTimeSemantic } from '@/utils/format'
 import TabBar from '@/components/TabBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import PopupDrawer from '@/components/PopupDrawer.vue'
@@ -179,8 +180,9 @@ const mapDelivery = (d) => ({
 	location: d.location || '',
 	status: DELIVERY_STATUS[d.status] || 'pending',
 	statusText: DELIVERY_STATUS_TEXT[d.status] || '待查看',
-	createTime: d.createTime ? d.createTime.substring(0, 10) : '',
+	createTime: d.createTime ? formatTimeSemantic(d.createTime) : '',
 	interviewTime: d.interviewTime ? formatInterviewTime(d.interviewTime) : '',
+	interviewTimeText: d.interviewTime ? formatTimeSemantic(d.interviewTime) : '',
 	interviewLocation: d.interviewLocation || '',
 	feedback: d.feedback || '',
 	score: null,
@@ -189,9 +191,9 @@ const mapDelivery = (d) => ({
 
 const formatInterviewTime = (t) => {
 	if (!t) return ''
-	// 后端返回的是 LocalDateTime 格式 YYYY-MM-DDTHH:mm:ss
-	const str = t.replace('T', ' ')
-	return str.length > 16 ? str.substring(0, 16) : str
+	// 保留原始格式（YYYY-MM-DD HH:mm），供过期判断与排序使用；展示用 interviewTimeText
+	const s = String(t).replace('T', ' ')
+	return formatTimeSemantic(s.length > 10 ? s.substring(0, 16) : s)
 }
 
 const DELIVERY_NODES = [

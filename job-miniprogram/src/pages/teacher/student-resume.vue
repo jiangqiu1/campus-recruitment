@@ -21,7 +21,7 @@
 			<view class="section-card" v-if="resumeData.basic">
 				<view class="tag-row">
 					<text class="tag-tag">{{ resumeData.basic.education || '大专' }}</text>
-					<text class="tag-tag">{{ resumeData.basic.gender || '未知' }}</text>
+					<text v-if="resumeData.basic.gender && resumeData.basic.gender !== '未知'" class="tag-tag">{{ resumeData.basic.gender }}</text>
 					<text class="tag-tag">{{ resumeData.basic.graduationYear || '待毕业' }}</text>
 				</view>
 			</view>

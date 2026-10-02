@@ -134,6 +134,7 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { jobAPI, deliveryAPI, favoriteAPI, resumeAPI, hrAPI, matchAPI } from '@/utils/request'
+import { formatSalary, formatTimeSemantic } from '@/utils/format'
 import { addBrowseRecord } from '@/utils/browseHistory'
 import NavBar from '@/components/NavBar.vue'
 
@@ -193,6 +194,8 @@ const loadJobDetail = async (id) => {
 	try {
 		const res = await jobAPI.getJobDetail(id)
 		job.value = res.data || {}
+		// 薪资格式统一（5K–8K），与岗位卡片一致
+		job.value.salaryText = formatSalary(job.value.salaryText || job.value.salaryRange)
 		addBrowseRecord(id)
 		loadUserState()
 		loadCompany()
@@ -323,9 +326,8 @@ const goBack = () => {
 }
 
 const formatDate = (time) => {
-	if (!time) return '刚刚'
-	const d = new Date(time)
-	return `${String(d.getMonth() + 1).padStart(2, '0')}月${String(d.getDate()).padStart(2, '0')}日`
+	// 更新时间语义化（今天/昨天/周X/M月D日），见 utils/format.js
+	return formatTimeSemantic(time) || '刚刚'
 }
 </script>
 

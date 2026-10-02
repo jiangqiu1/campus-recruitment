@@ -1,4 +1,6 @@
 // 优先读取自定义API地址（存储中修改），其次环境变量，默认localhost
+import { formatSalary, formatTimeSemantic } from './format'
+
 const getBaseUrl = () => {
   try {
     const custom = uni.getStorageSync('api_base_url')
@@ -290,7 +292,7 @@ export const mapJobData = (raw) => {
 	if (!raw) return {}
 	return {
 		...raw,
-		salaryText: raw.salaryText || raw.salaryRange || '',
+		salaryText: formatSalary(raw.salaryText || raw.salaryRange || ''),
 		requirements: raw.requirements || raw.requirement || '',
 		companyName: raw.companyName || '',
 		companyDesc: raw.companyDesc || '',
@@ -331,7 +333,8 @@ export function mapDeliveryItem(d) {
 		status: status.class,
 		statusText: status.label,
 		statusColor: status.color,
-		createTime: d.createTime ? d.createTime.substring(0, 10) : ''
+		createTime: d.createTime ? d.createTime.substring(0, 10) : '',
+		createTimeText: d.createTime ? formatTimeSemantic(d.createTime) : ''
 	}
 }
 
@@ -345,7 +348,7 @@ export function mapTeacherJob(job) {
 		companyId: job.companyId,
 		companyName: job.companyName || '待设置',
 		location: job.location || '未设置',
-		salaryText: job.salaryRange || '薪资面议',
+		salaryText: formatSalary(job.salaryRange) || '薪资面议',
 		status: status.class,
 		statusText: status.label,
 		deliveryCount: job.deliveryCount || 0
