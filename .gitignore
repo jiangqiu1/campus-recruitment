@@ -73,3 +73,6 @@ scripts/seed_*.sql
 # ZCode 会话工作目录
 .zcode/
 .zcodeignore
+
+# 界面文档（工作稿，本地维护）
+docs/小程序界面文档.docx
