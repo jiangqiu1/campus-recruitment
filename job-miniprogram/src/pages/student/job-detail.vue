@@ -123,8 +123,11 @@
 				<uni-icons :type="isFavorited ? 'star-filled' : 'star'" size="22" :color="isFavorited ? '#FF7D00' : '#86909C'" />
 				<text class="action-label">{{ isFavorited ? '已收藏' : '收藏' }}</text>
 			</view>
-			<button class="deliver-btn" :class="isDelivered ? 'btn-disabled' : 'btn-primary'" :disabled="isDelivered" @click="handleDeliver">
-				{{ isDelivered ? '已投递' : '立即投递' }}
+			<button v-if="!isDelivered" class="deliver-btn btn-primary" @click="handleDeliver">
+				立即投递
+			</button>
+			<button v-else class="deliver-btn btn-progress" @click="goToMyDeliveries">
+				查看投递进度
 			</button>
 		</view>
 	</view>
@@ -325,6 +328,9 @@ const goBack = () => {
 	try { uni.navigateBack() } catch (e) { uni.reLaunch({ url: '/pages/student/home' }) }
 }
 
+// 已投递后底部按钮转为投递进度入口（替代不可操作的灰色禁用态）
+const goToMyDeliveries = () => uni.reLaunch({ url: '/pages/student/deliveries' })
+
 const formatDate = (time) => {
 	// 更新时间语义化（今天/昨天/周X/M月D日），见 utils/format.js
 	return formatTimeSemantic(time) || '刚刚'
@@ -382,6 +388,8 @@ const formatDate = (time) => {
 .action-label { font-size: 12px; color: $uni-text-color-secondary; line-height: 1; margin-top: 2px; }
 .deliver-btn { flex: 1; padding: 0 16px; border-radius: 999px; height: 48px; font-size: 16px; font-weight: 600; align-items: center; justify-content: center; border: none; }
 .btn-primary { background: $uni-color-primary; color: white; }
+/* 已投递态：转为可点击的投递进度入口 */
+.btn-progress { background: $uni-color-primary-light; color: $uni-color-primary; }
 .btn-disabled { background: $uni-border-color; color: $uni-text-color-placeholder; }
 .btn-primary:active { opacity: 0.85; }
 </style>

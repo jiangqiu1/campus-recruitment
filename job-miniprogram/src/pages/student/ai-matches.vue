@@ -8,7 +8,7 @@
 				</view>
 				<view class="banner-text">
 					<text class="banner-title">AI 智能匹配</text>
-					<text class="banner-desc">基于你的简历和技能，智能推荐最合适的岗位</text>
+					<text class="banner-desc">基于你的简历、技能与岗位要求生成 · 教师推送后自动更新</text>
 				</view>
 			</view>
 			<view class="sort-bar">
@@ -35,7 +35,7 @@
 								<view class="score-circle" :style="{ borderColor: scoreColor(item.matchScore), backgroundColor: scoreBg(item.matchScore) }">
 									<text class="score-text" :style="{ color: scoreColor(item.matchScore) }">{{ formatScore(item.matchScore) }}</text>
 								</view>
-								<text class="score-label">匹配度</text>
+								<text class="score-label" :style="{ color: matchVerdict(item.matchScore).color }">{{ matchVerdict(item.matchScore).text }}</text>
 							</view>
 						</view>
 						<view class="match-reason" v-if="item.matchReason">
@@ -64,6 +64,7 @@
 					<view class="detail-score-ring" :style="{ borderColor: scoreColor(detailItem.matchScore), backgroundColor: scoreBg(detailItem.matchScore) }">
 						<text :style="{ color: scoreColor(detailItem.matchScore) }">{{ formatScore(detailItem.matchScore) }}</text>
 					</view>
+					<text class="detail-verdict" :style="{ color: matchVerdict(detailItem.matchScore).color }">{{ matchVerdict(detailItem.matchScore).text }}</text>
 				</view>
 				<view class="detail-reason-section">
 					<text class="detail-section-label">匹配理由</text>
@@ -109,6 +110,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { matchAPI, jobAPI } from '@/utils/request'
+import { formatTimeSemantic } from '@/utils/format'
 import NavBar from '@/components/NavBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import PopupDrawer from '@/components/PopupDrawer.vue'
@@ -200,10 +202,17 @@ const scoreBg = (score) => {
 	if (num >= 0.4) return 'rgba(255,125,0,0.06)'
 	return 'rgba(245,63,63,0.06)'
 }
-const formatTime = (t) => {
-	if (!t) return ''
-	return t.substring(0, 10)
+// 匹配区间语义：让 AI 分数直接支撑投递决策
+const matchVerdict = (score) => {
+	const num = typeof score === 'number' ? score : parseFloat(score) || 0
+	const p = num > 1 ? Math.round(num) : Math.round(num * 100)
+	if (p >= 90) return { text: '非常匹配', color: '#00B42A' }
+	if (p >= 80) return { text: '值得投递', color: '#00B42A' }
+	if (p >= 70) return { text: '部分匹配', color: '#165DFF' }
+	return { text: '建议谨慎', color: '#FF7D00' }
 }
+
+const formatTime = (t) => formatTimeSemantic(t)
 const showMatchDetail = (item) => {
 	// 从 scoreDetail 中提取维度分数
 	const sd = item.scoreDetail || {}
@@ -298,6 +307,7 @@ const goToJob = (item) => {
 .detail-company { font-size: 13px; color: $uni-text-color-secondary; }
 .detail-score-section { align-items: center; margin-bottom: 16px; }
 .detail-section-label { font-size: 13px; color: $uni-text-color-secondary; margin-bottom: 8px; align-self: flex-start; }
+.detail-verdict { font-size: 13px; font-weight: 600; color: $uni-text-color-secondary; margin-top: 8px; }
 .detail-score-ring { width: 80px; height: 80px; border-radius: 50%; border-width: 4px; border-style: solid; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; }
 .detail-reason-section { margin-bottom: 16px; }
 .detail-reason-text { font-size: 14px; color: $uni-text-color; line-height: 1.6; padding: 10px 14px; background: $uni-bg-color-page; border-radius: 8px; }
