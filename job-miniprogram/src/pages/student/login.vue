@@ -223,9 +223,10 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	flex: 1;
 	align-items: center;
 	padding: 14px 0;
+	min-height: 72px;
 	border-radius: 12px;
-	background: rgba(255,255,255,0.15);
-	border: 1px solid rgba(255,255,255,0.2);
+	background: rgba(255,255,255,0.14);
+	border: 1px solid rgba(255,255,255,0.18);
 	transition: all 0.2s ease;
 	gap: 6px;
 }
@@ -249,7 +250,7 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 .role-name {
 	font-size: 13px;
 	font-weight: 500;
-	color: rgba(255,255,255,0.8);
+	color: rgba(255,255,255,0.72);
 }
 .role-name.active {
 	color: $uni-text-color-title;

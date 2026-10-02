@@ -46,8 +46,11 @@
 				<view class="practice-job-bar">
 					<view class="practice-job-info">
 						<text class="practice-job-title">{{ currentJob.jobTitle }}</text>
-						<text class="progress-text">第 {{ currentIdx + 1 }} / {{ questions.length }} 题</text>
-					</view>
+					<text class="progress-text">第 {{ currentIdx + 1 }} / {{ questions.length }} 题</text>
+				</view>
+				<view class="q-progress-track">
+					<view class="q-progress-fill" :style="{ width: (currentIdx / questions.length * 100) + '%' }" />
+				</view>
 					<text class="quit-link" @click="quitPractice">退出</text>
 				</view>
 
@@ -348,6 +351,19 @@ const scoreColor = (score) => {
 .practice-job-info { flex: 1; }
 .practice-job-title { font-size: 15px; font-weight: 600; color: $uni-text-color-title; display: block; }
 .progress-text { font-size: 12px; color: $uni-text-color-secondary; margin-top: 2px; display: block; }
+.q-progress-track {
+	height: 4px;
+	background: $uni-border-color-divider;
+	border-radius: 2px;
+	overflow: hidden;
+	margin-top: 10px;
+}
+.q-progress-fill {
+	height: 100%;
+	background: $uni-color-ai;
+	border-radius: 2px;
+	transition: width 0.3s;
+}
 .quit-link { font-size: 13px; color: $uni-color-error; padding: 4px 0 4px 12px; }
 
 .question-card {

@@ -26,28 +26,28 @@
 					</view>
 				</view>
 				<view class="info-list">
-					<view class="info-item">
+					<view class="info-item" v-if="company.industry">
 						<text class="info-label">行业领域</text>
 						<view class="info-right">
-							<text class="info-value" :class="{ empty: !company.industry }">{{ company.industry || '待填写' }}</text>
+							<text class="info-value">{{ company.industry }}</text>
 						</view>
 					</view>
-					<view class="info-item">
+					<view class="info-item" v-if="company.size">
 						<text class="info-label">企业规模</text>
 						<view class="info-right">
-							<text class="info-value" :class="{ empty: !company.size }">{{ company.size || '待填写' }}</text>
+							<text class="info-value">{{ company.size }}</text>
 						</view>
 					</view>
-					<view class="info-item">
+					<view class="info-item" v-if="company.city">
 						<text class="info-label">所在城市</text>
 						<view class="info-right">
-							<text class="info-value" :class="{ empty: !company.city }">{{ company.city || '待填写' }}</text>
+							<text class="info-value">{{ company.city }}</text>
 						</view>
 					</view>
-					<view class="info-item">
+					<view class="info-item" v-if="company.address">
 						<text class="info-label">详细地址</text>
 						<view class="info-right">
-							<text class="info-value" :class="{ empty: !company.address }">{{ company.address || '待填写' }}</text>
+							<text class="info-value">{{ company.address }}</text>
 						</view>
 					</view>
 				</view>
@@ -61,9 +61,8 @@
 						<text class="info-title">公司简介</text>
 					</view>
 				</view>
-				<text class="desc-text" :class="{ empty: !company.description }">
-					{{ company.description || '暂无公司简介' }}
-				</text>
+				<text class="desc-text" v-if="company.description">{{ company.description }}</text>
+				<text class="desc-text" v-else style="color:#86909C;">企业暂未完善简介</text>
 			</view>
 
 			<!-- 3. 资质认证 -->

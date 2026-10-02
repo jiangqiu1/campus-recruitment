@@ -6,14 +6,14 @@
 		<view class="ai-job-banner" @click="showAiModal = true">
 			<view class="ai-job-banner__left">
 				<view class="ai-job-banner__icon">
-					<uni-icons type="star" size="20" color="#8B5CF6" />
+					<uni-icons type="star" size="20" color="#0EA5E9" />
 				</view>
 				<view>
 					<text class="ai-job-banner__title">AI 智能写岗位</text>
 					<text class="ai-job-banner__desc">粘贴岗位描述，AI 自动提取信息并填充表单</text>
 				</view>
 			</view>
-			<uni-icons type="arrowright" size="16" color="#8B5CF6" />
+			<uni-icons type="arrowright" size="16" color="#0EA5E9" />
 		</view>
 
 		<!-- 顶部筛选标签 -->

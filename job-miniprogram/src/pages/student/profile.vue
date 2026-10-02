@@ -10,7 +10,7 @@
 					</view>
 					<view class="profile-info-wrap">
 						<text class="profile-name" @click="editProfile">{{ userInfo.realName || '学生用户' }}</text>
-						<text class="profile-desc">{{ userInfo.school || '职业院校' }} · {{ userInfo.major || '未设置专业' }}</text>
+						<text v-if="profileDescLine" class="profile-desc">{{ profileDescLine }}</text>
 						<text v-if="classInfo" class="profile-class" @click="editProfile">{{ classInfo.name }}{{ classInfo.teacherName ? ' · ' + (classInfo.teacherName.endsWith('老师') ? classInfo.teacherName : classInfo.teacherName + '老师') : '' }}</text>
 						<view class="profile-status-badge">
 							<text class="profile-status-text">求职状态：{{ jobStatus }}</text>
@@ -54,11 +54,10 @@
 					<text class="checklist-edit" @click="gotoFunc('/pages/student/resume-edit')">{{ checklistDone }}/{{ fieldStatuses.length }} 已完善 · 去完善 ›</text>
 				</view>
 				<view class="checklist-grid">
-					<view v-for="(item, i) in fieldStatuses" :key="i" class="checklist-item" @click="gotoFunc('/pages/student/resume-edit')">
+					<view v-for="(item, i) in fieldStatuses" :key="i" class="checklist-item" :class="{ pending: !item.done }" @click="gotoFunc('/pages/student/resume-edit')">
 						<text class="checklist-label">{{ item.label }}</text>
-						<view class="checklist-status" :class="{ done: item.done }">
-							<text>{{ item.done ? '已完成' : '待补充' }}</text>
-						</view>
+						<text v-if="item.done" class="checklist-ok">✓</text>
+						<text v-else class="checklist-pending">待补充</text>
 					</view>
 				</view>
 			</view>
@@ -160,6 +159,13 @@ const jobStatus = computed(() => {
 })
 
 const checklistDone = computed(() => fieldStatuses.value.filter(f => f.done).length)
+
+// 学校/专业都为空时整行隐藏，不展示「未设置」类半成品文案
+const profileDescLine = computed(() => {
+	const s = userInfo.value.school || ''
+	const m = userInfo.value.major || ''
+	return [s, m].filter(Boolean).join(' · ')
+})
 
 onMounted(() => {
 	try {
@@ -399,15 +405,20 @@ const handleLogout = () => {
 }
 .checklist-label {
 	font-size: 13px;
-	color: $uni-text-color-title;
+	color: $uni-text-color;
 }
-.checklist-status text {
+.checklist-ok {
+	font-size: 14px;
+	font-weight: 700;
+	color: $uni-color-success;
+}
+.checklist-pending {
 	font-size: 11px;
 	color: $uni-color-warning;
 	font-weight: 500;
 }
-.checklist-status.done text {
-	color: $uni-color-success;
+.checklist-item.pending {
+	background: #FFF7E8;
 }
 
 /* 成长概览卡：完整度 + AI 诊断 + 继续完善（玻璃拟态，对齐三端概览行） */

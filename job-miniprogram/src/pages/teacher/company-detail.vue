@@ -20,10 +20,10 @@
 				<view class="info-list">
 					<view class="info-item"><text class="info-label">行业领域</text><text class="info-value">{{ company.industry || '—' }}</text></view>
 					<view class="info-item"><text class="info-label">企业规模</text><text class="info-value">{{ company.size || '—' }}</text></view>
-					<view class="info-item"><text class="info-label">所在城市</text><text class="info-value">{{ company.city || '—' }}</text></view>
-					<view class="info-item"><text class="info-label">详细地址</text><text class="info-value">{{ company.address || '—' }}</text></view>
-					<view class="info-item"><text class="info-label">联系人</text><text class="info-value">{{ company.contactPerson || '—' }}</text></view>
-					<view class="info-item"><text class="info-label">联系电话</text><text class="info-value">{{ company.contactPhone || '—' }}</text></view>
+					<view class="info-item"><text class="info-label">所在城市</text><text class="info-value">{{ company.city || '未提供' }}</text></view>
+					<view class="info-item"><text class="info-label">详细地址</text><text class="info-value">{{ company.address || '未提供' }}</text></view>
+					<view class="info-item" v-if="company.contactPerson || company.contactPhone"><text class="info-label">联系人</text><text class="info-value">{{ company.contactPerson || '未提供' }}</text></view>
+					<view class="info-item" v-if="company.contactPerson || company.contactPhone"><text class="info-label">联系电话</text><text class="info-value">{{ company.contactPhone || '未提供' }}</text></view>
 				</view>
 			</view>
 

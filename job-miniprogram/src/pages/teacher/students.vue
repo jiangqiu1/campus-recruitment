@@ -13,7 +13,8 @@
 						<text class="student-name">{{ stu.realName || '未知' }}</text>
 						<text class="student-id">学号: {{ stu.username || '' }}</text>
 						<view class="student-tags">
-							<text class="tag-green" v-if="stu.resumeComplete">简历: {{ stu.resumeComplete }}%</text>
+							<text class="tag-red" v-if="!stu.resumeComplete">未建简历</text>
+							<text class="tag-green" v-else>简历: {{ stu.resumeComplete }}%</text>
 							<text class="tag-blue">投递: {{ stu.deliveryCount || 0 }}</text>
 						</view>
 						<view class="tags-row">
@@ -116,6 +117,7 @@ const goToResume = (studentId, realName) => {
 .student-id { font-size: 13px; color: $uni-text-color-secondary; display: block; margin-bottom: 6px; }
 .student-tags { flex-direction: row; gap: 8px; }
 .tag-green { padding: 3px 8px; border-radius: 8px; font-size: 12px; font-weight: 600; background: $uni-color-primary-light; color: $uni-color-primary; }
+.tag-red { padding: 3px 8px; border-radius: 8px; font-size: 12px; font-weight: 600; background: $uni-color-error-light; color: $uni-color-error; }
 .tag-blue { padding: 3px 8px; border-radius: 8px; font-size: 12px; font-weight: 600; background: $uni-color-primary-light; color: $uni-color-primary; }
 .student-card:active { background: $uni-bg-color-page; }
 .tags-row { flex-direction: row; gap: 8px; margin-top: 6px; }

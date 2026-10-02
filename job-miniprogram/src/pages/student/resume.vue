@@ -8,6 +8,7 @@
 					<ScoreCircle :score="completeness" :size="56" />
 					<view class="top-bar-right">
 						<text class="completeness-title">简历完整度 {{ completeness }}%</text>
+						<text class="resume-updated" v-if="resume && resume.updateTime">简历更新于 {{ formatTimeSemantic(resume.updateTime) }}</text>
 						<view class="ai-optimize" @click="goAIReview">
 							<uni-icons type="compose" size="14" color="#0EA5E9" />
 							<text class="optimize-text optimize-text--ai">{{ reviewing ? 'AI 诊断中...' : 'AI 诊断' }}</text>
@@ -74,7 +75,7 @@
 					</view>
 				</view>
 
-				<!-- AI 简历分析结果（由教师触发分析后保存，学生可查看） -->
+				<!-- AI 简历分析结果（教师评估或学生自诊，首屏只展示核心结论） -->
 				<view class="section-card" v-if="aiAnalysisResult" id="ai-analysis-section">
 					<view class="section-title-row">
 						<text class="section-title">AI 简历分析</text>
@@ -85,28 +86,31 @@
 							<text>综合评分</text>
 							<text class="score-num">{{ aiAnalysisResult.overallScore || '--' }}分</text>
 						</view>
-						<view class="ai-section" v-if="aiAnalysisResult.strengths && aiAnalysisResult.strengths.length">
+						<view class="ai-section" v-if="shownStrengths.length">
 							<text class="ai-subtitle">优势</text>
-							<text v-for="(s, i) in aiAnalysisResult.strengths" :key="i" class="ai-item ai-item--green">{{ s }}</text>
+							<text v-for="(s, i) in shownStrengths" :key="i" class="ai-item ai-item--green">{{ s }}</text>
 						</view>
-						<view class="ai-section" v-if="aiAnalysisResult.weaknesses && aiAnalysisResult.weaknesses.length">
+						<view class="ai-section" v-if="shownWeaknesses.length">
 							<text class="ai-subtitle">不足</text>
-							<text v-for="(w, i) in aiAnalysisResult.weaknesses" :key="i" class="ai-item ai-item--red">{{ w }}</text>
+							<text v-for="(w, i) in shownWeaknesses" :key="i" class="ai-item ai-item--red">{{ w }}</text>
 						</view>
-						<view class="ai-section" v-if="aiAnalysisResult.suggestions && aiAnalysisResult.suggestions.length">
-							<text class="ai-subtitle">改进建议</text>
-							<text v-for="(sg, i) in aiAnalysisResult.suggestions" :key="i" class="ai-item ai-item--blue">{{ sg }}</text>
-						</view>
-						<view class="ai-section" v-if="aiAnalysisResult.missingFields && aiAnalysisResult.missingFields.length">
-							<text class="ai-subtitle">缺失字段</text>
-							<text class="ai-item ai-item--amber">{{ aiAnalysisResult.missingFields.join('、') }}</text>
-						</view>
-						<view class="ai-section" v-if="aiAnalysisResult.recommendedSkills && aiAnalysisResult.recommendedSkills.length">
-							<text class="ai-subtitle">推荐补充技能</text>
-							<view class="tag-container">
-								<text v-for="(sk, i) in aiAnalysisResult.recommendedSkills" :key="i" class="skill-tag" style="background:rgba(14, 165, 233,0.1);color:#0EA5E9;">{{ sk }}</text>
+						<template v-if="diagExpanded">
+							<view class="ai-section" v-if="aiAnalysisResult.suggestions && aiAnalysisResult.suggestions.length">
+								<text class="ai-subtitle">改进建议</text>
+								<text v-for="(sg, i) in aiAnalysisResult.suggestions" :key="i" class="ai-item ai-item--blue">{{ sg }}</text>
 							</view>
-						</view>
+							<view class="ai-section" v-if="aiAnalysisResult.missingFields && aiAnalysisResult.missingFields.length">
+								<text class="ai-subtitle">缺失字段</text>
+								<text class="ai-item ai-item--amber">{{ aiAnalysisResult.missingFields.join('、') }}</text>
+							</view>
+							<view class="ai-section" v-if="aiAnalysisResult.recommendedSkills && aiAnalysisResult.recommendedSkills.length">
+								<text class="ai-subtitle">推荐补充技能</text>
+								<view class="tag-container">
+									<text v-for="(sk, i) in aiAnalysisResult.recommendedSkills" :key="i" class="skill-tag" style="background:rgba(14, 165, 233,0.1);color:#0EA5E9;">{{ sk }}</text>
+								</view>
+							</view>
+						</template>
+						<text class="diag-toggle" @click="diagExpanded = !diagExpanded">{{ diagExpanded ? '收起完整诊断 ›' : '查看完整诊断 ›' }}</text>
 					</view>
 				</view>
 
@@ -127,6 +131,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { resumeAPI, aiAssistantAPI } from '@/utils/request'
 import { buildResumeChecklist, resumeCompleteness } from '@/utils/resumeCheck'
+import { formatTimeSemantic } from '@/utils/format'
 import NavBar from '@/components/NavBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import LoadingState from '@/components/LoadingState.vue'
@@ -220,6 +225,11 @@ const analysisBadge = computed(() => {
 	return `分析于 ${d.getMonth() + 1}-${String(d.getDate()).padStart(2, '0')} ${hh}:${mm}`
 })
 
+// 诊断首屏只展示核心结论，完整内容折叠
+const diagExpanded = ref(false)
+const shownStrengths = computed(() => (aiAnalysisResult.value?.strengths || []).slice(0, diagExpanded.value ? undefined : 2))
+const shownWeaknesses = computed(() => (aiAnalysisResult.value?.weaknesses || []).slice(0, diagExpanded.value ? undefined : 2))
+
 // AI 诊断：分析自己的简历（简历未变更时后端直接返回缓存结果）
 const goAIReview = async () => {
 	if (reviewing.value) return
@@ -285,6 +295,17 @@ const formatTime = (time) => {
 	font-size: 15px;
 	font-weight: 600;
 	color: $uni-text-color-title;
+}
+.resume-updated {
+	font-size: 12px;
+	color: $uni-text-color-secondary;
+}
+.diag-toggle {
+	font-size: 13px;
+	color: $uni-color-primary;
+	font-weight: 500;
+	margin-top: 10px;
+	display: block;
 }
 .ai-optimize {
 	flex-direction: row;

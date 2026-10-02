@@ -20,13 +20,13 @@
 						</view>
 						<view class="company-info">
 							<text class="company-name">{{ c.name }}</text>
-							<text class="company-industry">{{ c.industry || '未设置行业' }}</text>
+							<text class="company-industry" v-if="c.industry">{{ c.industry }}</text>
 						</view>
 						<uni-icons type="arrowright" size="16" color="#C9CDD4" />
 					</view>
 					<view class="company-meta">
-						<text><uni-icons type="location" size="12" color="#C9CDD4" /> {{ c.location || '未设置' }}</text>
-						<text><uni-icons type="person" size="12" color="#C9CDD4" /> {{ c.scale || '未设置' }}</text>
+						<text v-if="c.location"><uni-icons type="location" size="12" color="#C9CDD4" /> {{ c.location }}</text>
+						<text v-if="c.scale"><uni-icons type="person" size="12" color="#C9CDD4" /> {{ c.scale }}</text>
 					</view>
 					<view class="company-tags" v-if="c.tags && c.tags.length">
 						<text v-for="(t, ti) in c.tags.slice(0, 3)" :key="ti" class="tag-tag">{{ t }}</text>

@@ -51,7 +51,15 @@
 							</view>
 						</view>
 					</template>
-					<text v-else-if="!aiScore && !loading" class="score-hint" @click="triggerScore">点击启用 AI 评分，评估候选人与岗位匹配度</text>
+					<view v-else-if="!aiScore && !loading" class="score-entry" @click="triggerScore">
+					<view class="score-entry-icon">
+						<uni-icons type="star" size="18" color="#0EA5E9" />
+					</view>
+					<view class="score-entry-texts">
+						<text class="score-entry-title">AI 简历评估</text>
+						<text class="score-entry-desc">开始评估 ›（评估该候选人与岗位的匹配度）</text>
+					</view>
+				</view>
 				</view>
 
 				<!-- 3. 简历信息（展开全部字段） -->
@@ -63,16 +71,16 @@
 							<text class="block-label">基本信息</text>
 							<view class="block-grid">
 								<view><text class="grid-label">姓名</text><text class="grid-value">{{ resume.name }}</text></view>
-								<view><text class="grid-label">电话</text><text class="grid-value">{{ resume.phone || '--' }}</text></view>
+								<view><text class="grid-label">电话</text><text class="grid-value">{{ resume.phone || '未提供' }}</text></view>
 							</view>
 						</view>
 						<!-- 教育经历 -->
 						<view class="resume-block">
 							<text class="block-label">教育经历</text>
 							<view class="block-grid">
-								<view><text class="grid-label">学校</text><text class="grid-value">{{ resume.school || '--' }}</text></view>
-								<view><text class="grid-label">专业</text><text class="grid-value">{{ resume.major || '--' }}</text></view>
-								<view><text class="grid-label">学历</text><text class="grid-value">{{ resume.education || '--' }}</text></view>
+								<view><text class="grid-label">学校</text><text class="grid-value">{{ resume.school || '未提供' }}</text></view>
+								<view><text class="grid-label">专业</text><text class="grid-value">{{ resume.major || '未提供' }}</text></view>
+								<view><text class="grid-label">学历</text><text class="grid-value">{{ resume.education || '未提供' }}</text></view>
 							</view>
 						</view>
 						<!-- 技能证书 -->
@@ -465,7 +473,29 @@ const goBack = () => uni.navigateBack()
 .score-bar-wrap { margin-top: 0; margin-bottom: 12px; }
 .score-bar { flex: 1; height: 6px; background: $uni-color-primary-light; border-radius: 4px; overflow: hidden; }
 .score-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, $uni-color-primary, $uni-color-primary-hover); }
-.score-hint { font-size: 13px; color: $uni-text-color-secondary; margin-top: 10px; }
+/* AI 评分入口（状态型组件：未评分时引导，评分后替换为分数卡） */
+.score-entry {
+	flex-direction: row;
+	align-items: center;
+	gap: 12px;
+	background: rgba(14, 165, 233, 0.08);
+	border-radius: 10px;
+	padding: 12px 14px;
+	margin-top: 10px;
+}
+.score-entry:active { opacity: 0.8; }
+.score-entry-icon {
+	width: 36px;
+	height: 36px;
+	border-radius: 10px;
+	background: $uni-bg-color;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+.score-entry-texts { flex: 1; }
+.score-entry-title { font-size: 14px; font-weight: 600; color: $uni-text-color-title; display: block; }
+.score-entry-desc { font-size: 12px; color: $uni-text-color-secondary; margin-top: 2px; display: block; }
 .score-dims { margin-top: 12px; gap: 8px; }
 .dim-row { flex-direction: row; align-items: center; gap: 8px; }
 .dim-label { width: 36px; font-size: 12px; color: $uni-text-color; }

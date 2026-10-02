@@ -17,10 +17,10 @@
 
 			<!-- 求职进度漏斗 -->
 			<view class="progress-card">
-				<view class="progress-header">
-					<text class="progress-title">求职进度</text>
-					<text class="progress-more" @click="goToDeliveries">投递记录 ›</text>
-				</view>
+					<view class="progress-header">
+						<text class="progress-title">求职数据</text>
+						<text class="progress-more" @click="goToDeliveries">投递记录 ›</text>
+					</view>
 				<view class="funnel-row">
 					<view
 						v-for="(step, i) in funnelSteps"

@@ -42,6 +42,10 @@
 							<uni-icons type="info" size="12" color="#165DFF" />
 							<text>{{ item.matchReason }}</text>
 						</view>
+						<view class="match-improve" v-if="improveOf(item)">
+							<text class="match-improve-mark">△</text>
+							<text>待提升：{{ improveOf(item) }}</text>
+						</view>
 						<view class="match-meta">
 							<text class="meta-tag" v-if="item.isPushed == 1">已推送</text>
 							<text class="meta-tag" v-if="item.isClicked == 1">已查看</text>
@@ -202,6 +206,25 @@ const scoreBg = (score) => {
 	if (num >= 0.4) return 'rgba(255,125,0,0.06)'
 	return 'rgba(245,63,63,0.06)'
 }
+// 列表卡「待提升」：从该条匹配的三维分取最弱项（<70% 视为待提升）
+const IMPROVE_ADVICE = {
+	skill: '补充岗位要求的技术栈',
+	exp: '补充相关实习或项目经历',
+	edu: '在简历中突出相关课程与自学成果'
+}
+const improveOf = (item) => {
+	if (!item || !item.scoreDetail) return ''
+	const defs = [['skill', '技能'], ['exp', '经验'], ['edu', '学历']]
+	for (const [key, label] of defs) {
+		const raw = Number(item.scoreDetail[key])
+		if (!isNaN(raw)) {
+			const p = raw > 1 ? Math.round(raw) : Math.round(raw * 100)
+			if (p < 70) return label + '匹配 ' + p + '%，' + IMPROVE_ADVICE[key]
+		}
+	}
+	return ''
+}
+
 // 匹配区间语义：让 AI 分数直接支撑投递决策
 const matchVerdict = (score) => {
 	const num = typeof score === 'number' ? score : parseFloat(score) || 0
@@ -298,6 +321,22 @@ const goToJob = (item) => {
 .score-text { font-size: 16px; font-weight: 700; }
 .score-label { font-size: 12px; color: $uni-text-color-secondary; margin-top: 2px; }
 .match-reason { flex-direction: row; align-items: center; gap: 6px; margin-top: 10px; padding: 8px 12px; background: $uni-bg-color-page; border-radius: 8px; font-size: 13px; color: $uni-text-color; }
+.match-improve {
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 4px;
+	margin-top: 6px;
+	padding: 6px 10px;
+	background: rgba(255, 125, 0, 0.06);
+	border-radius: 6px;
+}
+.match-improve-mark { color: $uni-color-warning; font-size: 12px; line-height: 1.5; }
+.match-improve text {
+	flex: 1;
+	font-size: 12px;
+	color: $uni-color-warning;
+	line-height: 1.5;
+}
 .match-meta { flex-direction: row; align-items: center; gap: 8px; margin-top: 10px; }
 .meta-tag { font-size: 12px; padding: 2px 8px; border-radius: 4px; background: $uni-color-primary-light; color: $uni-color-primary; font-weight: 500; }
 .meta-date { font-size: 12px; color: $uni-text-color-placeholder; margin-left: auto; }
