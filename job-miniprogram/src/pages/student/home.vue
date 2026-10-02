@@ -6,7 +6,7 @@
 				<view class="header-top">
 					<view class="greeting-wrap">
 						<text class="greeting-text">您好，{{ userName }}</text>
-						<text class="greeting-sub">今天继续完成你的求职计划</text>
+						<text class="greeting-sub">{{ stageLine }}</text>
 					</view>
 				</view>
 				<view class="search-box">
@@ -136,6 +136,15 @@ const userName = ref('学生用户')
 const resume = ref(null)
 const matchCount = ref(0)
 const topMatchScore = ref(0)
+
+// Hero 阶段句：按求职推进阶段生成人格化问候
+const stageLine = computed(() => {
+	const d = stats.value || {}
+	if ((d.offers || 0) > 0) return '已拿到录用通知，保持好状态'
+	if ((d.interviews || 0) > 0) return '你已进入面试阶段，好好准备'
+	if ((d.deliveries || 0) > 0) return '简历已投出，静候反馈也别停下脚步'
+	return '从一份完整的简历开始你的求职计划'
+})
 
 const mockJobs = [
 	{ id: 1, title: '前端开发实习生', salaryRange: '4K-6K', location: '广州', education: '大专及以上', companyName: '广州科技公司', matchScore: 92 },

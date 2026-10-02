@@ -25,7 +25,7 @@
 			<LoadingState type="skeleton" :rows="4" v-if="loading" />
 			<view v-if="!loading">
 			<view class="job-list">
-				<view v-for="(job, i) in filteredList" :key="i" class="job-card" @click="goToEdit(job)">
+				<view v-for="(job, i) in filteredList" :key="i" class="job-card" @click="goToCandidates(job)">
 					<view class="job-top">
 						<view class="job-title-row">
 							<text class="job-title">{{ job.title }}</text>
@@ -38,10 +38,11 @@
 						</view>
 					</view>
 					<view class="job-actions">
-						<text v-if="job.status === 'draft'" class="action-tag primary" @click.stop="handlePublish(job.id)">发布</text>
-						<text v-if="job.status === 'active'" class="action-tag warning" @click.stop="handleClose(job.id)">下架</text>
+						<text class="action-tag primary" @click.stop="goToCandidates(job)">查看候选人</text>
+						<text v-if="job.status === 'draft'" class="action-tag warning" @click.stop="handlePublish(job.id)">发布</text>
 						<text v-if="job.status === 'closed'" class="action-tag primary" @click.stop="handlePublish(job.id)">上架</text>
 						<text class="action-tag outline" @click.stop="goToEdit(job)">编辑</text>
+						<text v-if="job.status === 'active'" class="action-tag more" @click.stop="showMore(job)">更多 ⋯</text>
 					</view>
 				</view>
 				<EmptyState v-if="!filteredList.length" icon="inbox" title="暂无岗位" desc="点击右下角+号新建" />
@@ -50,9 +51,10 @@
 			<view style="height: calc(60px + env(safe-area-inset-bottom))" />
 		</scroll-view>
 
-		<!-- 底部浮动新建按钮 -->
+		<!-- 底部浮动新建按钮（带文字，更明确） -->
 		<view class="fab-btn" @click="goToCreate">
 			<text class="fab-icon">+</text>
+			<text class="fab-text">发布岗位</text>
 		</view>
 
 		<!-- AI 智能写岗位弹窗 -->
@@ -191,6 +193,19 @@ const goToEdit = (job) => {
 	uni.navigateTo({ url: '/pages/hr/job-edit?id=' + job.id })
 }
 
+// 岗位卡主操作：直接进入该岗位的候选人列表
+const goToCandidates = (job) => {
+	uni.navigateTo({ url: '/pages/hr/deliveries?jobId=' + job.id })
+}
+
+// 次级操作收纳（下架等低频/危险操作）
+const showMore = (job) => {
+	uni.showActionSheet({
+		itemList: ['下架岗位'],
+		success: (r) => { if (r.tapIndex === 0) handleClose(job.id) }
+	})
+}
+
 const goToCreate = () => {
 	uni.navigateTo({ url: '/pages/hr/job-edit' })
 }
@@ -301,15 +316,18 @@ const handleAiParse = async () => {
 .action-tag.primary { background: $uni-color-primary; color: $uni-text-color-inverse; }
 .action-tag.warning { background: $uni-color-warning; color: $uni-text-color-inverse; }
 .action-tag.outline { background: $uni-bg-color; border: 1px solid $uni-border-color; color: $uni-text-color; }
+.action-tag.more { flex: none; padding: 8px 12px; color: $uni-text-color-secondary; background: $uni-bg-color-page; }
 
-/* ===== 浮动新建按钮 ===== */
+/* ===== 浮动新建按钮（带文字） ===== */
 .fab-btn {
 	position: fixed;
 	right: 24px;
 	bottom: 90px;
-	width: 56px;
-	height: 56px;
-	border-radius: 50%;
+	flex-direction: row;
+	gap: 4px;
+	padding: 0 18px;
+	height: 48px;
+	border-radius: 999px;
 	background: $uni-gradient-primary;
 	align-items: center;
 	justify-content: center;
@@ -317,10 +335,15 @@ const handleAiParse = async () => {
 	z-index: 100;
 }
 .fab-icon {
-	font-size: 32px;
+	font-size: 26px;
 	color: white;
 	font-weight: 300;
 	margin-top: -2px;
+}
+.fab-text {
+	font-size: 14px;
+	color: white;
+	font-weight: 600;
 }
 
 /* ===== AI 智能写岗位 ===== */

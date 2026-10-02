@@ -9,6 +9,10 @@
 						<text class="role-badge">企业招聘方</text>
 					</view>
 				</view>
+				<!-- 今日任务句（角色人格：专业、直接、决策导向） -->
+				<view class="header-task">
+					<text class="header-task-text">今日任务：{{ formatNum(dashboard.todayInterviewCount) }} 场面试 · {{ formatNum(dashboard.pendingResumeCount) }} 份简历待筛选</text>
+				</view>
 				<!-- 招聘概览 -->
 				<view class="header-stats">
 					<view class="hs-item">
@@ -271,6 +275,15 @@ const formatTime = (time, type) => {
 	padding: 12px 0;
 	position: relative;
 	z-index: 1;
+}
+.header-task {
+	margin-top: 12px;
+	position: relative;
+	z-index: 1;
+}
+.header-task-text {
+	font-size: 13px;
+	color: rgba(255,255,255,0.9);
 }
 .hs-item {
 	flex: 1;

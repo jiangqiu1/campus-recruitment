@@ -103,6 +103,10 @@ const mapDelivery = (d) => ({
 
 export default {
 	components: { HrTabBar, EmptyState, NavBar },
+	onLoad(options) {
+		// 支持从岗位管理「查看候选人」直达：预选岗位
+		if (options && options.jobId) this.selectedJobId = Number(options.jobId)
+	},
 	data() {
 		return {
 			jobs: [],

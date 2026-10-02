@@ -111,12 +111,13 @@
 						<text class="section-title">操作</text>
 					</view>
 					<view class="action-group">
+						<!-- 初筛阶段：只提供面试与淘汰，录用留给面试后（高风险动作按阶段出现） -->
 						<template v-if="candidate.status === 'pending' || candidate.status === 'viewed'">
 							<text class="action-btn primary" @click="showInterviewPopup = true">安排面试</text>
-							<text class="action-btn success" @click="handleAccept">录用</text>
 							<text class="action-btn danger" @click="handleReject">不合适</text>
 						</template>
 						<template v-if="candidate.status === 'interview'">
+							<text class="action-btn primary" @click="showInterviewPopup = true">调整面试</text>
 							<text class="action-btn success" @click="handleAccept">录用</text>
 							<text class="action-btn danger" @click="handleReject">未通过</text>
 						</template>
