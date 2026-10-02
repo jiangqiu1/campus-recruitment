@@ -108,6 +108,16 @@
 						<text class="summary-score" :style="{ color: scoreColor(avgScore) }">{{ avgScore }}分</text>
 						<text class="summary-score-label">平均得分</text>
 					</view>
+					<!-- 能力条：按题型平均分（技术/项目/行为） -->
+					<view class="ability-bars" v-if="abilityBars.length">
+						<view v-for="(b, i) in abilityBars" :key="i" class="ability-row">
+							<text class="ability-label">{{ b.label }}</text>
+							<view class="ability-track">
+								<view class="ability-fill" :style="{ width: b.value + '%', background: scoreColor(b.value) }" />
+							</view>
+							<text class="ability-val">{{ b.value }}</text>
+						</view>
+					</view>
 					<view class="summary-tips">
 						<text class="summary-tip">回顾每题的参考答案，把没答好的知识点补进简历和项目里</text>
 					</view>
@@ -143,6 +153,19 @@ const avgScore = computed(() => {
 	const scores = results.value.filter(r => r && r.score != null).map(r => Number(r.score))
 	if (!scores.length) return null
 	return Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+})
+
+// 能力条：按题型（技术/项目/行为）计算已答题平均分
+const abilityBars = computed(() => {
+	const defs = [['技术', '技术能力'], ['项目', '项目能力'], ['行为', '行为表达']]
+	return defs.map(([type, label]) => {
+		const scores = questions.value
+			.map((q, i) => (q.type === type && results.value[i] && results.value[i].score != null)
+				? Number(results.value[i].score) : null)
+			.filter(s => s != null)
+		if (!scores.length) return null
+		return { label, value: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) }
+	}).filter(Boolean)
 })
 
 const getStudentId = () => {
@@ -413,6 +436,42 @@ const scoreColor = (score) => {
 .summary-score-row { align-items: center; margin-top: 20px; }
 .summary-score { font-size: 40px; font-weight: 800; }
 .summary-score-label { font-size: 12px; color: $uni-text-color-secondary; margin-top: 2px; }
+.ability-bars {
+	align-self: stretch;
+	margin: 20px 0 4px;
+	gap: 10px;
+}
+.ability-row {
+	flex-direction: row;
+	align-items: center;
+	gap: 10px;
+}
+.ability-label {
+	width: 64px;
+	font-size: 12px;
+	color: $uni-text-color;
+	text-align: right;
+	flex-shrink: 0;
+}
+.ability-track {
+	flex: 1;
+	height: 8px;
+	background: $uni-border-color-divider;
+	border-radius: 4px;
+	overflow: hidden;
+}
+.ability-fill {
+	height: 100%;
+	border-radius: 4px;
+	transition: width 0.5s;
+}
+.ability-val {
+	width: 32px;
+	font-size: 12px;
+	font-weight: 700;
+	color: $uni-text-color;
+	text-align: right;
+}
 .summary-tips { margin: 16px 0 8px; }
 .summary-tip {
 	font-size: 12px;
