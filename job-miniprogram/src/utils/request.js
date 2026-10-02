@@ -113,7 +113,7 @@ export const jobAPI = {
   getRecommendJobs: (params) => request({ url: '/jobs/recommend', data: params }),
   getJobDetail: (id) => request({ url: '/jobs/' + id }),
   getJobs: (params) => request({ url: '/jobs', data: params }),
-  searchJobs: (keyword) => request({ url: '/jobs/search', data: { keyword } }),
+	searchJobs: (params) => request({ url: '/jobs/search', data: params }),
   getActiveJobs: () => request({ url: '/jobs/active' })
 }
 

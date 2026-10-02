@@ -69,8 +69,20 @@ const msgIcon = (type) => {
 }
 
 const filteredList = computed(() => {
-	if (currentCat.value === 'all') return messages.value
-	return messages.value.filter(m => m.type === currentCat.value)
+	let list = currentCat.value === 'all' ? messages.value : messages.value.filter(m => m.type === currentCat.value)
+	// 聚合重复的轻量通知：同类「投递成功通知」超过 2 条时合并为一条汇总
+	const AGG_TITLE = '投递成功通知'
+	const hits = list.filter(m => m.title === AGG_TITLE)
+	if (hits.length > 2) {
+		const newest = hits.reduce((a, b) => ((a.time || '') > (b.time || '') ? a : b))
+		const aggregated = {
+			...newest,
+			content: '你已成功投递 ' + hits.length + ' 个岗位，可在「投递」页查看进展与反馈',
+			__aggIds: hits.map(h => h.id)
+		}
+		list = [aggregated, ...list.filter(m => m.title !== AGG_TITLE)]
+	}
+	return list
 })
 
 function getStudentId() {
@@ -126,6 +138,12 @@ const onRefresh = async () => {
 }
 
 const handleRead = async (msg) => {
+	if (msg.__aggIds) {
+		// 聚合消息：点击一次性标记所有成员已读
+		try { await Promise.all(msg.__aggIds.map(id => messageAPI.readMessage(id))) } catch (e) {}
+		msg.isRead = true
+		return
+	}
 	if (!msg.isRead) {
 		try { await messageAPI.readMessage(msg.id); msg.isRead = true } catch (e) {}
 	}
@@ -211,7 +229,7 @@ const isToday = (t) => {
 	color: $uni-text-color-title;
 }
 .msg-item.unread .msg-title {
-	font-weight: 700;
+	font-weight: 600;
 }
 .msg-today .msg-title {
 	font-weight: 700;
@@ -232,10 +250,10 @@ const isToday = (t) => {
 }
 .msg-red-dot {
 	position: absolute;
-	top: 16px;
-	right: 4px;
-	width: 8px;
-	height: 8px;
+	top: 17px;
+	right: 5px;
+	width: 6px;
+	height: 6px;
 	background: $uni-color-error;
 	border-radius: 50%;
 }

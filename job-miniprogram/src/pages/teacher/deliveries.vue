@@ -278,7 +278,7 @@ const goToStudentResume = (d) => {
 	border-radius: 12px;
 	padding: 16px;
 	margin-bottom: 12px;
-	box-shadow: $uni-shadow-card;
+	border: 1px solid $uni-border-color-divider;
 }
 /* 待查看 = 教师的待办，左侧橙色标识条 */
 .delivery-card.is-pending {

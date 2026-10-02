@@ -413,17 +413,23 @@ public class JobController extends BaseController {
     }
     
     /**
-     * 搜索岗位（根据标题模糊搜索）
-     * 
+     * 搜索岗位（招聘中），关键词匹配标题、地点、技能要求与企业名称
+     *
      * @param keyword 关键词
      * @return 岗位列表
      */
     @GetMapping("/search")
     public Result<List<Job>> searchJobs(@RequestParam String keyword) {
+        String kw = keyword == null ? "" : keyword.trim();
         List<Job> jobs = jobService.lambdaQuery()
-                .like(Job::getTitle, keyword)
+                .eq(Job::getStatus, 1)
+                .and(w -> w.like(Job::getTitle, kw)
+                        .or().like(Job::getLocation, kw)
+                        .or().like(Job::getRequiredSkills, kw)
+                        .or().apply("company_id IN (SELECT id FROM company WHERE name LIKE {0})", "%" + kw + "%"))
+                .orderByDesc(Job::getCreateTime)
                 .list();
-        
+
         return Result.success(jobs);
     }
     

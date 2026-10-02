@@ -17,20 +17,21 @@
 					<text class="base-tag">{{ job.education || job.educationLevel }}</text>
 					<text v-if="job.experience || job.experienceLevel" class="base-tag">{{ job.experience || job.experienceLevel }}</text>
 				</view>
+				<view v-if="delivered" class="delivered-row">
+					<text class="delivered-tag">已投递</text>
+				</view>
 				<view v-if="job.tags && job.tags.length" class="welfare-tags">
 					<text v-for="(tag, i) in job.tags.slice(0, 3)" :key="i" class="welfare-tag">{{ tag }}</text>
 				</view>
 			</view>
 		</view>
-		<view v-if="showActions" class="card-actions">
+		<view v-if="showActions && (!delivered || showCollect)" class="card-actions">
 			<button
-				v-if="showDeliver"
+				v-if="showDeliver && !delivered"
 				class="action-btn btn-primary"
-				:class="{ 'btn-disabled': delivered }"
-				:disabled="delivered"
 				@click.stop="handleDeliver"
 			>
-				{{ delivered ? '已投递' : '立即投递' }}
+				立即投递
 			</button>
 			<button
 				v-if="showCollect"
@@ -74,23 +75,13 @@ const matchBadgeBg = computed(() => {
 <style scoped lang="scss">
 .job-card {
 	position: relative;
-	overflow: hidden;
 	background: $uni-bg-color;
 	border-radius: 12px;
 	padding: 16px;
 	margin-bottom: 12px;
-	box-shadow: $uni-shadow-card;
+	/* 列表卡降噪：浅边框替代阴影，避免大量"漂浮白块" */
+	border: 1px solid $uni-border-color-divider;
 	transition: background 0.2s;
-}
-/* 顶部渐变细条：品牌识别 + 精致感 */
-.job-card::before {
-	content: '';
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	height: 2px;
-	background: linear-gradient(90deg, $uni-color-primary 0%, $uni-color-primary-lighter 60%, rgba(96, 165, 250, 0) 100%);
 }
 .job-card:active {
 	background: $uni-bg-color-page;
@@ -162,6 +153,14 @@ const matchBadgeBg = computed(() => {
 	font-size: 12px;
 	color: $uni-color-primary;
 	background: $uni-color-primary-light;
+	padding: 2px 8px;
+	border-radius: 4px;
+}
+.delivered-row { margin-top: 8px; }
+.delivered-tag {
+	font-size: 12px;
+	color: $uni-text-color-secondary;
+	background: $uni-border-color-divider;
 	padding: 2px 8px;
 	border-radius: 4px;
 }
