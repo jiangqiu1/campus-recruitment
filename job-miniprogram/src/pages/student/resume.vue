@@ -446,8 +446,8 @@ const formatTime = (time) => {
 .ai-subtitle { font-size: 13px; font-weight: 600; color: $uni-text-color; margin-bottom: 6px; display: block; }
 .ai-item { display: block; font-size: 13px; padding: 6px 10px; border-radius: 8px; margin-bottom: 4px; line-height: 1.5; }
 .ai-item--green { background: $uni-color-success-light; color: $uni-color-success; }
-.ai-item--red { background: rgba(239,68,68,0.06); color: $uni-color-error; }
+.ai-item--red { background: $uni-color-error-light; color: $uni-color-error; }
 .ai-item--blue { background: $uni-color-primary-light; color: $uni-color-primary; }
-.ai-item--amber { background: rgba(245,158,11,0.08); color: $uni-color-warning; }
+.ai-item--amber { background: $uni-color-warning-light; color: $uni-color-warning; }
 .tag-container { flex-direction: row; flex-wrap: wrap; gap: 8px; }
 </style>

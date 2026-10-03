@@ -64,10 +64,11 @@ const handleDeliver = () => { if (!props.delivered) emit('deliver', props.job) }
 const handleCollect = () => emit('collect', props.job)
 
 const matchBadgeBg = computed(() => {
+	// 评分阈值与 08 规范统一：≥80 绿 / ≥60 蓝 / ≥40 橙 / 其余灰
 	const s = props.matchScore
-	if (s >= 85) return 'linear-gradient(135deg, #00B42A 0%, #7BE188 100%)'
-	if (s >= 70) return 'linear-gradient(135deg, #165DFF 0%, #60A5FA 100%)'
-	if (s >= 50) return 'linear-gradient(135deg, #FF7D00 0%, #FFC166 100%)'
+	if (s >= 80) return 'linear-gradient(135deg, #00B42A 0%, #7BE188 100%)'
+	if (s >= 60) return 'linear-gradient(135deg, #165DFF 0%, #60A5FA 100%)'
+	if (s >= 40) return 'linear-gradient(135deg, #FF7D00 0%, #FFC166 100%)'
 	return 'linear-gradient(135deg, #86909C 0%, #C9CDD4 100%)'
 })
 </script>
@@ -81,10 +82,11 @@ const matchBadgeBg = computed(() => {
 	margin-bottom: 12px;
 	/* 列表卡降噪：浅边框替代阴影，避免大量"漂浮白块" */
 	border: 1px solid $uni-border-color-divider;
-	transition: background 0.2s;
+	transition: background 0.2s, transform 0.15s ease;
 }
 .job-card:active {
 	background: $uni-bg-color-page;
+	transform: scale(0.98);
 }
 .card-main {
 	width: 100%;

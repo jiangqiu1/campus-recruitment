@@ -265,13 +265,13 @@ const goToActivityDetail = (act) => {
 	width: 36px;
 	height: 36px;
 	border-radius: 12px;
-	background: rgba(245,158,11,0.08);
+	background: $uni-color-warning-light;
 	align-items: center;
 	justify-content: center;
 }
 .todo-card:nth-child(2) .todo-icon { background: $uni-color-primary-light; }
 .todo-card:nth-child(3) .todo-icon { background: $uni-color-success-light; }
-.todo-card:nth-child(4) .todo-icon { background: rgba(239,68,68,0.08); }
+.todo-card:nth-child(4) .todo-icon { background: $uni-color-error-light; }
 .todo-label {
 	font-size: 13px;
 	color: $uni-text-color;

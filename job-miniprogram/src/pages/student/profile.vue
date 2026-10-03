@@ -118,7 +118,7 @@
 				<view class="settings-item" @click="handleLogout">
 					<view class="settings-left">
 						<view class="settings-icon settings-icon--danger">
-							<uni-icons type="close" size="18" color="#EF4444" />
+							<uni-icons type="close" size="18" color="#F53F3F" />
 						</view>
 						<text class="settings-label settings-label--danger">退出登录</text>
 					</view>

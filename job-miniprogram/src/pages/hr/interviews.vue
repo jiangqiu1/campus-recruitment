@@ -313,11 +313,11 @@ const goToDetail = (id) => uni.navigateTo({ url: '/pages/hr/delivery-detail?id='
 .card-feedback { font-size: 12px; color: $uni-text-color; margin-top: 4px; background: $uni-bg-color-page; border-radius: 4px; padding: 4px 8px; }
 
 .status-tag { font-size: 12px; padding: 2px 8px; border-radius: 8px; font-weight: 600; flex-shrink: 0; }
-.tag-pending { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.tag-pending { background: $uni-color-warning-light; color: $uni-color-warning; }
 .tag-viewed { background: $uni-color-primary-light; color: $uni-color-primary; }
 .tag-interview { background: $uni-color-primary-light; color: $uni-color-primary; }
 .tag-accepted { background: $uni-color-success-light; color: $uni-color-success; }
-.tag-rejected { background: rgba(239,68,68,0.1); color: $uni-color-error; }
+.tag-rejected { background: $uni-color-error-light; color: $uni-color-error; }
 
 /* 操作按钮 */
 .card-actions { flex-direction: column; gap: 6px; flex-shrink: 0; }
@@ -330,6 +330,6 @@ const goToDetail = (id) => uni.navigateTo({ url: '/pages/hr/delivery-detail?id='
 	min-width: 48px;
 }
 .action-btn--accept { background: $uni-color-success-light; color: $uni-color-success; }
-.action-btn--reject { background: rgba(239,68,68,0.1); color: $uni-color-error; }
+.action-btn--reject { background: $uni-color-error-light; color: $uni-color-error; }
 .action-btn:active { opacity: 0.7; }
 </style>

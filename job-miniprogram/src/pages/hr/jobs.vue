@@ -300,7 +300,7 @@ const handleAiParse = async () => {
 	flex-shrink: 0;
 }
 .tag-active { background: $uni-color-success-light; color: $uni-color-success; }
-.tag-draft { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.tag-draft { background: $uni-color-warning-light; color: $uni-color-warning; }
 .tag-closed { background: rgba(201,205,212,0.3); color: $uni-text-color-secondary; }
 
 /* ===== 操作标签 ===== */

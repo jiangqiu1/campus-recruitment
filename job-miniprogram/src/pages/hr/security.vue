@@ -134,8 +134,8 @@ const goBack = () => {
 }
 .menu-icon.blue { background: $uni-color-primary-light; }
 .menu-icon.green { background: rgba(16,185,129,0.1); }
-.menu-icon.orange { background: rgba(245,158,11,0.1); }
-.menu-icon.red { background: rgba(239,68,68,0.1); }
+.menu-icon.orange { background: $uni-color-warning-light; }
+.menu-icon.red { background: $uni-color-error-light; }
 .menu-text {
 	flex: 1;
 	font-size: 15px;

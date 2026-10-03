@@ -405,11 +405,11 @@ const goBack = () => uni.navigateBack()
 .status-badge {
 	padding: 5px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; flex-shrink: 0;
 }
-.sb-pending { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.sb-pending { background: $uni-color-warning-light; color: $uni-color-warning; }
 .sb-viewed { background: $uni-color-primary-light; color: $uni-color-primary; }
 .sb-interview { background: $uni-color-primary-light; color: $uni-color-primary; }
 .sb-accepted { background: $uni-color-success-light; color: $uni-color-success; }
-.sb-rejected { background: rgba(239,68,68,0.1); color: $uni-color-error; }
+.sb-rejected { background: $uni-color-error-light; color: $uni-color-error; }
 
 /* ===== 通用卡片 ===== */
 .section-card {
@@ -529,7 +529,7 @@ const goBack = () => uni.navigateBack()
 }
 .action-btn.primary { background: $uni-color-primary; color: $uni-text-color-inverse; }
 .action-btn.success { background: $uni-color-success-light; color: $uni-color-success; }
-.action-btn.danger { background: rgba(239,68,68,0.1); color: $uni-color-error; }
+.action-btn.danger { background: $uni-color-error-light; color: $uni-color-error; }
 .action-btn.disabled { background: $uni-border-color-divider; color: $uni-text-color-placeholder; }
 
 /* ===== 面试弹窗 ===== */

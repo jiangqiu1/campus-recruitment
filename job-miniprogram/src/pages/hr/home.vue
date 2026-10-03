@@ -365,9 +365,9 @@ const formatTime = (time, type) => {
 	align-items: center;
 	justify-content: center;
 }
-.todo-icon-yellow { background: rgba(245,158,11,0.08); }
+.todo-icon-yellow { background: $uni-color-warning-light; }
 .todo-icon-blue { background: $uni-color-primary-light; }
-.todo-icon-orange { background: rgba(245,158,11,0.08); }
+.todo-icon-orange { background: $uni-color-warning-light; }
 .todo-icon-green { background: $uni-color-success-light; }
 .todo-label {
 	font-size: 13px;
@@ -584,9 +584,9 @@ const formatTime = (time, type) => {
 	font-weight: 600;
 	flex-shrink: 0;
 }
-.tag-pending { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.tag-pending { background: $uni-color-warning-light; color: $uni-color-warning; }
 .tag-viewed { background: $uni-color-primary-light; color: $uni-color-primary; }
 .tag-interview { background: $uni-color-primary-light; color: $uni-color-primary; }
 .tag-accepted { background: $uni-color-success-light; color: $uni-color-success; }
-.tag-rejected { background: rgba(239,68,68,0.1); color: $uni-color-error; }
+.tag-rejected { background: $uni-color-error-light; color: $uni-color-error; }
 </style>

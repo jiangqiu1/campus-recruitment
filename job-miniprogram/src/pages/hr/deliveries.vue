@@ -393,7 +393,7 @@ export default {
 }
 .score-high { background: $uni-color-success-light; color: $uni-color-success; }
 .score-mid { background: $uni-color-primary-light; color: $uni-color-primary; }
-.score-low { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.score-low { background: $uni-color-warning-light; color: $uni-color-warning; }
 .cand-job { font-size: 12px; color: $uni-text-color-secondary; }
 .cand-meta {
 	margin-left: 50px;
@@ -409,11 +409,11 @@ export default {
 	font-weight: 600;
 	flex-shrink: 0;
 }
-.tag-pending { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.tag-pending { background: $uni-color-warning-light; color: $uni-color-warning; }
 .tag-viewed { background: $uni-color-primary-light; color: $uni-color-primary; }
 .tag-interview { background: $uni-color-primary-light; color: $uni-color-primary; }
 .tag-accepted { background: $uni-color-success-light; color: $uni-color-success; }
-.tag-rejected { background: rgba(239,68,68,0.1); color: $uni-color-error; }
+.tag-rejected { background: $uni-color-error-light; color: $uni-color-error; }
 
 /* ===== 操作标签 ===== */
 .cand-actions {

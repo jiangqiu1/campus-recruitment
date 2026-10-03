@@ -4,7 +4,7 @@
 		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
 			<view class="match-banner">
 				<view class="banner-icon">
-					<uni-icons type="star-filled" size="32" color="#165DFF" />
+					<uni-icons type="star-filled" size="32" color="#0EA5E9" />
 				</view>
 				<view class="banner-text">
 					<text class="banner-title">AI 智能匹配</text>
@@ -295,7 +295,7 @@ const goToJob = (item) => {
 </script>
 
 <style scoped lang="scss">
-.match-banner { flex-direction: row; align-items: center; margin: 16px; padding: 20px; background: $uni-color-primary-light; border-radius: 12px; gap: 16px; }
+.match-banner { flex-direction: row; align-items: center; margin: 16px; padding: 20px; background: $uni-color-ai-light; border-radius: 12px; gap: 16px; }
 .banner-icon { width: 48px; height: 48px; border-radius: 12px; background: $uni-bg-color; align-items: center; justify-content: center; }
 .banner-text { flex: 1; }
 .banner-title { font-size: 18px; font-weight: 700; color: $uni-text-color-title; display: block; margin-bottom: 4px; }

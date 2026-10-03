@@ -272,9 +272,9 @@ const loadMore = () => {}
 .job-title { font-size: 16px; font-weight: 700; color: $uni-text-color-title; display: block; margin-bottom: 2px; }
 .company-name { font-size: 12px; color: $uni-text-color-secondary; display: block; }
 .status-tag { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 8px; white-space: nowrap; margin-left: 8px; }
-.status-tag.pending { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.status-tag.pending { background: $uni-color-warning-light; color: $uni-color-warning; }
 .status-tag.approved { background: $uni-color-success-light; color: $uni-color-success; }
-.status-tag.rejected { background: rgba(239,68,68,0.08); color: $uni-color-error; }
+.status-tag.rejected { background: $uni-color-error-light; color: $uni-color-error; }
 
 .card-meta { flex-direction: row; flex-wrap: wrap; gap: 12px 16px; margin-bottom: 12px; font-size: 12px; color: $uni-text-color-secondary; }
 .change-content { background: $uni-bg-color-page; border-radius: 8px; padding: 12px; margin-bottom: 14px; }

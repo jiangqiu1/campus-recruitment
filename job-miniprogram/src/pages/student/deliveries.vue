@@ -1,7 +1,6 @@
 <template>
 	<view class="page-wrapper">
-		<NavBar title="投递记录" :showBack="false" />
-		<!-- 状态概览（点击即筛选） -->
+		<!-- 状态概览（点击即筛选）；导航用 pages.json 原生标题「我的投递」，避免双导航栏 -->
 		<view class="stats-row">
 			<view class="stat-card" :class="{ active: currentTab === 'all' }" @click="currentTab = 'all'">
 				<text class="stat-num">{{ stats.all }}</text>

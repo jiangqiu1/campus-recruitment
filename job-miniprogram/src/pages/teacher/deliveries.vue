@@ -339,11 +339,11 @@ const goToStudentResume = (d) => {
 .delivery-name { font-size: 15px; font-weight: 700; color: $uni-text-color-title; display: block; margin-bottom: 2px; }
 .delivery-class { font-size: 12px; color: $uni-text-color-secondary; display: block; }
 .status-tag { font-size: 12px; padding: 3px 10px; border-radius: 8px; font-weight: 600; flex-shrink: 0; }
-.status-pending { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.status-pending { background: $uni-color-warning-light; color: $uni-color-warning; }
 .status-viewed { background: $uni-color-primary-light; color: $uni-color-primary; }
 .status-interview { background: $uni-color-primary-light; color: $uni-color-primary; }
 .status-accepted { background: $uni-color-success-light; color: $uni-color-success; }
-.status-rejected { background: rgba(239,68,68,0.1); color: $uni-color-error; }
+.status-rejected { background: $uni-color-error-light; color: $uni-color-error; }
 
 .delivery-bottom { flex-direction: row; justify-content: space-between; align-items: center; }
 .delivery-time { font-size: 12px; color: $uni-text-color-placeholder; flex-direction: row; align-items: center; gap: 4px; }

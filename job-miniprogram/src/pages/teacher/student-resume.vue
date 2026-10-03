@@ -422,9 +422,9 @@ const handleAnalyze = async () => {
 .ai-subtitle { font-size: 13px; font-weight: 600; color: $uni-text-color; margin-bottom: 6px; display: block; }
 .ai-item { display: block; font-size: 13px; padding: 6px 10px; border-radius: 8px; margin-bottom: 4px; line-height: 1.5; }
 .ai-item--green { background: $uni-color-success-light; color: $uni-color-success; }
-.ai-item--red { background: rgba(239,68,68,0.06); color: $uni-color-error; }
+.ai-item--red { background: $uni-color-error-light; color: $uni-color-error; }
 .ai-item--blue { background: $uni-color-primary-light; color: $uni-color-primary; }
-.ai-item--amber { background: rgba(245,158,11,0.08); color: $uni-color-warning; }
+.ai-item--amber { background: $uni-color-warning-light; color: $uni-color-warning; }
 
 /* 投递记录 */
 .delivery-item { padding: 12px 0; border-bottom: 0.5px solid $uni-border-color-divider; }
@@ -435,11 +435,11 @@ const handleAnalyze = async () => {
 .delivery-company { font-size: 12px; color: $uni-text-color-secondary; display: block; }
 .delivery-time { font-size: 12px; color: $uni-text-color-placeholder; display: block; }
 .status-tag { font-size: 12px; padding: 2px 8px; border-radius: 8px; font-weight: 600; flex-shrink: 0; }
-.status-pending { background: rgba(245,158,11,0.1); color: $uni-color-warning; }
+.status-pending { background: $uni-color-warning-light; color: $uni-color-warning; }
 .status-viewed { background: $uni-color-primary-light; color: $uni-color-primary; }
 .status-interview { background: $uni-color-primary-light; color: $uni-color-primary; }
 .status-accepted { background: $uni-color-success-light; color: $uni-color-success; }
-.status-rejected { background: rgba(239,68,68,0.1); color: $uni-color-error; }
+.status-rejected { background: $uni-color-error-light; color: $uni-color-error; }
 
 /* 底部操作栏 */
 .bottom-bar {

@@ -5,13 +5,13 @@
 			<view class="header-section" :style="{ paddingTop: (statusBarHeight + 16) + 'px' }">
 				<view class="header-top">
 					<view class="greeting-wrap">
-						<text class="greeting-text">您好，{{ userName }}</text>
+						<text class="greeting-text">{{ greetingPrefix }}，{{ userName }}</text>
 						<text class="greeting-sub">{{ stageLine }}</text>
 					</view>
 				</view>
-				<view class="search-box">
+				<view class="search-box" :class="{ focused: searchFocused }">
 					<uni-icons type="search" size="16" color="rgba(255,255,255,0.8)" />
-					<input v-model="keyword" placeholder="搜索岗位、公司、关键词..." placeholder-style="color: rgba(255,255,255,0.65)" @confirm="handleSearch" />
+					<input v-model="keyword" placeholder="搜索岗位、公司、关键词..." placeholder-style="color: rgba(255,255,255,0.65)" @confirm="handleSearch" @focus="searchFocused = true" @blur="searchFocused = false" />
 				</view>
 			</view>
 
@@ -136,6 +136,18 @@ const userName = ref('学生用户')
 const resume = ref(null)
 const matchCount = ref(0)
 const topMatchScore = ref(0)
+const searchFocused = ref(false)
+
+// 时段化问候（纯前端，对齐概念图"下午好，王女士"的问候形式）
+const greetingPrefix = computed(() => {
+	const h = new Date().getHours()
+	if (h < 6) return '夜深了'
+	if (h < 9) return '早上好'
+	if (h < 12) return '上午好'
+	if (h < 14) return '中午好'
+	if (h < 18) return '下午好'
+	return '晚上好'
+})
 
 // Hero 阶段句：按求职推进阶段生成人格化问候
 const stageLine = computed(() => {
@@ -357,6 +369,17 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 </script>
 
 <style scoped lang="scss">
+/* ===== 入场动画：区块依次淡入上移（一次性，克制） ===== */
+@keyframes fadeUp {
+	from { opacity: 0; transform: translateY(14px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+.progress-card { animation: fadeUp 0.45s ease both; }
+.action-card { animation: fadeUp 0.45s ease 0.07s both; }
+.ai-entry { animation: fadeUp 0.45s ease 0.14s both; }
+.sub-entries { animation: fadeUp 0.45s ease 0.21s both; }
+.list-section { animation: fadeUp 0.45s ease 0.28s both; }
+
 /* Header：深色 Hero + 光斑 */
 .header-section {
 	position: relative;
@@ -410,6 +433,11 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	height: 40px;
 	position: relative;
 	z-index: 1;
+	transition: background 0.2s ease, border-color 0.2s ease;
+}
+.search-box.focused {
+	background: rgba(255, 255, 255, 0.24);
+	border-color: rgba(255, 255, 255, 0.6);
 }
 .search-box input {
 	flex: 1;
@@ -465,6 +493,7 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	width: calc(100% - 24px);
 	height: 2px;
 	background: $uni-border-color-divider;
+	transition: background 0.4s ease;
 }
 .funnel-step:last-child::after {
 	display: none;
@@ -479,13 +508,19 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	background: $uni-border-color-divider;
 	margin-bottom: 8px;
 	z-index: 1;
+	transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 .funnel-step.done .funnel-dot {
 	background: $uni-color-primary;
 }
+/* 当前节点：呼吸脉冲，引导视线到"下一步" */
+@keyframes dotPulse {
+	0%, 100% { box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.18); }
+	50% { box-shadow: 0 0 0 7px rgba(22, 93, 255, 0.05); }
+}
 .funnel-step.current .funnel-dot {
 	background: $uni-color-primary;
-	box-shadow: 0 0 0 4px $uni-color-primary-light;
+	animation: dotPulse 2s ease-in-out infinite;
 }
 /* 录用节点：成功绿收尾 */
 .funnel-step.success .funnel-dot {
@@ -522,7 +557,9 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	gap: 12px;
 	padding: 12px 0;
 	border-bottom: 0.5px solid $uni-border-color-divider;
+	transition: transform 0.15s ease, opacity 0.15s ease;
 }
+.action-item:active { transform: scale(0.97); opacity: 0.85; }
 .action-item:last-child {
 	border-bottom: none;
 	padding-bottom: 0;
@@ -549,18 +586,37 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	display: block;
 }
 
-/* AI 智能匹配大入口 */
+/* AI 智能匹配大入口：青=智能（08 规范 2.3），微光 shimmer 体现"正在为你计算" */
 .ai-entry {
+	position: relative;
+	overflow: hidden;
 	flex-direction: row;
 	align-items: center;
 	gap: 12px;
-	background: $uni-gradient-primary;
+	background: $uni-gradient-ai;
 	border-radius: 12px;
 	margin: 12px 16px 0;
 	padding: 16px;
-	box-shadow: 0 4px 12px rgba(22, 93, 255, 0.25);
+	box-shadow: 0 4px 12px rgba(14, 165, 233, 0.28);
+	transition: transform 0.15s ease;
 }
-.ai-entry:active { opacity: 0.9; }
+.ai-entry:active { transform: scale(0.98); }
+/* 微光扫过：低频循环，白色透明渐变 */
+.ai-entry::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: -60%;
+	width: 45%;
+	height: 100%;
+	background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.22) 50%, transparent 100%);
+	animation: aiShimmer 2.8s ease-in-out infinite;
+	pointer-events: none;
+}
+@keyframes aiShimmer {
+	0% { left: -60%; }
+	55%, 100% { left: 130%; }
+}
 .ai-entry-icon {
 	width: 44px;
 	height: 44px;
@@ -569,8 +625,10 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	align-items: center;
 	justify-content: center;
 	flex-shrink: 0;
+	position: relative;
+	z-index: 1;
 }
-.ai-entry-texts { flex: 1; }
+.ai-entry-texts { flex: 1; position: relative; z-index: 1; }
 .ai-entry-title {
 	font-size: 16px;
 	font-weight: 700;
@@ -585,6 +643,8 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 }
 .ai-entry-score {
 	align-items: center;
+	position: relative;
+	z-index: 1;
 }
 .ai-entry-score-num {
 	font-size: 22px;
@@ -610,8 +670,9 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	flex: 1;
 	align-items: center;
 	gap: 6px;
+	transition: transform 0.15s ease, opacity 0.15s ease;
 }
-.sub-entry:active { opacity: 0.7; }
+.sub-entry:active { transform: scale(0.94); opacity: 0.8; }
 .sub-entry-icon {
 	width: 40px;
 	height: 40px;
@@ -643,6 +704,7 @@ const loadMoreJobs = () => uni.showToast({ title: '加载更多...', icon: 'none
 	font-weight: 500;
 	padding-bottom: 4px;
 	position: relative;
+	transition: color 0.2s ease;
 }
 .list-tab.active {
 	color: $uni-text-color-title;
