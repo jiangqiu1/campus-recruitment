@@ -152,13 +152,12 @@ const resultFeedback = ref('')
 const resultTitle = ref('')
 const refreshing = ref(false)
 
-const DELIVERY_STATUS = ['pending', 'viewed', 'interview', 'accepted', 'rejected']
-const DELIVERY_STATUS_TEXT = ['待查看', '已查看', '面试', '已通过', '未通过']
+const STATUS_ORDER = ['pending', 'viewed', 'interview', 'accepted', 'rejected']
+const STATUS_ORDER_TEXT = ['待查看', '已查看', '面试', '已通过', '未通过']
 
 // 状态色单源：直接读 DELIVERY_STATUS 常量，消除双份维护
 const statusColor = (s) => (DELIVERY_STATUS[String(s).toUpperCase()] || {}).color || '#C9CDD4'
 const statusBg = (s) => (DELIVERY_STATUS[String(s).toUpperCase()] || {}).light || '#F7F8FA'
-}
 
 const mapDelivery = (d) => ({
 	id: d.id,
@@ -167,8 +166,8 @@ const mapDelivery = (d) => ({
 	companyName: d.companyName || '',
 	salaryText: d.salaryText || '',
 	location: d.location || '',
-	status: DELIVERY_STATUS[d.status] || 'pending',
-	statusText: DELIVERY_STATUS_TEXT[d.status] || '待查看',
+	status: STATUS_ORDER[d.status] || 'pending',
+	statusText: STATUS_ORDER_TEXT[d.status] || '待查看',
 	createTime: d.createTime ? formatTimeSemantic(d.createTime) : '',
 	interviewTime: d.interviewTime ? formatInterviewTime(d.interviewTime) : '',
 	interviewTimeText: d.interviewTime ? formatTimeSemantic(d.interviewTime) : '',
