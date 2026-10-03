@@ -12,8 +12,8 @@
 				<!-- 本班概览 -->
 				<view class="header-stats">
 					<view class="hs-item">
-						<text class="hs-num">{{ dashboard.deliveryCount || 0 }}</text>
-						<text class="hs-label">累计投递</text>
+						<text class="hs-num">{{ dashboard.pendingApprovalCount || 0 }}</text>
+						<text class="hs-label">待审核简历</text>
 					</view>
 					<view class="hs-divider" />
 					<view class="hs-item">
@@ -22,8 +22,8 @@
 					</view>
 					<view class="hs-divider" />
 					<view class="hs-item">
-						<text class="hs-num">{{ dashboard.jobCount || 0 }}</text>
-						<text class="hs-label">发布岗位</text>
+						<text class="hs-num">{{ dashboard.todayDeliveryCount || 0 }}</text>
+						<text class="hs-label">今日新增投递</text>
 					</view>
 				</view>
 			</view>

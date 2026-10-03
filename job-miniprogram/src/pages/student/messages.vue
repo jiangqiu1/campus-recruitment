@@ -20,10 +20,11 @@
 					<uni-icons type="arrowright" size="12" color="#C9CDD4" />
 				</view>
 			</view>
-			<view class="msg-list">
-				<view v-for="(msg, i) in filteredList" :key="i" class="msg-item" :class="{ unread: !msg.isRead, 'msg-today': isToday(msg.createTime || msg.time) }" @click="handleRead(msg)">
-					<view class="msg-icon">
-						<uni-icons :type="msgIcon(msg.type)" :size="20" color="#86909C" />
+			<view class="msg-group" v-for="group in groupedMessages" :key="group.label">
+				<text class="msg-group-title">{{ group.label }}</text>
+				<view v-for="(msg, i) in group.items" :key="group.label + i" class="msg-item" :class="{ unread: !msg.isRead, 'msg-today': isToday(msg.createTime || msg.time) }" @click="handleRead(msg)">
+					<view class="msg-icon" :class="'msg-icon--' + msg.type">
+						<uni-icons :type="msgIcon(msg.type)" :size="20" :color="msgIconColor(msg.type)" />
 					</view>
 					<view class="msg-content">
 						<view class="msg-top">
@@ -34,8 +35,8 @@
 					</view>
 					<view v-if="!msg.isRead" class="msg-red-dot" />
 				</view>
-				<EmptyState v-if="!filteredList.length" icon="chat" title="暂无消息" desc="有新的投递反馈或面试通知会出现在这里" />
 			</view>
+			<EmptyState v-if="!filteredList.length" icon="chat" title="暂无消息" desc="有新的投递反馈或面试通知会出现在这里" />
 			</view>
 			<view style="height: calc(60px + env(safe-area-inset-bottom))" />
 		</scroll-view>
@@ -67,12 +68,17 @@ const msgIcon = (type) => {
 	const map = { system: 'gear', company: 'shop', ai: 'star' }
 	return map[type] || 'chat'
 }
+// 类型上色：AI 青 / 系统 蓝 / 企业 橙
+const msgIconColor = (type) => {
+	const map = { system: '#165DFF', company: '#FF7D00', ai: '#0EA5E9' }
+	return map[type] || '#86909C'
+}
 
 const filteredList = computed(() => {
-	let list = currentCat.value === 'all' ? messages.value : messages.value.filter(m => m.type === currentCat.value)
+	let base = currentCat.value === 'all' ? messages.value : messages.value.filter(m => m.type === currentCat.value)
 	// 聚合重复的轻量通知：同类「投递成功通知」超过 2 条时合并为一条汇总
-	const AGG_TITLE = '投递成功通知'
-	const hits = list.filter(m => m.title === AGG_TITLE)
+	const AGG = '投递成功通知'
+	const hits = base.filter(m => m.title === AGG)
 	if (hits.length > 2) {
 		const newest = hits.reduce((a, b) => ((a.time || '') > (b.time || '') ? a : b))
 		const aggregated = {
@@ -80,9 +86,34 @@ const filteredList = computed(() => {
 			content: '你已成功投递 ' + hits.length + ' 个岗位，可在「投递」页查看进展与反馈',
 			__aggIds: hits.map(h => h.id)
 		}
-		list = [aggregated, ...list.filter(m => m.title !== AGG_TITLE)]
+		base = [aggregated, ...base.filter(m => m.title !== AGG)]
 	}
-	return list
+	return base
+})
+
+// 日期分组：今天 / 昨天 / M月D日 / 跨年带年份
+const groupedMessages = computed(() => {
+	const today = new Date()
+	const startOf = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
+	const buckets = []
+	const map = {}
+	for (const m of filteredList.value) {
+		const key = (m.time || '').substring(0, 10)
+		if (!key) continue
+		if (!map[key]) {
+			const dd = new Date(key + 'T00:00')
+			const diff = Math.round((startOf(dd) - startOf(today)) / 86400000)
+			let label
+			if (diff === 0) label = '今天'
+			else if (diff === -1) label = '昨天'
+			else if (diff < 0 && diff >= -6) label = ['周日','周一','周二','周三','周四','周五','周六'][dd.getDay()]
+			else label = dd.getFullYear() === today.getFullYear() ? (dd.getMonth() + 1) + '月' + dd.getDate() + '日' : key
+			map[key] = { label, items: [] }
+			buckets.push(map[key])
+		}
+		map[key].items.push(m)
+	}
+	return buckets
 })
 
 function getStudentId() {
@@ -193,6 +224,13 @@ const isToday = (t) => {
 	padding: 8px 16px;
 	gap: 0;
 }
+.msg-group-title {
+	font-size: 12px;
+	font-weight: 500;
+	color: $uni-text-color-secondary;
+	padding: 12px 4px 4px;
+	display: block;
+}
 .msg-item {
 	flex-direction: row;
 	background: $uni-bg-color;
@@ -214,6 +252,9 @@ const isToday = (t) => {
 	justify-content: center;
 	flex-shrink: 0;
 }
+.msg-icon--ai { background: $uni-color-ai-light; }
+.msg-icon--system { background: $uni-color-primary-light; }
+.msg-icon--company { background: $uni-color-warning-light; }
 .msg-content {
 	flex: 1;
 	gap: 4px;

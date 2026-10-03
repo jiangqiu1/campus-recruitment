@@ -164,7 +164,8 @@ const checklistDone = computed(() => fieldStatuses.value.filter(f => f.done).len
 const profileDescLine = computed(() => {
 	const s = userInfo.value.school || ''
 	const m = userInfo.value.major || ''
-	return [s, m].filter(Boolean).join(' · ')
+	const g = classInfo.value && classInfo.value.grade ? classInfo.value.grade + '级' : ''
+	return [s, m, g].filter(Boolean).join(' · ')
 })
 
 onMounted(() => {
@@ -418,7 +419,7 @@ const handleLogout = () => {
 	font-weight: 500;
 }
 .checklist-item.pending {
-	background: #FFF7E8;
+	background: $uni-color-warning-light;
 }
 
 /* 成长概览卡：完整度 + AI 诊断 + 继续完善（玻璃拟态，对齐三端概览行） */

@@ -29,7 +29,7 @@
 				</view>
 				<view class="role-card" :class="{ active: role === 2 }" @click="role = 2">
 					<view class="role-icon-wrap">
-						<uni-icons type="person" size="22" :color="role === 2 ? '#FFFFFF' : '#4E5969'" />
+						<uni-icons type="shop" size="22" :color="role === 2 ? '#FFFFFF' : '#4E5969'" />
 					</view>
 					<text class="role-name" :class="{ active: role === 2 }">企业</text>
 				</view>
@@ -200,7 +200,7 @@ const goToPrivacy = () => uni.navigateTo({ url: '/pages/common/privacy' })
 	margin-bottom: 4px;
 }
 .login-headline {
-	font-size: 26px;
+	font-size: 24px;
 	font-weight: 800;
 	color: $uni-text-color-inverse;
 	line-height: 1.4;

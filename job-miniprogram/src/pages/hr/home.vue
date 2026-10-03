@@ -17,17 +17,17 @@
 				<view class="header-stats">
 					<view class="hs-item">
 						<text class="hs-num">{{ formatNum(dashboard.resumeCount) }}</text>
-						<text class="hs-label">收到简历</text>
+						<text class="hs-label">收到投递</text>
 					</view>
 					<view class="hs-divider" />
 					<view class="hs-item">
-						<text class="hs-num">{{ formatNum(dashboard.interviewCount) }}</text>
-						<text class="hs-label">已发面试</text>
+						<text class="hs-num">{{ formatNum(dashboard.todayNewCount) }}</text>
+						<text class="hs-label">今日新增</text>
 					</view>
 					<view class="hs-divider" />
 					<view class="hs-item">
-						<text class="hs-num">{{ formatNum(dashboard.hiredCount) }}</text>
-						<text class="hs-label">已录用</text>
+						<text class="hs-num">{{ formatNum(dashboard.todayInterviewCount) }}</text>
+						<text class="hs-label">待面试</text>
 					</view>
 				</view>
 			</view>
