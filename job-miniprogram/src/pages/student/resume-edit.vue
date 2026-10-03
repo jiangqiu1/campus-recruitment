@@ -249,7 +249,7 @@ const handleImportPdf = () => {
 
 const uploadAndParse = async (filePath) => {
 	importing.value = true
-	uni.showToast({ title: '解析中...', icon: 'loading' })
+	uni.showLoading({ title: 'AI 正在解析简历…', mask: true })
 	try {
 		const studentId = getStudentId()
 		const token = uni.getStorageSync('token')
@@ -318,6 +318,7 @@ const uploadAndParse = async (filePath) => {
 		uni.showToast({ title: '导入失败', icon: 'none' })
 	} finally {
 		importing.value = false
+		uni.hideLoading()
 	}
 }
 

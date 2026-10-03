@@ -4,10 +4,10 @@
 		<scroll-view class="content-scrollable" scroll-y>
 			<view class="about-header">
 				<view class="logo-placeholder">
-					<uni-icons type="flag" size="40" color="#165DFF" />
+					<text class="logo-letter">聘</text>
 				</view>
 				<text class="app-name">校企招聘平台</text>
-				<text class="app-version">v1.0.0</text>
+				<text class="app-version">v2.0.0</text>
 			</view>
 
 			<view class="about-card">
@@ -54,6 +54,12 @@ import NavBar from '@/components/NavBar.vue'
 	align-items: center;
 	justify-content: center;
 	margin-bottom: 12px;
+}
+.logo-letter {
+	font-size: 30px;
+	font-weight: 700;
+	color: $uni-color-primary;
+	line-height: 1;
 }
 .app-name {
 	font-size: 20px;

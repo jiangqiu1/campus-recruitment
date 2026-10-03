@@ -316,33 +316,29 @@ const goToInterviewPractice = () => uni.navigateTo({ url: '/pages/student/interv
 .stat-card {
 	flex: 1;
 	align-items: center;
-	padding: 10px 4px;
-	border-radius: 12px;
-	background: $uni-bg-color-page;
-	gap: 2px;
+	padding: 8px 4px;
+	gap: 4px;
 }
-.stat-card.active {
-	background: $uni-color-primary;
+.stat-card:active { opacity: 0.7; }
+.stat-label {
+	font-size: 13px;
+	color: $uni-text-color;
 }
-.stat-card:active {
-	opacity: 0.85;
+.stat-card.active .stat-label {
+	color: $uni-color-primary;
+	font-weight: 600;
 }
 .stat-num {
-	font-size: 20px;
+	font-size: 17px;
 	font-weight: 700;
 	color: $uni-text-color-title;
 	line-height: 1.3;
+	padding: 2px 14px;
+	border-radius: 10px;
 }
 .stat-card.active .stat-num {
+	background: $uni-color-primary;
 	color: $uni-text-color-inverse;
-}
-.stat-label {
-	font-size: 12px;
-	color: $uni-text-color-secondary;
-	line-height: 1.3;
-}
-.stat-card.active .stat-label {
-	color: rgba(255,255,255,0.85);
 }
 .delivery-list {
 	padding: 12px 16px;
@@ -505,9 +501,10 @@ const goToInterviewPractice = () => uni.navigateTo({ url: '/pages/student/interv
 	margin-top: 4px;
 }
 .action-btn {
-	padding: 6px 14px;
-	border-radius: 8px;
-	font-size: 12px;
+	width: 100%;
+	height: 40px;
+	border-radius: 10px;
+	font-size: 14px;
 	font-weight: 500;
 	border: none;
 	height: 32px;
@@ -515,6 +512,7 @@ const goToInterviewPractice = () => uni.navigateTo({ url: '/pages/student/interv
 .btn-cancel {
 	background: $uni-bg-color-page;
 	color: $uni-text-color-secondary;
+	border: 1px solid $uni-border-color-divider;
 }
 .btn-view {
 	background: $uni-color-primary-light;
