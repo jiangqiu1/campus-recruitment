@@ -303,12 +303,13 @@ export const mapJobData = (raw) => {
 
 /* ======================== 教师端通用数据映射 ======================== */
 // 投递状态映射（色值对齐 uni.scss 设计 token，见 docs/frontend/08-小程序UI设计规范.md）
+// light = 同色系浅底，供状态标签使用
 export const DELIVERY_STATUS = {
-	PENDING: { value: 0, label: '待查看', color: '#FF7D00', class: 'pending' },
-	VIEWED: { value: 1, label: '已查看', color: '#165DFF', class: 'viewed' },
-	INTERVIEW: { value: 2, label: '面试中', color: '#165DFF', class: 'interview' },
-	ACCEPTED: { value: 3, label: '已录用', color: '#8B5CF6', class: 'accepted' },
-	REJECTED: { value: 4, label: '不合适', color: '#F53F3F', class: 'rejected' }
+	PENDING: { value: 0, label: '待查看', color: '#FF7D00', light: 'rgba(255,125,0,0.08)', class: 'pending' },
+	VIEWED: { value: 1, label: '已查看', color: '#165DFF', light: 'rgba(22,93,255,0.08)', class: 'viewed' },
+	INTERVIEW: { value: 2, label: '面试中', color: '#165DFF', light: 'rgba(22,93,255,0.08)', class: 'interview' },
+	ACCEPTED: { value: 3, label: '已录用', color: '#00B42A', light: 'rgba(0,180,42,0.08)', class: 'accepted' },
+	REJECTED: { value: 4, label: '不合适', color: '#F53F3F', light: 'rgba(245,63,63,0.08)', class: 'rejected' }
 }
 
 // 岗位状态映射

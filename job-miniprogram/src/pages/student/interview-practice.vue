@@ -121,10 +121,17 @@
 							<text class="ability-val">{{ b.value }}</text>
 						</view>
 					</view>
-					<view class="summary-tips">
-						<text class="summary-tip">回顾每题的参考答案，把没答好的知识点补进简历和项目里</text>
+					<view class="advice-card">
+						<text class="advice-title">提升建议</text>
+						<view class="advice-row">
+							<view class="advice-dot" />
+							<text class="advice-text">回顾每题的参考答案，把没答好的知识点补进简历和项目里</text>
+						</view>
 					</view>
-					<button class="submit-btn" @click="restartPractice">再练一次（换个岗位）</button>
+					<view class="summary-btn-row">
+						<button class="summary-btn summary-btn--ghost" @click="practiceRecord">查看练习记录</button>
+						<button class="summary-btn" @click="restartPractice">再练一次</button>
+					</view>
 				</view>
 			</template>
 		</scroll-view>
@@ -275,6 +282,7 @@ const restartPractice = () => {
 }
 
 const goHome = () => uni.reLaunch({ url: '/pages/student/home' })
+const practiceRecord = () => uni.showToast({ title: '练习记录功能即将上线', icon: 'none' })
 
 // 题目类型 → 样式类
 const typeClass = (type) => {
@@ -450,7 +458,35 @@ const scoreColor = (score) => {
 .summary-title { font-size: 20px; font-weight: 700; color: $uni-text-color-title; }
 .summary-desc { font-size: 13px; color: $uni-text-color-secondary; margin-top: 6px; }
 .summary-score-row { align-items: center; margin-top: 20px; }
-.summary-score { font-size: 40px; font-weight: 800; }
+.summary-score { font-size: 40px; font-weight: 800; animation: scoreUp 0.4s ease both; }
+@keyframes scoreUp {
+	from { opacity: 0; transform: translateY(8px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+.summary-btn-row {
+	align-self: stretch;
+	flex-direction: row;
+	gap: 12px;
+	margin-top: 24px;
+}
+.summary-btn {
+	flex: 1;
+	height: 44px;
+	border-radius: 12px;
+	background: $uni-color-ai;
+	color: #FFFFFF;
+	font-size: 14px;
+	font-weight: 600;
+	align-items: center;
+	justify-content: center;
+	border: none;
+}
+.summary-btn:active { transform: scale(0.97); }
+.summary-btn--ghost {
+	background: $uni-bg-color;
+	border: 1px solid $uni-border-color;
+	color: $uni-text-color;
+}
 .summary-score-label { font-size: 12px; color: $uni-text-color-secondary; margin-top: 2px; }
 .ability-bars {
 	align-self: stretch;
@@ -488,6 +524,24 @@ const scoreColor = (score) => {
 	color: $uni-text-color;
 	text-align: right;
 }
+.advice-card {
+	align-self: stretch;
+	background: #F7F8FA;
+	border-radius: 10px;
+	padding: 14px;
+	margin: 20px 0 8px;
+}
+.advice-title { font-size: 13px; font-weight: 600; color: $uni-text-color-title; margin-bottom: 8px; display: block; }
+.advice-row { flex-direction: row; align-items: flex-start; gap: 8px; }
+.advice-dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: $uni-color-ai;
+	margin-top: 6px;
+	flex-shrink: 0;
+}
+.advice-text { flex: 1; font-size: 13px; color: $uni-text-color; line-height: 1.6; }
 .summary-tips { margin: 16px 0 8px; }
 .summary-tip {
 	font-size: 12px;

@@ -138,7 +138,7 @@
 const loading = ref(true)
 import LoadingState from '@/components/LoadingState.vue'
 import { ref, computed } from 'vue'
-import { deliveryAPI, scoreAPI } from '@/utils/request'
+import { deliveryAPI, scoreAPI, DELIVERY_STATUS } from '@/utils/request'
 import { formatTimeSemantic } from '@/utils/format'
 import TabBar from '@/components/TabBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -155,19 +155,9 @@ const refreshing = ref(false)
 const DELIVERY_STATUS = ['pending', 'viewed', 'interview', 'accepted', 'rejected']
 const DELIVERY_STATUS_TEXT = ['待查看', '已查看', '面试', '已通过', '未通过']
 
-const statusColor = (s) => {
-	const map = { pending: '#FF7D00', viewed: '#165DFF', interview: '#165DFF', accepted: '#00B42A', rejected: '#F53F3F' }
-	return map[s] || '#C9CDD4'
-}
-const statusBg = (s) => {
-	const map = { 
-		pending: 'rgba(255,125,0,0.08)', 
-		viewed: 'rgba(22,93,255,0.08)', 
-		interview: 'rgba(22,93,255,0.08)', 
-		accepted: 'rgba(0,180,42,0.08)', 
-		rejected: 'rgba(245,63,63,0.08)' 
-	}
-	return map[s] || '#F7F8FA'
+// 状态色单源：直接读 DELIVERY_STATUS 常量，消除双份维护
+const statusColor = (s) => (DELIVERY_STATUS[String(s).toUpperCase()] || {}).color || '#C9CDD4'
+const statusBg = (s) => (DELIVERY_STATUS[String(s).toUpperCase()] || {}).light || '#F7F8FA'
 }
 
 const mapDelivery = (d) => ({
@@ -363,7 +353,9 @@ const goToInterviewPractice = () => uni.navigateTo({ url: '/pages/student/interv
 	background: $uni-bg-color;
 	border-radius: 12px;
 	border: 1px solid $uni-border-color-divider;
+	transition: transform 0.15s ease, background 0.2s;
 }
+.delivery-card:active { transform: scale(0.98); }
 .delivery-card:active { background: $uni-bg-color-page; }
 .card-body {
 	padding: 16px;
@@ -558,11 +550,28 @@ const goToInterviewPractice = () => uni.navigateTo({ url: '/pages/student/interv
 }
 /* 下一场面试：行动大卡 */
 .next-interview-card {
+	position: relative;
+	overflow: hidden;
 	background: $uni-gradient-primary;
 	border-radius: 12px;
 	padding: 16px;
 	margin: 12px 16px 0;
 	box-shadow: 0 4px 12px rgba(22, 93, 255, 0.25);
+}
+.next-interview-card::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: -60%;
+	width: 45%;
+	height: 100%;
+	background: linear-gradient(105deg, transparent 0%, rgba(255, 255, 255, 0.18) 50%, transparent 100%);
+	animation: nicShimmer 2.8s ease-in-out infinite;
+	pointer-events: none;
+}
+@keyframes nicShimmer {
+	0% { left: -60%; }
+	55%, 100% { left: 130%; }
 }
 .next-interview-card:active { opacity: 0.92; }
 .nic-top {
@@ -585,7 +594,7 @@ const goToInterviewPractice = () => uni.navigateTo({ url: '/pages/student/interv
 	font-weight: 500;
 }
 .nic-time {
-	font-size: 14px;
+	font-size: 18px;
 	font-weight: 700;
 	color: $uni-text-color-inverse;
 }

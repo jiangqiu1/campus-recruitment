@@ -2,6 +2,8 @@
 	<view class="page-wrapper">
 		<NavBar title="岗位详情" show-back @back="goBack" />
 		<scroll-view class="content-scrollable" scroll-y>
+			<ErrorState v-if="loadFailed" error-msg="岗位加载失败，请检查网络后重试" @retry="loadJobDetail(jobId)" />
+			<template v-else>
 			<!-- 岗位核心信息 -->
 			<view class="job-header">
 				<view class="job-title-row">
@@ -20,7 +22,7 @@
 				<view class="job-update-time">更新于 {{ formatDate(job.updateTime) }}</view>
 			</view>
 
-			<!-- AI 匹配结论（决策卡：回答"适不适合我、要不要投"） -->
+			<!-- AI 匹配结论（决策卡：回答"适不适合我、要不要投"）；无匹配时引导去生成 -->
 			<view v-if="matchRecord" class="match-hero">
 				<view class="match-hero-top">
 					<view class="match-ring" :style="{ borderColor: matchVerdict.color, backgroundColor: matchVerdict.bg }">
@@ -38,6 +40,17 @@
 						<text class="match-dim-val">{{ d.value }}%</text>
 					</view>
 				</view>
+			</view>
+			<!-- 无匹配记录：轻量占位引导（不出现内容断层） -->
+			<view v-else class="match-empty" @click="goToAIMatches">
+				<view class="match-empty-icon">
+					<uni-icons type="star" size="18" color="#0EA5E9" />
+				</view>
+				<view class="match-empty-texts">
+					<text class="match-empty-title">暂无 AI 匹配结果</text>
+					<text class="match-empty-desc">教师推送或生成后，这里会显示匹配结论</text>
+				</view>
+				<text class="match-empty-link">去查看 ›</text>
 			</view>
 
 			<!-- 公司信息入口 -->
@@ -63,7 +76,7 @@
 				<text class="section-title">岗位职责</text>
 				<view v-if="descriptionLines.length > 1" class="section-list">
 					<view v-for="(line, i) in descriptionLines" :key="i" class="section-li">
-						<text class="section-li-dot">•</text>
+						<text class="section-li-dot">{{ i + 1 }}.</text>
 						<text class="section-li-text">{{ line }}</text>
 					</view>
 				</view>
@@ -75,7 +88,7 @@
 				<text class="section-title">任职要求</text>
 				<view v-if="requirementLines.length > 1" class="section-list">
 					<view v-for="(line, i) in requirementLines" :key="i" class="section-li">
-						<text class="section-li-dot">•</text>
+						<text class="section-li-dot">{{ i + 1 }}.</text>
 						<text class="section-li-text">{{ line }}</text>
 					</view>
 				</view>
@@ -140,6 +153,7 @@ import { jobAPI, deliveryAPI, favoriteAPI, resumeAPI, hrAPI, matchAPI } from '@/
 import { formatSalary, formatTimeSemantic } from '@/utils/format'
 import { addBrowseRecord } from '@/utils/browseHistory'
 import NavBar from '@/components/NavBar.vue'
+import ErrorState from '@/components/ErrorState.vue'
 
 const job = ref({})
 const isFavorited = ref(false)
@@ -147,6 +161,7 @@ const isDelivered = ref(false)
 const matchRecord = ref(null)
 const jobId = ref('')
 const company = ref({})
+const loadFailed = ref(false)
 
 // 匹配度：来自真实人岗匹配记录（教师推送/生成），无记录时决策卡整体隐藏
 const matchScore = computed(() => {
@@ -199,12 +214,14 @@ const loadJobDetail = async (id) => {
 		job.value = res.data || {}
 		// 薪资格式统一（5K–8K），与岗位卡片一致
 		job.value.salaryText = formatSalary(job.value.salaryText || job.value.salaryRange)
+		loadFailed.value = false
 		addBrowseRecord(id)
 		loadUserState()
 		loadCompany()
 		loadMatch()
 	} catch (e) {
 		console.log('加载岗位详情失败', e)
+		loadFailed.value = true
 		uni.showToast({ title: '加载失败', icon: 'none' })
 	}
 }
@@ -328,6 +345,8 @@ const goBack = () => {
 	try { uni.navigateBack() } catch (e) { uni.reLaunch({ url: '/pages/student/home' }) }
 }
 
+const goToAIMatches = () => uni.navigateTo({ url: '/pages/student/ai-matches' })
+
 // 已投递后底部按钮转为投递进度入口（替代不可操作的灰色禁用态）
 const goToMyDeliveries = () => uni.reLaunch({ url: '/pages/student/deliveries' })
 
@@ -343,7 +362,7 @@ const formatDate = (time) => {
 .job-title { font-size: 20px; font-weight: 700; color: $uni-text-color-title; flex: 1; }
 .tag-urgent { font-size: 12px; color: $uni-color-error; background: $uni-color-error-light; padding: 2px 8px; border-radius: 4px; font-weight: 600; flex-shrink: 0; }
 .tag-campus { font-size: 12px; color: $uni-color-primary; background: $uni-color-primary-light; padding: 2px 8px; border-radius: 4px; font-weight: 500; flex-shrink: 0; }
-.job-salary { font-size: 20px; color: $uni-color-error; font-weight: 700; display: block; margin-bottom: 12px; }
+.job-salary { font-size: 20px; color: $uni-color-primary; font-weight: 700; display: block; margin-bottom: 12px; }
 .job-base-tags { flex-direction: row; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .base-tag { font-size: 13px; color: $uni-text-color; background: $uni-bg-color-page; padding: 4px 10px; border-radius: 4px; }
 .job-update-time { font-size: 12px; color: $uni-text-color-placeholder; }
@@ -353,6 +372,29 @@ const formatDate = (time) => {
 .company-name { font-size: 14px; font-weight: 600; color: $uni-text-color-title; }
 .company-sub { font-size: 12px; color: $uni-text-color-secondary; }
 .company-info:active { background: $uni-bg-color-page; }
+.match-empty {
+	flex-direction: row;
+	align-items: center;
+	gap: 12px;
+	background: rgba(14, 165, 233, 0.06);
+	border-radius: 12px;
+	padding: 14px 16px;
+	margin-bottom: 12px;
+}
+.match-empty:active { opacity: 0.8; }
+.match-empty-icon {
+	width: 40px;
+	height: 40px;
+	border-radius: 10px;
+	background: $uni-bg-color;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+.match-empty-texts { flex: 1; }
+.match-empty-title { font-size: 14px; font-weight: 600; color: $uni-text-color-title; display: block; }
+.match-empty-desc { font-size: 12px; color: $uni-text-color-secondary; margin-top: 2px; display: block; }
+.match-empty-link { font-size: 13px; color: $uni-color-ai; font-weight: 500; flex-shrink: 0; }
 .section-card { background: $uni-bg-color; margin-bottom: 12px; padding: 20px 16px; }
 .section-title { font-size: 16px; font-weight: 700; color: $uni-text-color-title; margin-bottom: 12px; padding-left: 12px; border-left: 4px solid $uni-color-primary; display: block; }
 .section-text { font-size: 14px; color: $uni-text-color; line-height: 1.8; display: block; white-space: pre-line; }
@@ -377,7 +419,7 @@ const formatDate = (time) => {
 .match-dim-val { width: 36px; font-size: 12px; font-weight: 600; color: $uni-text-color; text-align: right; }
 .section-li { flex-direction: row; gap: 8px; margin-bottom: 6px; }
 .section-li:last-child { margin-bottom: 0; }
-.section-li-dot { color: $uni-color-primary; font-size: 14px; line-height: 1.7; }
+.section-li-dot { color: $uni-text-color-secondary; font-size: 13px; line-height: 1.7; flex-shrink: 0; }
 .section-li-text { flex: 1; font-size: 14px; color: $uni-text-color; line-height: 1.7; }
 .address-box { flex-direction: row; align-items: center; gap: 8px; padding: 12px; background: $uni-bg-color-page; border-radius: 8px; }
 .address-text { font-size: 14px; color: $uni-text-color; flex: 1; }
