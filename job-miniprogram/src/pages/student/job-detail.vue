@@ -124,6 +124,7 @@
 			</view>
 
 			<view style="height: calc(80px + env(safe-area-inset-bottom))" />
+			</template>
 		</scroll-view>
 
 		<!-- 底部操作栏 -->
