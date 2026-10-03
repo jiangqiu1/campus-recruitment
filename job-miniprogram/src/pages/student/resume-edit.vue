@@ -1,6 +1,6 @@
 <template>
 	<view class="page-wrapper">
-		<NavBar title="编辑简历" />
+		<NavBar title="编辑简历" @back="handleBack" />
 		<scroll-view class="scroll-area" scroll-y>
 			<!-- 导入PDF简历 -->
 			<view class="import-section" @click="handleImportPdf">
@@ -118,13 +118,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { resumeAPI, authAPI } from '@/utils/request'
 import NavBar from '@/components/NavBar.vue'
 import TagInput from '@/components/TagInput.vue'
 
 const resumeId = ref(null)
 const saving = ref(false)
+// 保存状态检测：加载/保存成功后记录快照，供「未保存离开确认」与按钮文案使用
+const savedSnapshot = ref('')
+const isDirty = computed(() => !!savedSnapshot.value && JSON.stringify(form.value) !== savedSnapshot.value)
+const markSaved = () => { savedSnapshot.value = JSON.stringify(form.value) }
 const importing = ref(false)
 const form = ref({
 	name: '',
@@ -217,6 +221,7 @@ async function loadExisting() {
 			form.value.email = userEmail
 		}
 	} catch (e) {}
+	markSaved()
 }
 
 function parseJsonArray(val) {
@@ -331,6 +336,18 @@ const getApiBaseUrl = () => {
 	return 'http://localhost:8080/api'
 }
 
+const handleBack = () => {
+	if (isDirty.value) {
+		uni.showModal({
+			title: '未保存的修改',
+			content: '简历有修改尚未保存，确定离开吗？',
+			success: (r) => { if (r.confirm) uni.navigateBack() }
+		})
+	} else {
+		uni.navigateBack()
+	}
+}
+
 const handleSave = async () => {
 	if (!form.value.jobTarget.trim()) {
 		uni.showToast({ title: '请填写求职意向', icon: 'none' })
@@ -376,6 +393,7 @@ const handleSave = async () => {
 		uni.showToast({ title: '保存失败，请重试', icon: 'none' })
 	} finally {
 		saving.value = false
+		markSaved()
 	}
 }
 </script>

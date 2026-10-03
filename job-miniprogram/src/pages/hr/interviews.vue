@@ -36,10 +36,11 @@
 
       <view class="interview-list">
         <template v-if="filteredInterviews.length">
-          <view v-for="item in filteredInterviews" :key="item.id" class="interview-card" @click="goToDetail(item.id)" @longpress="showActions(item)">
+          <view v-for="item in filteredInterviews" :key="item.id" class="interview-card" :class="{ 'card-ended': item.status === 'accepted' || item.status === 'rejected' }" @click="goToDetail(item.id)" @longpress="showActions(item)">
             <view class="card-left">
               <text class="card-date">{{ formatDate(item.interviewTime) }}</text>
               <text class="card-time">{{ formatTime(item.interviewTime) }}</text>
+              <text v-if="countdownText(item)" class="card-countdown">{{ countdownText(item) }}</text>
             </view>
             <view class="card-body">
               <view class="card-top">
@@ -172,6 +173,19 @@ const getCompanyId = () => {
   }
 }
 
+// 今天的面试显示倒计时，强化"接下来要做什么"
+const countdownText = (item) => {
+	if (item.status !== 'interview' || !item.interviewTime) return ''
+	const t = new Date(String(item.interviewTime).replace(' ', 'T'))
+	if (isNaN(t.getTime())) return ''
+	const diffMin = Math.round((t - new Date()) / 60000)
+	if (diffMin <= 0) return ''
+	if (diffMin < 60) return '还有 ' + diffMin + ' 分钟'
+	const h = Math.floor(diffMin / 60)
+	if (h < 24) return '还有 ' + h + ' 小时'
+	return ''
+}
+
 const formatTime = (t) => {
 	if (!t) return '待定'
 	return t.length >= 16 ? t.substring(11, 16) : t
@@ -301,6 +315,12 @@ const goToDetail = (id) => uni.navigateTo({ url: '/pages/hr/delivery-detail?id='
 }
 .card-date { font-size: 12px; color: $uni-text-color-secondary; margin-bottom: 2px; }
 .card-time { font-size: 15px; font-weight: 700; color: $uni-text-color-title; }
+.card-countdown {
+	font-size: 11px;
+	color: $uni-color-ai;
+	margin-top: 2px;
+}
+.card-ended { opacity: 0.72; }
 .card-body { flex: 1; gap: 3px; }
 .card-top {
   flex-direction: row;
