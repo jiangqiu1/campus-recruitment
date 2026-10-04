@@ -2,6 +2,9 @@
 	<view class="page-wrapper">
 		<NavBar :title="studentName + ' 的简历'" show-back />
 		<scroll-view class="content-scrollable" scroll-y>
+			<LoadingState type="skeleton" :rows="5" v-if="loading" />
+			<ErrorState v-else-if="loadFailed" error-msg="简历加载失败" @retry="loadData" />
+			<template v-else>
 			<!-- 头部信息卡：强化视觉层级 -->
 			<view class="info-header-card">
 				<view class="info-avatar">
@@ -132,6 +135,7 @@
 			</view>
 
 			<view style="height: 80px"></view>
+			</template>
 		</scroll-view>
 
 		<!-- 底部操作栏 -->
@@ -149,6 +153,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import LoadingState from '@/components/LoadingState.vue'
+import ErrorState from '@/components/ErrorState.vue'
 import { teacherAPI, jobAPI, aiParseAPI } from '@/utils/request'
 import NavBar from '@/components/NavBar.vue'
 import { checkRole } from '@/utils/auth'
@@ -251,7 +257,12 @@ onMounted(() => {
 	loadData()
 })
 
+const loading = ref(true)
+const loadFailed = ref(false)
+
 const loadData = async () => {
+	loading.value = true
+	loadFailed.value = false
 	try {
 		const calls = [
 			teacherAPI.getStudentResume(studentId.value),
@@ -289,7 +300,9 @@ const loadData = async () => {
 		if (rawDeliveries.length > 0) loadDeliveryCompanyNames(rawDeliveries)
 	} catch (e) {
 		console.error('加载学生详情失败', e)
-		uni.showToast({ title: '加载失败', icon: 'none' })
+		loadFailed.value = true
+	} finally {
+		loading.value = false
 	}
 }
 
