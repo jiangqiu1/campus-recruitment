@@ -139,11 +139,15 @@ const loadJobDetail = async (id) => {
 	}
 }
 
+const saving = ref(false)
+
 const handleSave = async (publish) => {
+	if (saving.value) return
 	if (!form.value.title || !form.value.salaryText || !form.value.location || !form.value.description || !form.value.requirements) {
 		uni.showToast({ title: '请填写完整信息', icon: 'none' })
 		return
 	}
+	saving.value = true
 
 	const payload = {
 		title: form.value.title,
@@ -168,6 +172,8 @@ const handleSave = async (publish) => {
 		}, 500)
 	} catch (e) {
 		uni.showToast({ title: '保存失败', icon: 'none' })
+	} finally {
+		saving.value = false
 	}
 }
 

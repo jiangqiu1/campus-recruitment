@@ -10,7 +10,9 @@
 			</template>
 
 			<view v-else class="msg-list">
-				<view v-for="(msg, i) in messages" :key="i" class="msg-item" @click="handleRead(msg)">
+				<view class="msg-group" v-for="group in groupedMessages" :key="group.label">
+					<text class="msg-group-title">{{ group.label }}</text>
+					<view v-for="(msg, i) in group.items" :key="group.label + i" class="msg-item" @click="handleRead(msg)">
 					<view class="msg-icon" :style="{ background: msg.bgColor || '#F2F3F5' }">
 						<uni-icons :type="msg.icon || 'chat'" :size="18" :color="msg.iconColor || '#86909C'" />
 					</view>
@@ -25,12 +27,9 @@
 						<text class="msg-text">{{ msg.content || msg.message || '' }}</text>
 					</view>
 				</view>
-
-				<view v-if="!messages.length && !loading" class="empty-state">
-					<uni-icons type="chat" size="40" color="#C9CDD4" />
-					<text class="empty-text">暂无消息</text>
-					<text style="font-size:12px;color:#C9CDD4;margin-top:4px;">有新的投递或面试通知会出现在这里</text>
 				</view>
+
+				<EmptyState v-if="!messages.length && !loading" icon="chat" title="暂无消息" desc="有新的投递或面试通知会出现在这里" />
 			</view>
 
 			<view style="height:40px;" />
@@ -39,12 +38,39 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { hrAPI } from '@/utils/request'
 import NavBar from '@/components/NavBar.vue'
+import LoadingState from '@/components/LoadingState.vue'
+import EmptyState from '@/components/EmptyState.vue'
 
 const messages = ref([])
 const loading = ref(false)
+
+// 日期分组：今天 / 昨天 / M月D日 / 跨年带年份（渲染层）
+const groupedMessages = computed(() => {
+	const today = new Date()
+	const startOf = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
+	const buckets = []
+	const map = {}
+	for (const m of messages.value) {
+		const key = (m.createTime || '').substring(0, 10)
+		if (!key) continue
+		if (!map[key]) {
+			const dd = new Date(key + 'T00:00')
+			const diff = Math.round((startOf(dd) - startOf(today)) / 86400000)
+			let label
+			if (diff === 0) label = '今天'
+			else if (diff === -1) label = '昨天'
+			else if (diff < 0 && diff >= -6) label = ['周日','周一','周二','周三','周四','周五','周六'][dd.getDay()]
+			else label = dd.getFullYear() === today.getFullYear() ? (dd.getMonth() + 1) + '月' + dd.getDate() + '日' : key
+			map[key] = { label, items: [] }
+			buckets.push(map[key])
+		}
+		map[key].items.push(m)
+	}
+	return buckets
+})
 
 const getMessagesForHR = async () => {
 	// 从所有投递中获取最近的消息动态
@@ -60,7 +86,7 @@ const getMessagesForHR = async () => {
 				const statusMap = { 0: '投递了', 1: '已查看', 2: '安排了面试', 3: '已录用', 4: '未通过' }
 				const statusIcon = { 0: 'paperplane', 1: 'eye', 2: 'calendar', 3: 'checkmark', 4: 'close' }
 				const statusColor = { 0: '#FF7D00', 1: '#165DFF', 2: '#165DFF', 3: '#00B42A', 4: '#F53F3F' }
-				const bgColor = { 0: '#FEF3E8', 1: '#E6F1FB', 2: '#E6F1FB', 3: '#EAF3DE', 4: '#FCEBEB' }
+				const bgColor = { 0: 'rgba(255,125,0,0.08)', 1: 'rgba(22,93,255,0.08)', 2: 'rgba(22,93,255,0.08)', 3: 'rgba(0,180,42,0.08)', 4: 'rgba(245,63,63,0.08)' }
 				all.push({
 					title: d.studentName || '候选人' + ' ' + (statusMap[d.status] || '投递了'),
 					content: statusMap[d.status] || '投递了' + '「' + (job.title || '') + '」',
@@ -128,6 +154,13 @@ onMounted(loadMessages)
 </script>
 
 <style scoped lang="scss">
+.msg-group-title {
+	font-size: 12px;
+	font-weight: 500;
+	color: #86909C;
+	padding: 12px 4px 4px;
+	display: block;
+}
 .msg-list { padding: 12px 16px; }
 .msg-item {
 	flex-direction: row;
