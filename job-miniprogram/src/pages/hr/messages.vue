@@ -73,32 +73,25 @@ const groupedMessages = computed(() => {
 })
 
 const getMessagesForHR = async () => {
-	// 从所有投递中获取最近的消息动态
+	// 单次企业投递聚合接口（后端已富化 jobTitle/studentName），替代 N+1 循环
 	const cId = getCompanyId()
 	if (!cId) return []
-	const jobsRes = await hrAPI.getHrJobs(cId)
-	const jobs = jobsRes.data || []
-	const all = []
-	for (const job of jobs) {
-		try {
-			const dRes = await hrAPI.getCompanyDeliveries(job.id)
-			;(dRes.data || []).forEach(d => {
-				const statusMap = { 0: '投递了', 1: '已查看', 2: '安排了面试', 3: '已录用', 4: '未通过' }
-				const statusIcon = { 0: 'paperplane', 1: 'eye', 2: 'calendar', 3: 'checkmark', 4: 'close' }
-				const statusColor = { 0: '#FF7D00', 1: '#165DFF', 2: '#165DFF', 3: '#00B42A', 4: '#F53F3F' }
-				const bgColor = { 0: 'rgba(255,125,0,0.08)', 1: 'rgba(22,93,255,0.08)', 2: 'rgba(22,93,255,0.08)', 3: 'rgba(0,180,42,0.08)', 4: 'rgba(245,63,63,0.08)' }
-				all.push({
-					title: d.studentName || '候选人' + ' ' + (statusMap[d.status] || '投递了'),
-					content: statusMap[d.status] || '投递了' + '「' + (job.title || '') + '」',
-					createTime: d.createTime || d.updateTime,
-					isRead: false,
-					icon: statusIcon[d.status] || 'chat',
-					iconColor: statusColor[d.status] || '#86909C',
-					bgColor: bgColor[d.status] || '#F2F3F5'
-				})
-			})
-		} catch (e) { console.error('获取消息数据失败', e) }
-	}
+	const statusMap = { 0: '投递了', 1: '已查看', 2: '安排了面试', 3: '已录用', 4: '未通过' }
+	const statusIcon = { 0: 'paperplane', 1: 'eye', 2: 'calendar', 3: 'checkmark-filled', 4: 'close' }
+	const statusColor = { 0: '#FF7D00', 1: '#165DFF', 2: '#165DFF', 3: '#00B42A', 4: '#F53F3F' }
+	const bgColor = { 0: 'rgba(255,125,0,0.08)', 1: 'rgba(22,93,255,0.08)', 2: 'rgba(22,93,255,0.08)', 3: 'rgba(0,180,42,0.08)', 4: 'rgba(245,63,63,0.08)' }
+	const res = await hrAPI.getDeliveriesByCompany(cId)
+	const all = (res.data || []).map(d => ({
+		id: d.id,
+		title: (d.studentName || '候选人') + ' ' + (statusMap[d.status] || '投递了'),
+		content: (statusMap[d.status] || '投递了') + '「' + (d.jobTitle || '') + '」',
+		createTime: d.createTime || d.updateTime,
+		isRead: false,
+		icon: statusIcon[d.status] || 'chat',
+		iconColor: statusColor[d.status] || '#86909C',
+		bgColor: bgColor[d.status] || '#F2F3F5',
+		status: d.status
+	}))
 	all.sort((a, b) => new Date(b.createTime || 0) - new Date(a.createTime || 0))
 	return all.slice(0, 50)
 }

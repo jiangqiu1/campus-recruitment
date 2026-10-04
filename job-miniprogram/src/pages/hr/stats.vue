@@ -26,7 +26,30 @@
 					</view>
 				</view>
 
-				<!-- 今日数据 -->
+				<!-- 时间筛选 + 区间概览（真实可查口径：新增投递/待处理/面试安排） -->
+			<view class="range-section">
+				<view class="range-chips">
+					<text v-for="c in rangeChips" :key="c.days" class="range-chip" :class="{ active: rangeDays === c.days }" @click="switchRange(c.days)">{{ c.label }}</text>
+				</view>
+				<view class="range-stats-row">
+					<view class="range-item">
+						<text class="range-num">{{ rangeStats.newDeliveries }}</text>
+						<text class="range-label">新增投递</text>
+					</view>
+					<view class="range-divider" />
+					<view class="range-item">
+						<text class="range-num">{{ rangeStats.pendingCount }}</text>
+						<text class="range-label">待处理</text>
+					</view>
+					<view class="range-divider" />
+					<view class="range-item">
+						<text class="range-num">{{ rangeStats.interviewCount }}</text>
+						<text class="range-label">面试安排</text>
+					</view>
+				</view>
+			</view>
+
+			<!-- 今日数据 -->
 				<view class="section-card">
 					<text class="section-title">今日数据</text>
 					<view class="today-row">
@@ -88,6 +111,28 @@ import LoadingState from '@/components/LoadingState.vue'
 
 const loading = ref(true)
 const stats = ref({})
+const rangeDays = ref(7)
+const rangeStats = ref({ newDeliveries: 0, pendingCount: 0, interviewCount: 0 })
+const rangeChips = [
+	{ label: '近7天', days: 7 },
+	{ label: '近30天', days: 30 },
+	{ label: '全部', days: 0 }
+]
+
+const switchRange = (days) => {
+	if (rangeDays.value === days) return
+	rangeDays.value = days
+	loadRangeStats()
+}
+
+const loadRangeStats = async () => {
+	const cId = getCompanyId()
+	if (!cId) return
+	try {
+		const res = await hrAPI.getRangeStats(cId, rangeDays.value)
+		rangeStats.value = res.data || { newDeliveries: 0, pendingCount: 0, interviewCount: 0 }
+	} catch (e) { console.error('加载区间统计失败', e) }
+}
 
 const interviewRate = computed(() => {
 	const total = stats.value.resumeCount || 0
@@ -117,6 +162,7 @@ const loadData = async () => {
 		if (!cId) return
 		const res = await hrAPI.getDashboard(cId)
 		stats.value = res.data || {}
+		loadRangeStats()
 	} catch (e) {
 		console.error('加载统计数据失败', e)
 	} finally {

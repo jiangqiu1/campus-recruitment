@@ -129,18 +129,24 @@ public class JobChangeApplyController extends BaseController {
     }
 
     /**
-     * 审核拒绝
+     * 审核拒绝（需携带拒绝原因，随申请展示给 HR）
      */
     @LogOperation("审核拒绝岗位变更申请")
     @PutMapping("/{id}/reject")
-    public Result<String> reject(@PathVariable Long id) {
+    public Result<String> reject(@PathVariable Long id, @RequestBody(required = false) Map<String, String> params) {
         requireTeacher();
         JobChangeApply apply = jobChangeApplyService.getById(id);
         if (apply == null) return Result.error(404, "申请不存在");
         if (apply.getStatus() != 0) return Result.error("该申请已审核");
 
+        String reason = params != null ? params.get("reason") : null;
+        if (reason == null || reason.trim().isEmpty()) {
+            return Result.error("请填写拒绝原因");
+        }
+
         apply.setStatus(2);
         apply.setReviewTeacherId(getCurrentUserId());
+        apply.setRejectReason(reason.trim());
         jobChangeApplyService.updateById(apply);
         return Result.success("已拒绝");
     }

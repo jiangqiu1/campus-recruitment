@@ -44,6 +44,11 @@ public class JobChangeApply {
      * 审核教师ID - 外键(sys_user.id)
      */
     private Long reviewTeacherId;
+
+    /**
+     * 拒绝原因（教师拒绝时填写）
+     */
+    private String rejectReason;
     
     /**
      * 申请时间

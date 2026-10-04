@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -651,6 +652,170 @@ public class StatisticsController extends BaseController {
         data.put("total", total);
         data.put("mockCount", mockTotal);
         return Result.success(data);
+    }
+
+    /**
+     * HR 区间统计（时间筛选）：只统计真实可查口径，不编造数据
+     * 新增投递=投递时间在区间内；待处理=区间内投递且仍为待查看；面试安排=面试时间在区间内
+     *
+     * @param companyId 企业ID
+     * @param days      区间天数（7/30/90，0或不传=全部）
+     */
+    @GetMapping("/hr/range-stats")
+    public Result<Map<String, Object>> getHrRangeStats(@RequestParam Long companyId,
+            @RequestParam(required = false, defaultValue = "0") Integer days) {
+        List<Job> jobs = jobService.lambdaQuery()
+                .eq(Job::getCompanyId, companyId)
+                .list();
+        List<Long> jobIds = jobs.stream().map(Job::getId).collect(Collectors.toList());
+        Map<String, Object> data = new HashMap<>();
+        data.put("days", days);
+        if (jobIds.isEmpty()) {
+            data.put("newDeliveries", 0);
+            data.put("pendingCount", 0);
+            data.put("interviewCount", 0);
+            return Result.success(data);
+        }
+
+        LocalDateTime start = days > 0 ? LocalDate.now().minusDays(days).atStartOfDay() : null;
+        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery> qw =
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                        .in("job_id", jobIds);
+        if (start != null) {
+            qw.apply("create_time >= {0}", start);
+        }
+        data.put("newDeliveries", deliveryService.count(qw));
+
+        // 区间内投递且仍待查看（status=0）
+        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery> qwPending =
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                        .in("job_id", jobIds)
+                        .eq("status", 0);
+        if (start != null) {
+            qwPending.apply("create_time >= {0}", start);
+        }
+        data.put("pendingCount", deliveryService.count(qwPending));
+
+        // 区间内安排的面试（面试时间落在区间，days=0 时不设上界）
+        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery> qwInterview =
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                        .in("job_id", jobIds)
+                        .ge("interview_time", start != null ? start : LocalDate.of(2000, 1, 1).atStartOfDay());
+        if (start != null) {
+            qwInterview.le("interview_time", LocalDateTime.now());
+        }
+        data.put("interviewCount", deliveryService.count(qwInterview));
+
+        return Result.success(data);
+    }
+
+    /**
+     * 教师重点关注学生：从真实数据中筛出需要干预的学生
+     * 标签口径：未建简历 / 简历待完善（6项分组填充不足4项）/ 从未投递 / 超过两周未投递
+     */
+    @GetMapping("/teacher/attention-students")
+    public Result<List<Map<String, Object>>> getAttentionStudents() {
+        requireTeacher();
+        Long teacherId = getCurrentUserId();
+        List<Class> myClasses = classService != null ? classService.selectByTeacherId(teacherId) : new ArrayList<>();
+        if (myClasses == null || myClasses.isEmpty()) {
+            return Result.success(new ArrayList<>());
+        }
+
+        // 班级名映射 + 全部学生ID
+        Map<Long, String> classNames = new HashMap<>();
+        List<Long> allStudentIds = new ArrayList<>();
+        for (Class cls : myClasses) {
+            List<Long> ids = classService.getStudentIdsByClassId(cls.getId());
+            if (ids == null) continue;
+            for (Long sid : ids) {
+                if (!classNames.containsKey(sid)) {
+                    classNames.put(sid, cls.getName());
+                    allStudentIds.add(sid);
+                }
+            }
+        }
+        if (allStudentIds.isEmpty()) {
+            return Result.success(new ArrayList<>());
+        }
+
+        // 学生姓名
+        Map<Long, SysUser> userMap = userService.listByIds(allStudentIds).stream()
+                .collect(Collectors.toMap(SysUser::getId, u -> u));
+
+        // 简历（一次批量）
+        List<com.recruit.entity.Resume> resumes = resumeService.lambdaQuery()
+                .in(com.recruit.entity.Resume::getStudentId, allStudentIds)
+                .list();
+        Map<Long, com.recruit.entity.Resume> resumeMap = new HashMap<>();
+        for (com.recruit.entity.Resume r : resumes) {
+            resumeMap.put(r.getStudentId(), r);
+        }
+
+        // 投递：按学生聚合 数量 + 最近投递时间
+        List<Map<String, Object>> deliveryRows = deliveryService.getBaseMapper().selectMaps(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                        .select("student_id, COUNT(*) AS cnt, MAX(create_time) AS last_time")
+                        .in("student_id", allStudentIds)
+                        .groupBy("student_id"));
+        Map<Long, Long> deliveryCnt = new HashMap<>();
+        Map<Long, LocalDateTime> lastDelivery = new HashMap<>();
+        for (Map<String, Object> row : deliveryRows) {
+            if (row.get("student_id") == null) continue;
+            Long sid = Long.valueOf(row.get("student_id").toString());
+            deliveryCnt.put(sid, row.get("cnt") != null ? Long.valueOf(row.get("cnt").toString()) : 0L);
+            if (row.get("last_time") != null) {
+                try {
+                    lastDelivery.put(sid, LocalDateTime.parse(row.get("last_time").toString().replace(" ", "T")));
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // 逐个学生判定关注标签
+        LocalDateTime twoWeeksAgo = LocalDateTime.now().minusDays(14);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Long sid : allStudentIds) {
+            List<String> tags = new ArrayList<>();
+            com.recruit.entity.Resume r = resumeMap.get(sid);
+            int filled = 0;
+            if (r == null) {
+                tags.add("未建简历");
+            } else {
+                if (notBlank(r.getEducation())) filled++;
+                if (notBlank(r.getInternship())) filled++;
+                if (notBlank(r.getProject())) filled++;
+                if (notBlank(r.getSkills())) filled++;
+                if (notBlank(r.getSelfEvaluation())) filled++;
+                if (notBlank(r.getJobTarget())) filled++;
+                if (filled < 4) tags.add("简历待完善");
+            }
+            long cnt = deliveryCnt.getOrDefault(sid, 0L);
+            if (cnt == 0) {
+                tags.add("从未投递");
+            } else {
+                LocalDateTime last = lastDelivery.get(sid);
+                if (last != null && last.isBefore(twoWeeksAgo)) {
+                    tags.add("超过两周未投递");
+                }
+            }
+            if (tags.isEmpty()) continue;
+
+            SysUser u = userMap.get(sid);
+            Map<String, Object> item = new HashMap<>();
+            item.put("studentId", sid);
+            item.put("studentName", u != null && u.getRealName() != null ? u.getRealName() : "学生" + sid);
+            item.put("className", classNames.getOrDefault(sid, ""));
+            item.put("deliveryCount", cnt);
+            item.put("tags", tags);
+            result.add(item);
+        }
+        // 标签多的排前面（更需要关注）
+        result.sort((a, b) -> ((List<?>) b.get("tags")).size() - ((List<?>) a.get("tags")).size());
+        return Result.success(result);
+    }
+
+    private boolean notBlank(String s) {
+        return s != null && !s.trim().isEmpty() && !s.trim().equals("[]");
     }
 
     private int getStatusValue(String name) {

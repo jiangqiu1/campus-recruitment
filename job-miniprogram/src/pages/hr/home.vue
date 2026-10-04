@@ -173,17 +173,9 @@ const loadAllData = async () => {
 }
 
 const fetchAllDeliveries = async (companyId) => {
-	const jobsRes = await hrAPI.getHrJobs(companyId)
-	const jobs = jobsRes.data || []
-	const all = []
-	for (const job of jobs) {
-		try {
-			const dRes = await hrAPI.getCompanyDeliveries(job.id)
-			const list = (dRes.data || []).map(item => ({ ...item, jobTitle: job.title }))
-			all.push(...list)
-		} catch (e) { console.error('获取投递列表失败', e) }
-	}
-	return all
+	// 单次企业投递聚合接口（后端已富化 jobTitle/studentName），替代 N+1 循环
+	const res = await hrAPI.getDeliveriesByCompany(companyId)
+	return res.data || []
 }
 
 const goToDeliveries = (filter) => {

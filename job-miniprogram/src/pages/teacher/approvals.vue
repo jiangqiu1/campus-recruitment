@@ -33,6 +33,10 @@
 					<text><uni-icons type="calendar" size="12" color="#C9CDD4" /> {{ item.applyTime || '—' }}</text>
 					<text><uni-icons type="info" size="12" color="#C9CDD4" /> 申请 #{{ item.id }}</text>
 				</view>
+				<view v-if="item.status === 2 && item.rejectReason" class="reject-reason-row">
+						<text class="reject-reason-label">拒绝原因</text>
+						<text class="reject-reason-text">{{ item.rejectReason }}</text>
+					</view>
 				<view v-if="item.changeContent" class="change-content">
 					<text class="change-label">变更内容</text>
 					<view class="change-rows">
@@ -274,6 +278,14 @@ const loadMore = () => {}
 .status-tag { font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 8px; white-space: nowrap; margin-left: 8px; }
 .status-tag.pending { background: $uni-color-warning-light; color: $uni-color-warning; }
 .status-tag.approved { background: $uni-color-success-light; color: $uni-color-success; }
+.reject-reason-row {
+	background: $uni-color-error-light;
+	border-radius: 8px;
+	padding: 8px 12px;
+	margin-top: 8px;
+}
+.reject-reason-label { font-size: 12px; color: $uni-color-error; font-weight: 600; display: block; margin-bottom: 2px; }
+.reject-reason-text { font-size: 13px; color: $uni-text-color; line-height: 1.5; }
 .status-tag.rejected { background: $uni-color-error-light; color: $uni-color-error; }
 
 .card-meta { flex-direction: row; flex-wrap: wrap; gap: 12px 16px; margin-bottom: 12px; font-size: 12px; color: $uni-text-color-secondary; }

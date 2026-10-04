@@ -60,6 +60,26 @@
 				</view>
 			</view>
 
+			<!-- 重点关注学生（真实数据筛出需要干预的学生） -->
+			<view class="attention-card" v-if="attentionStudents.length">
+				<view class="attention-header">
+					<text class="attention-title">重点关注学生</text>
+					<text class="attention-more" @click="goToStudents">全部学生 ›</text>
+				</view>
+				<view v-for="(s, i) in attentionStudents" :key="s.studentId" class="attention-item" @click="goToStudentResume(s)">
+					<view class="attention-avatar">
+						<text>{{ (s.studentName || '学').charAt(0) }}</text>
+					</view>
+					<view class="attention-info">
+						<text class="attention-name">{{ s.studentName }}</text>
+						<text class="attention-class">{{ s.className || '' }}</text>
+					</view>
+					<view class="attention-tags">
+						<text v-for="(t, ti) in s.tags" :key="ti" class="attention-tag" :class="{ 'attention-tag--red': t === '未建简历' }">{{ t }}</text>
+					</view>
+				</view>
+			</view>
+
 			<!-- 近期动态 -->
 			<view class="list-section">
 				<view class="list-tabs">
@@ -100,6 +120,7 @@ checkRole(1)
 
 const userInfo = ref({})
 const dashboard = ref({})
+const attentionStudents = ref([])
 const activities = ref([])
 const refreshing = ref(false)
 const statusBarHeight = ref(0)
@@ -119,6 +140,7 @@ onMounted(() => {
 		if (stored) userInfo.value = JSON.parse(stored)
 	} catch (e) { console.error('获取用户信息失败', e) }
 	loadDashboard()
+	loadAttention()
 })
 
 const onRefresh = async () => {
@@ -139,6 +161,15 @@ const loadDashboard = async () => {
 	}
 }
 
+const loadAttention = async () => {
+	try {
+		const res = await teacherAPI.getAttentionStudents()
+		attentionStudents.value = (res.data || []).slice(0, 5)
+	} catch (e) { console.error('加载重点关注失败', e) }
+}
+
+const goToStudents = () => uni.navigateTo({ url: '/pages/teacher/students' })
+const goToStudentResume = (s) => uni.navigateTo({ url: '/pages/teacher/student-resume?studentId=' + s.studentId })
 const goToDeliveries = () => uni.navigateTo({ url: '/pages/teacher/deliveries?filter=today' })
 const goToApprovals = () => uni.navigateTo({ url: '/pages/teacher/approvals?tab=0' })
 const goToResumes = () => uni.navigateTo({ url: '/pages/teacher/resumes?filter=unread' })
@@ -278,6 +309,54 @@ const goToActivityDetail = (act) => {
 	font-weight: 500;
 }
 .todo-card:active { transform: scale(0.97); }
+
+/* ========== 重点关注学生 ========== */
+.attention-card {
+	background: white;
+	border-radius: 12px;
+	margin: 12px 16px 0;
+	padding: 4px 16px;
+	border: 1px solid $uni-border-color-divider;
+}
+.attention-header {
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12px 0 4px;
+}
+.attention-title { font-size: 15px; font-weight: 600; color: $uni-text-color-title; }
+.attention-more { font-size: 12px; color: $uni-color-primary; }
+.attention-item {
+	flex-direction: row;
+	align-items: center;
+	gap: 12px;
+	padding: 12px 0;
+	border-bottom: 0.5px solid $uni-border-color-divider;
+}
+.attention-item:last-child { border-bottom: none; }
+.attention-item:active { background: $uni-bg-color-page; }
+.attention-avatar {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background: $uni-color-warning-light;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+.attention-avatar text { font-size: 16px; font-weight: 600; color: $uni-color-warning; }
+.attention-info { flex: 1; gap: 2px; }
+.attention-name { font-size: 14px; font-weight: 600; color: $uni-text-color-title; }
+.attention-class { font-size: 12px; color: $uni-text-color-secondary; }
+.attention-tags { flex-direction: row; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+.attention-tag {
+	font-size: 11px;
+	color: $uni-color-warning;
+	background: $uni-color-warning-light;
+	padding: 2px 8px;
+	border-radius: 4px;
+}
+.attention-tag--red { color: $uni-color-error; background: $uni-color-error-light; }
 
 /* ========== 近期动态列表 ========== */
 .list-section {

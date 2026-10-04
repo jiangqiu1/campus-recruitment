@@ -196,6 +196,7 @@ export const classAPI = {
 /* ======================== 教师端模块 ======================== */
 export const teacherAPI = {
   getDashboard: () => request({ url: '/statistics/teacher/dashboard' }),
+  getAttentionStudents: () => request({ url: '/statistics/teacher/attention-students' }),
   getDeliveryTrend: (userId) => request({ url: '/statistics/delivery-trend', data: { userId } }),
   getClasses: () => request({ url: '/classes' }),
   createClass: (data) => request({ url: '/classes', method: 'POST', data }),
@@ -216,7 +217,7 @@ export const teacherAPI = {
   getAllDeliveries: (jobId) => request({ url: '/deliveries/by-job/' + jobId }),
   getApprovals: (status) => request({ url: '/job-changes', data: { status } }),
   approveJobChange: (id) => request({ url: '/job-changes/' + id + '/approve', method: 'PUT' }),
-  rejectJobChange: (id) => request({ url: '/job-changes/' + id + '/reject', method: 'PUT' }),
+  rejectJobChange: (id, reason) => request({ url: '/job-changes/' + id + '/reject', method: 'PUT', data: { reason } }),
 }
 
 /* ======================== 企业端（HR）模块 ======================== */
@@ -237,6 +238,7 @@ export const hrAPI = {
   updateCompany: (id, data) => request({ url: '/companies/' + id, method: 'PUT', data }),
   getCompanyName: (companyId) => request({ url: '/companies/' + companyId }),
   getJobStats: (jobId) => request({ url: '/jobs/' + jobId + '/statistics' }),
+  getRangeStats: (companyId, days) => request({ url: '/statistics/hr/range-stats', data: { companyId, days } }),
 }
 
 /* ======================== AI人岗匹配模块 ======================== */
