@@ -54,6 +54,7 @@
 						<uni-icons type="arrowright" size="16" color="#C9CDD4" />
 					</view>
 				</view>
+				<LoadingState type="skeleton" :rows="5" v-if="loading" />
 				<EmptyState v-if="!loading && !filteredStudents.length" icon="file" title="暂无简历" desc="请添加学生或检查筛选条件" />
 			</view>
 		</scroll-view>
@@ -66,6 +67,7 @@ import { onShow } from '@/utils/page-lifecycle'
 import { teacherAPI } from '@/utils/request'
 import NavBar from '@/components/NavBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import LoadingState from '@/components/LoadingState.vue'
 import { checkRole } from '@/utils/auth'
 
 checkRole(1)

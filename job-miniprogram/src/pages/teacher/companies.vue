@@ -12,7 +12,8 @@
 		</view>
 
 		<scroll-view class="content-scrollable" scroll-y>
-			<view class="company-list">
+			<LoadingState type="skeleton" :rows="5" v-if="loading" />
+			<view class="company-list" v-else>
 				<view v-for="(c, i) in filteredCompanies" :key="i" class="company-card" @click="goToCompany(c.id)">
 					<view class="company-top">
 						<view class="company-logo">
@@ -44,6 +45,7 @@ import { onShow } from '@/utils/page-lifecycle'
 import { teacherAPI } from '@/utils/request'
 import NavBar from '@/components/NavBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import LoadingState from '@/components/LoadingState.vue'
 import { checkRole } from '@/utils/auth'
 
 checkRole(1)
@@ -59,12 +61,17 @@ const filteredCompanies = computed(() => {
 
 const clearKeyword = () => { keyword.value = '' }
 
+const loading = ref(true)
+
 const loadCompanies = async () => {
+	loading.value = true
 	try {
 		const res = await teacherAPI.getCompanies()
 		companies.value = res.data || []
+		loading.value = false
 	} catch (e) {
 		console.error('加载企业列表失败', e)
+		loading.value = false
 		uni.showToast({ title: '加载失败', icon: 'none' })
 	}
 }

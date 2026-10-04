@@ -62,7 +62,7 @@
 				</button>
 			</view>
 
-			<view v-if="dataLoading" class="loading-hint"><text>正在加载匹配数据...</text></view>
+			<LoadingState type="skeleton" :rows="4" v-if="dataLoading" />
 			<view v-if="stats && matchMode === 'job'" class="stats-row">
 				<view class="stat-card">
 					<text class="stat-num">{{ formatScore(stats.avgScore) }}</text>
@@ -119,6 +119,7 @@ import { checkRole } from '@/utils/auth'
 import { matchAPI, teacherAPI, jobAPI, request } from '@/utils/request'
 import NavBar from '@/components/NavBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import LoadingState from '@/components/LoadingState.vue'
 
 checkRole(1)
 

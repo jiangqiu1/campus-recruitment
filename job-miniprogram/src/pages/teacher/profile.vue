@@ -22,6 +22,8 @@
 			</view>
 
 			<!-- 功能快捷入口：对齐登录页卡片质感 -->
+			<LoadingState type="skeleton" :rows="4" v-if="loading" />
+			<template v-else>
 				<view class="func-grid">
 					<view class="func-item" @click="gotoFunc('/pages/teacher/deliveries')">
 						<view class="func-icon func-icon--blue">
@@ -124,6 +126,7 @@
 			</view>
 
 			<view class="bottom-placeholder" />
+			</template>
 		</scroll-view>
 
 		<!-- 通用 TabBar -->
@@ -136,6 +139,7 @@ import { ref, computed, onMounted } from 'vue'
 import { onShow } from '@/utils/page-lifecycle'
 import { teacherAPI } from '@/utils/request'
 import TabBar from '@/components/TabBar.vue'
+import LoadingState from '@/components/LoadingState.vue'
 import { checkRole } from '@/utils/auth'
 
 checkRole(1)
@@ -147,6 +151,7 @@ const teacherTabs = [
 	{ page: 'profile', icon: 'person', activeIcon: 'person-filled', label: '我的' }
 ]
 
+const loading = ref(true)
 const userInfo = ref({})
 const dashboard = ref({})
 const refreshing = ref(false)
@@ -155,7 +160,7 @@ const isHeaderShrink = ref(false)
 
 const avatarText = computed(() => (userInfo.value.realName || '教').charAt(0))
 
-onMounted(() => {
+onMounted(async () => {
 	try {
 		const winInfo = uni.getWindowInfo()
 		statusBarHeight.value = winInfo.statusBarHeight || 0
@@ -166,7 +171,8 @@ onMounted(() => {
 		} catch (e2) { console.error('获取状态栏高度失败', e2) }
 	}
 	loadUserInfo()
-	loadDashboard()
+	await loadDashboard()
+	loading.value = false
 })
 
 // 编辑资料返回后刷新数据

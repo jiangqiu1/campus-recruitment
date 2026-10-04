@@ -5,7 +5,7 @@
 			<!-- 解析面板 -->
 			<view v-if="!showHistory" class="parse-panel">
 				<view class="panel-header">
-					<uni-icons type="file" size="28" color="#165DFF" />
+					<uni-icons type="file" size="28" color="#0EA5E9" />
 					<text class="panel-title">AI 简历解析</text>
 				</view>
 				<text class="panel-desc">粘贴学生简历原始文本，AI自动提取关键信息</text>
@@ -40,7 +40,7 @@
 			<!-- 解析历史 -->
 			<view v-else class="history-panel">
 				<view class="panel-header">
-					<uni-icons type="list" size="28" color="#165DFF" />
+					<uni-icons type="list" size="28" color="#0EA5E9" />
 					<text class="panel-title">解析历史</text>
 				</view>
 
