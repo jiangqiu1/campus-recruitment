@@ -9,7 +9,12 @@
 				</view>
 				<view class="form-item">
 					<text class="form-label">学校</text>
-					<input v-model="form.school" class="form-input" placeholder="请输入学校名称" maxlength="50" />
+					<picker class="form-picker" mode="selector" :range="schoolNames" :value="schoolIndex" @change="onSchoolChange">
+						<view class="picker-value" :class="{ 'picker-value--empty': !form.school }">
+							<text>{{ form.school || '请选择学校' }}</text>
+							<uni-icons type="arrowright" size="14" color="#C9CDD4" />
+						</view>
+					</picker>
 				</view>
 				<view class="form-item">
 					<text class="form-label">专业</text>
@@ -43,8 +48,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { authAPI } from '@/utils/request'
+import { ref, computed, onMounted } from 'vue'
+import { authAPI, dictAPI } from '@/utils/request'
 import NavBar from '@/components/NavBar.vue'
 
 const saving = ref(false)
@@ -56,6 +61,18 @@ const form = ref({
 	email: '',
 	gender: 0
 })
+
+// 学校字典（统一学校名称，避免自由文本脏数据）
+const schools = ref([])
+const schoolNames = computed(() => schools.value.map(s => s.name))
+const schoolIndex = computed(() => {
+	const idx = schools.value.findIndex(s => s.name === form.value.school)
+	return idx >= 0 ? idx : 0
+})
+const onSchoolChange = (e) => {
+	const item = schools.value[Number(e.detail.value)]
+	if (item) form.value.school = item.name
+}
 
 onMounted(async () => {
 	// 优先从 API 获取最新用户信息（手机号/邮箱等仅在服务端有完整数据）
@@ -91,6 +108,12 @@ onMounted(async () => {
 			form.value.email = ui.email || ''
 			form.value.gender = ui.gender != null ? ui.gender : 0
 		}
+		} catch (e) {}
+
+	// 学校字典（加载失败不阻塞表单，picker 显示空列表时仍可保存原值）
+	try {
+		const dictRes = await dictAPI.getSchools()
+		schools.value = dictRes.data || []
 	} catch (e) {}
 })
 
@@ -144,6 +167,17 @@ const handleSave = async () => {
 	padding: 16px;
 	border-bottom: 0.5px solid $uni-border-color-divider;
 	min-height: 52px;
+}
+.form-picker { flex: 1; }
+.picker-value {
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	font-size: 15px;
+	color: $uni-text-color-title;
+}
+.picker-value--empty text {
+	color: $uni-text-color-placeholder;
 }
 .form-label {
 	width: 60px;

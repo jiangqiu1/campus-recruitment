@@ -193,6 +193,11 @@ export const classAPI = {
   getMyClass: () => request({ url: '/classes/student/my-class' })
 }
 
+/* ======================== 数据字典模块 ======================== */
+export const dictAPI = {
+  getSchools: (keyword) => request({ url: '/dict/schools', data: { keyword } })
+}
+
 /* ======================== 教师端模块 ======================== */
 export const teacherAPI = {
   getDashboard: () => request({ url: '/statistics/teacher/dashboard' }),
