@@ -32,6 +32,11 @@ public class AiParseLog {
     private String provider;
 
     /**
+     * 模型版本（如 deepseek-chat/glm-4.5-flash）
+     */
+    private String model;
+
+    /**
      * AI任务名: scoreResume/matchJob/parseResume/parseJob/analyzeResume/genQuestions/evalAnswer
      */
     private String taskName;

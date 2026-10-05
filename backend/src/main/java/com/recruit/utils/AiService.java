@@ -289,7 +289,7 @@ public class AiService {
                         content = (String) message.get("content");
                         Map<String, Object> parsed = parseJsonResponse(content, taskName);
                         if (parsed != null) {
-                            logAiCall(taskName, name, System.currentTimeMillis() - start, false, prompt, content);
+                            logAiCall(taskName, name, provider.getModel(), System.currentTimeMillis() - start, false, prompt, content);
                             return parsed;
                         }
                         if (attempt == 1) {
@@ -307,7 +307,8 @@ public class AiService {
         }
 
         Map<String, Object> mock = fallbackMock(taskName);
-        logAiCall(taskName, name, System.currentTimeMillis() - start, true, prompt, content == null ? "" : content);
+        logAiCall(taskName, name, provider != null ? provider.getModel() : null,
+                System.currentTimeMillis() - start, true, prompt, content == null ? "" : content);
         return mock;
     }
 
@@ -435,10 +436,16 @@ public class AiService {
      */
     private void logAiCall(String taskName, String providerName, long latencyMs, boolean mock,
                            String prompt, String resultContent) {
+        logAiCall(taskName, providerName, null, latencyMs, mock, prompt, resultContent);
+    }
+
+    private void logAiCall(String taskName, String providerName, String modelName, long latencyMs, boolean mock,
+                           String prompt, String resultContent) {
         try {
             AiParseLog entry = new AiParseLog();
             entry.setTaskName(taskName);
             entry.setProvider(providerName);
+            entry.setModel(modelName);
             entry.setLatencyMs((int) latencyMs);
             entry.setMockFlag(mock ? 1 : 0);
             entry.setUserId(currentUserIdOrNull());

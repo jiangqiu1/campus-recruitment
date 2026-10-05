@@ -12,9 +12,10 @@
         <span class="compare-sub">每次 AI 调用自动记录提供方与耗时，智谱 GLM 接入后自动纳入对比</span>
       </div>
       <el-table v-if="modelStats.providers.length" :data="modelStats.providers" stripe>
-        <el-table-column label="AI 提供方" width="160">
+        <el-table-column label="AI 提供方 / 模型版本" width="200">
           <template #default="{ row }">
             <el-tag size="small" :type="row.provider === 'glm' ? 'success' : row.provider === 'deepseek' ? 'primary' : 'info'">{{ providerLabel(row.provider) }}</el-tag>
+            <div style="font-size:12px;color:#86909C;margin-top:2px;">{{ row.model || '版本未记录' }}</div>
           </template>
         </el-table-column>
         <el-table-column label="调用次数" width="110" align="center">
@@ -51,7 +52,7 @@
         <h3>简历评分</h3>
         <div class="num">{{ stats.scoreCount }}</div>
       </div>
-      <div class="stat-card" style="border-left-color:#8B5CF6">
+      <div class="stat-card" style="border-left-color:#0EA5E9">
         <h3>操作总数</h3>
         <div class="num">{{ stats.parseCount + stats.matchCount + stats.scoreCount }}</div>
       </div>
@@ -271,9 +272,9 @@ const renderCharts = () => {
       yAxis: { type: 'value', minInterval: 1, axisLabel: { fontSize: 12, color: '#86909C' } },
       series: [{
         type: 'line', data: dayData,
-        smooth: true, lineStyle: { color: '#8B5CF6', width: 3 },
-        areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(139,92,246,0.3)'},{offset:1,color:'rgba(139,92,246,0.02)'}]) },
-        itemStyle: { color: '#8B5CF6' }
+        smooth: true, lineStyle: { color: '#165DFF', width: 3 },
+        areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(22,93,255,0.3)'},{offset:1,color:'rgba(22,93,255,0.02)'}]) },
+        itemStyle: { color: '#165DFF' }
       }]
     })
   }
@@ -314,7 +315,7 @@ const renderCharts = () => {
         {
           name: '调用次数', type: 'bar', barWidth: 40,
           data: modelStats.value.providers.map(p => p.calls),
-          itemStyle: { color: '#8B5CF6', borderRadius: [4, 4, 0, 0] }
+          itemStyle: { color: '#0EA5E9', borderRadius: [4, 4, 0, 0] }
         },
         {
           name: '平均耗时(ms)', type: 'line', yAxisIndex: 1, smooth: true,
@@ -333,7 +334,7 @@ const renderCharts = () => {
 .compare-sub { font-size: 12px; color: #86909C; }
 .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; }
 .chart-box { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 6px 16px rgba(0,0,0,0.06); position: relative; overflow: hidden; }
-.chart-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg,#8B5CF6,#A78BFA,transparent); border-radius: 16px 16px 0 0; }
+.chart-box::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: linear-gradient(90deg,#165DFF,#60A5FA,transparent); border-radius: 16px 16px 0 0; }
 .table-sub-text { font-size: 12px; color: #C9CDD4; }
 .chart-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1D2129; }
 </style>

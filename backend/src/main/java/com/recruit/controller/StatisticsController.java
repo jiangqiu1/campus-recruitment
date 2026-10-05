@@ -618,12 +618,13 @@ public class StatisticsController extends BaseController {
         // CAST 绕开 MySQL 驱动把 TINYINT(1) 读成 Boolean 的问题
         List<Map<String, Object>> providerRows = aiParseLogService.getBaseMapper().selectMaps(
                 new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AiParseLog>()
-                        .select("provider, COUNT(*) AS calls, AVG(latency_ms) AS avgLatency, SUM(CAST(mock_flag AS SIGNED)) AS mockCount")
+                        .select("provider, MAX(model) AS model, COUNT(*) AS calls, AVG(latency_ms) AS avgLatency, SUM(CAST(mock_flag AS SIGNED)) AS mockCount")
                         .groupBy("provider"));
         List<Map<String, Object>> providers = new ArrayList<>();
         for (Map<String, Object> row : providerRows) {
             Map<String, Object> p = new HashMap<>();
             p.put("provider", row.get("provider") != null ? row.get("provider").toString() : "unknown");
+            p.put("model", row.get("model") != null ? row.get("model").toString() : null);
             p.put("calls", row.get("calls") != null ? Integer.parseInt(row.get("calls").toString()) : 0);
             p.put("avgLatency", row.get("avgLatency") != null ? (int) Math.round(Double.parseDouble(row.get("avgLatency").toString())) : 0);
             p.put("mockCount", row.get("mockCount") != null ? Integer.parseInt(row.get("mockCount").toString()) : 0);
