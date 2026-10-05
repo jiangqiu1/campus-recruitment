@@ -49,16 +49,17 @@ import NavBar from '@/components/NavBar.vue'
 .logo-placeholder {
 	width: 72px;
 	height: 72px;
-	border-radius: 999px;
-	background: $uni-color-primary-light;
+	border-radius: 16px;
+	background: $uni-gradient-primary;
 	align-items: center;
 	justify-content: center;
 	margin-bottom: 12px;
+	box-shadow: 0 4px 16px $uni-color-primary-light;
 }
 .logo-letter {
 	font-size: 30px;
 	font-weight: 700;
-	color: $uni-color-primary;
+	color: $uni-text-color-inverse;
 	line-height: 1;
 }
 .app-name {

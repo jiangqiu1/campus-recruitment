@@ -212,12 +212,12 @@ onMounted(async () => {
 	background: $uni-color-primary-light;
 }
 .coop-2 {
-	color: #8B5CF6;
-	background: rgba(114,46,209,0.08);
+	color: $uni-color-success;
+	background: $uni-color-success-light;
 }
 .coop-3 {
 	color: $uni-color-warning;
-	background: rgba(247,114,52,0.08);
+	background: $uni-color-warning-light;
 }
 
 /* ===== 加载失败占位兼容 ===== */

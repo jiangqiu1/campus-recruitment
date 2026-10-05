@@ -3,15 +3,17 @@
 		<NavBar title="搜索结果" show-back />
 		<!-- 顶部搜索栏 -->
 		<view class="search-bar">
-			<view class="search-input">
-				<uni-icons type="search" size="16" color="#86909C" />
-				<input 
-					v-model="keyword" 
-					placeholder="搜索岗位、公司名称" 
-					:focus="true" 
-					@confirm="handleSearch"
-					@input="handleInput"
-				/>
+				<view class="search-input" :class="{ 'search-input--focus': searchFocused }">
+					<uni-icons type="search" size="16" color="#86909C" />
+					<input
+						v-model="keyword"
+						placeholder="搜索岗位、公司名称"
+						:focus="true"
+						@confirm="handleSearch"
+						@input="handleInput"
+						@focus="searchFocused = true"
+						@blur="searchFocused = false"
+					/>
 				<text v-if="keyword" class="clear-btn" @click="clearKeyword">
 					<uni-icons type="clear" size="16" color="#C9CDD4" />
 				</text>
@@ -75,6 +77,7 @@ const keyword = ref('')
 const list = ref([])
 const loading = ref(false)
 const currentTab = ref('default')
+const searchFocused = ref(false)
 const deliveredIds = ref(new Set())
 
 const tabs = [
@@ -172,9 +175,14 @@ const handleDeliver = async (job) => {
 	align-items: center;
 	gap: 8px;
 	background: $uni-bg-color-page;
+	border: 1px solid transparent;
 	border-radius: 999px;
 	padding: 0 16px;
 	height: 36px;
+	transition: border-color 0.15s ease;
+}
+.search-input--focus {
+	border-color: $uni-color-primary;
 }
 .search-input input {
 	flex: 1;

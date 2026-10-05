@@ -29,7 +29,7 @@
 						</view>
 					</view>
 				</view>
-				<EmptyState v-if="!favorites.length" icon="star" title="暂无收藏" desc="浏览岗位时点击收藏按钮即可添加" />
+				<EmptyState v-if="!favorites.length" icon="star" title="暂无收藏" desc="浏览岗位时点击收藏按钮即可添加" btn-text="去逛逛" @action="goBrowseHotJobs" />
 			</view>
 		</scroll-view>
 	</view>
@@ -47,6 +47,8 @@ const deliveredJobIds = ref(new Set())
 const editing = ref(false)
 const selectedIds = ref(new Set())
 const currentSort = ref('time')
+
+const goBrowseHotJobs = () => uni.navigateTo({ url: '/pages/student/hot-jobs' })
 
 const sorts = [
 	{ label: '按时间', value: 'time' },

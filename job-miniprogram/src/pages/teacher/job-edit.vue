@@ -5,7 +5,7 @@
 			<view class="form-container">
 				<view class="form-section">
 					<view class="input-group">
-						<text class="input-label">岗位名称 <text style="color:#F53F3F;">*</text></text>
+						<text class="input-label">岗位名称 <text class="required-mark">*</text></text>
 						<input class="input-field" v-model="form.title" placeholder="请输入岗位名称" />
 					</view>
 					<view class="input-group">
@@ -16,7 +16,7 @@
 						</view>
 					</view>
 					<view class="input-group">
-						<text class="input-label">工作地点 <text style="color:#F53F3F;">*</text></text>
+						<text class="input-label">工作地点 <text class="required-mark">*</text></text>
 						<input class="input-field" v-model="form.location" placeholder="如：广州" />
 					</view>
 					<view class="row-inputs">
@@ -50,7 +50,7 @@
 						</view>
 					</view>
 					<view class="input-group">
-						<text class="input-label">岗位描述 <text style="color:#F53F3F;">*</text></text>
+						<text class="input-label">岗位描述 <text class="required-mark">*</text></text>
 						<textarea class="input-textarea" v-model="form.description" placeholder="在此输入完整的岗位描述，点击下方「AI 智能填写」可自动提取标题、薪资、地点等信息" />
 					</view>
 					<button class="ai-btn" :loading="aiParsing" @click="handleAiParseJob" :disabled="!form.description.trim()">
@@ -320,6 +320,7 @@ const handleAiParseJob = async () => {
 }
 .input-group { margin-bottom: 16px; }
 .input-label { font-size: 14px; font-weight: 600; color: $uni-text-color-title; margin-bottom: 8px; display: block; }
+.required-mark { color: $uni-color-error; }
 .input-field {
 	width: 100%;
 	height: 44px;

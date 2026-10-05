@@ -62,7 +62,7 @@
 					</view>
 				</view>
 				<text class="desc-text" v-if="company.description">{{ company.description }}</text>
-				<text class="desc-text" v-else style="color:#86909C;">企业暂未完善简介</text>
+				<text class="desc-text empty" v-else>企业暂未完善简介</text>
 			</view>
 
 			<!-- 3. 资质认证 -->
@@ -248,7 +248,7 @@ const goBack = () => uni.navigateBack()
 .coop-0 { background: $uni-border-color-divider; color: $uni-text-color-secondary; }
 .coop-1 { background: $uni-color-primary-light; color: $uni-color-primary; }
 .coop-2 { background: $uni-color-success-light; color: $uni-color-success; }
-.coop-3 { background: rgba(139, 92, 246, 0.1); color: #8B5CF6; }
+.coop-3 { background: $uni-color-warning-light; color: $uni-color-warning; }
 
 /* ===== 岗位卡片 ===== */
 .job-card {

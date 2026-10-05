@@ -33,10 +33,12 @@
 				</view>
 			</view>
 
+		</scroll-view>
+		<view class="footer-bar">
 			<button class="save-btn" :disabled="saving" @click="handleSave">
 				{{ saving ? '保存中...' : '保存' }}
 			</button>
-		</scroll-view>
+		</view>
 	</view>
 </template>
 
@@ -172,9 +174,23 @@ const handleSave = async () => {
 	background: $uni-color-primary-light;
 	border-color: $uni-color-primary;
 }
+.content-scrollable {
+	/* 给吸底保存按钮留出空间 */
+	padding-bottom: 90px;
+	box-sizing: border-box;
+}
+.footer-bar {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+	background: $uni-bg-color;
+	box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.04);
+}
 .save-btn {
-	width: calc(100% - 32px);
-	margin: 0 16px 20px;
+	width: 100%;
+	margin: 0;
 	height: 46px;
 	border-radius: 12px;
 	background: $uni-color-primary;

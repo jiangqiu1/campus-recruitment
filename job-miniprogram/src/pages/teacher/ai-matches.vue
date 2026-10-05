@@ -1,5 +1,5 @@
 <template>
-	<view class="page-wrapper" style="background:#F7F8FA;min-height:100vh;">
+	<view class="page-wrapper">
 		<NavBar title="AI 人岗匹配" show-back />
 		<scroll-view class="content-scrollable" scroll-y>
 			<!-- 模式切换 -->
@@ -18,7 +18,7 @@
 							<uni-icons type="arrowdown" size="12" color="#C9CDD4" />
 						</view>
 					</picker>
-					<text v-else style="flex:1;font-size:13px;color:#86909C;">加载中...</text>
+					<text v-else class="picker-loading">加载中...</text>
 				</view>
 				<view class="select-row">
 					<text class="select-label">筛选班级</text>
@@ -28,7 +28,7 @@
 							<uni-icons type="arrowdown" size="12" color="#C9CDD4" />
 						</view>
 					</picker>
-					<text v-else style="flex:1;font-size:13px;color:#86909C;">加载中...</text>
+					<text v-else class="picker-loading">加载中...</text>
 				</view>
 				<button class="batch-btn" :loading="batchLoading" @click="batchMatchByJob" :disabled="!selectedJob">
 					{{ batchLoading ? '匹配中...' : '批量匹配' }}
@@ -45,7 +45,7 @@
 							<uni-icons type="arrowdown" size="12" color="#C9CDD4" />
 						</view>
 					</picker>
-					<text v-else style="flex:1;font-size:13px;color:#86909C;">加载中...</text>
+					<text v-else class="picker-loading">加载中...</text>
 				</view>
 				<view class="select-row">
 					<text class="select-label">选择学生</text>
@@ -383,6 +383,7 @@ const scoreTx = (score) => {
 .job-select-bar { background: white; padding: 14px 16px; margin: 0 16px 12px; border-radius: 12px; gap: 10px; box-shadow: $uni-shadow-card; }
 .select-row { flex-direction: row; align-items: center; gap: 10px; }
 .select-label { font-size: 14px; font-weight: 600; color: $uni-text-color-title; white-space: nowrap; }
+.picker-loading { flex: 1; font-size: 13px; color: $uni-text-color-secondary; }
 .job-picker { flex: 1; }
 .job-picker-btn { flex-direction: row; align-items: center; justify-content: space-between; padding: 8px 12px; background: $uni-bg-color-page; border-radius: 8px; }
 .job-picker-btn text { font-size: 13px; color: $uni-text-color; }

@@ -46,6 +46,8 @@
 		<scroll-view class="content-scrollable" scroll-y refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
 			<view class="delivery-list">
 				<text class="section-title">投递明细</text>
+				<LoadingState v-if="loading" type="skeleton" :rows="4" />
+				<template v-else>
 				<view v-for="d in filteredDeliveries" :key="d.id" class="delivery-card" :class="{ 'is-pending': d.status === 'pending' }">
 					<view class="delivery-top">
 						<view class="delivery-avatar">
@@ -62,7 +64,8 @@
 						<text class="delivery-link" @click.stop="goToStudentResume(d)">查看简历 ›</text>
 					</view>
 				</view>
-				<EmptyState v-if="!loading && !filteredDeliveries.length" icon="inbox" title="暂无投递记录" />
+				<EmptyState v-if="!filteredDeliveries.length" icon="inbox" title="暂无投递记录" />
+				</template>
 			</view>
 			<view style="height: calc(60px + env(safe-area-inset-bottom))" />
 		</scroll-view>
@@ -87,6 +90,7 @@ import { checkRole } from '@/utils/auth'
 import { teacherAPI, mapDeliveryItem } from '@/utils/request'
 import NavBar from '@/components/NavBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import LoadingState from '@/components/LoadingState.vue'
 import PopupDrawer from '@/components/PopupDrawer.vue'
 
 checkRole(1)

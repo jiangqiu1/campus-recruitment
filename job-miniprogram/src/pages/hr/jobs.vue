@@ -351,8 +351,8 @@ const handleAiParse = async () => {
 	flex-direction: row;
 	align-items: center;
 	justify-content: space-between;
-	background: rgba(139,92,246,0.06);
-	border: 1px solid rgba(139,92,246,0.15);
+	background: $uni-color-ai-light;
+	border: 1px solid rgba($uni-color-ai, 0.18);
 	border-radius: 12px;
 	margin: 12px 16px;
 	padding: 12px 16px;
@@ -368,7 +368,7 @@ const handleAiParse = async () => {
 	width: 36px;
 	height: 36px;
 	border-radius: 12px;
-	background: rgba(139,92,246,0.12);
+	background: rgba($uni-color-ai, 0.12);
 	align-items: center;
 	justify-content: center;
 }

@@ -34,7 +34,7 @@
 				<text class="section-title">技能特长</text>
 				<view class="tag-container">
 					<text v-for="(s, i) in resumeData.skills" :key="i" class="skill-tag">{{ s }}</text>
-					<text v-if="!resumeData.skills || !resumeData.skills.length" style="color:#86909C;font-size:13px;">暂无技能</text>
+					<text v-if="!resumeData.skills || !resumeData.skills.length" class="section-empty">暂无技能</text>
 				</view>
 			</view>
 
@@ -48,7 +48,7 @@
 					</view>
 					<text class="exp-sub">{{ edu.major }} · {{ edu.degree }}</text>
 				</view>
-				<text v-if="!resumeData.education || !resumeData.education.length" style="color:#86909C;font-size:13px;">暂无教育经历</text>
+				<text v-if="!resumeData.education || !resumeData.education.length" class="section-empty">暂无教育经历</text>
 			</view>
 
 			<!-- 实习经历 -->
@@ -62,17 +62,17 @@
 					<text class="exp-sub">{{ job.position || job.jobTitle }}</text>
 					<text class="exp-desc" v-if="job.description">{{ job.description }}</text>
 				</view>
-				<text v-if="!resumeData.internship || !resumeData.internship.length" style="color:#86909C;font-size:13px;">暂无实习经历</text>
+				<text v-if="!resumeData.internship || !resumeData.internship.length" class="section-empty">暂无实习经历</text>
 			</view>
 
 			<!-- 求职意向 + 自我评价 -->
 			<view class="section-card">
 				<text class="section-title">求职意向</text>
-				<text style="font-size:14px;color:#1D2129;">{{ resumeData.jobTarget || '未设置' }}</text>
+				<text class="section-value-strong">{{ resumeData.jobTarget || '未设置' }}</text>
 			</view>
 			<view class="section-card" v-if="resumeData.selfEvaluation">
 				<text class="section-title">自我评价</text>
-				<text style="font-size:14px;color:#4E5969;line-height:1.7;">{{ resumeData.selfEvaluation }}</text>
+				<text class="section-value-block">{{ resumeData.selfEvaluation }}</text>
 			</view>
 
 			<!-- AI 简历分析 -->
@@ -108,14 +108,14 @@
 					<view class="ai-section" v-if="aiResult.recommendedSkills && aiResult.recommendedSkills.length">
 						<text class="ai-subtitle">推荐补充技能</text>
 						<view class="tag-container">
-							<text v-for="(sk, i) in aiResult.recommendedSkills" :key="i" class="skill-tag" style="background:rgba(14, 165, 233,0.1);color:#0EA5E9;">{{ sk }}</text>
+							<text v-for="(sk, i) in aiResult.recommendedSkills" :key="i" class="skill-tag skill-tag--ai">{{ sk }}</text>
 						</view>
 					</view>
 				</view>
 				<view v-else-if="aiAnalyzing" class="ai-loading">
 					<text>AI 正在分析简历...</text>
 				</view>
-				<text v-else style="color:#86909C;font-size:13px;">点击「分析简历」获取优化建议</text>
+				<text v-else class="section-empty">点击「分析简历」获取优化建议</text>
 			</view>
 
 			<!-- 投递记录 -->
@@ -131,7 +131,7 @@
 					</view>
 					<text class="delivery-time">{{ d.createTime }}</text>
 				</view>
-				<text v-if="!deliveries.length" style="color:#86909C;font-size:13px;display:block;padding:16px 0;">暂无投递记录</text>
+				<text v-if="!deliveries.length" class="section-empty section-empty--pad">暂无投递记录</text>
 			</view>
 
 			<view style="height: 80px"></view>
@@ -386,12 +386,17 @@ const handleAnalyze = async () => {
 	box-shadow: $uni-shadow-card;
 }
 .section-title { font-size: 15px; font-weight: 700; color: $uni-text-color-title; margin-bottom: 12px; display: block; }
+.section-empty { font-size: 13px; color: $uni-text-color-secondary; }
+.section-empty--pad { display: block; padding: 16px 0; }
+.section-value-strong { font-size: 14px; color: $uni-text-color-title; }
+.section-value-block { font-size: 14px; color: $uni-text-color; line-height: 1.7; display: block; }
 
 .tag-row { flex-direction: row; gap: 8px; }
 .tag-tag { padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; background: $uni-border-color-divider; color: $uni-text-color; }
 
 .tag-container { flex-direction: row; flex-wrap: wrap; gap: 8px; }
 .skill-tag { padding: 6px 14px; border-radius: 999px; font-size: 13px; font-weight: 500; background: $uni-color-primary-light; color: $uni-color-primary; }
+.skill-tag--ai { background: $uni-color-ai-light; color: $uni-color-ai; }
 
 .exp-item { padding: 12px 0; border-bottom: 0.5px solid $uni-border-color-divider; }
 .exp-item:last-child { border-bottom: none; }

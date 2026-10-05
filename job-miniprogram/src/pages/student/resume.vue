@@ -9,11 +9,11 @@
 					<view class="top-bar-right">
 						<text class="completeness-title">简历完整度 {{ completeness }}%</text>
 						<text class="resume-updated" v-if="resume && resume.updateTime">简历更新于 {{ formatTimeSemantic(resume.updateTime) }}</text>
-						<view class="ai-optimize" @click="goAIReview">
-							<uni-icons type="compose" size="14" color="#0EA5E9" />
-							<text class="optimize-text optimize-text--ai">{{ reviewing ? 'AI 诊断中...' : 'AI 诊断' }}</text>
-							<uni-icons v-if="!reviewing" type="arrowright" size="14" color="#0EA5E9" />
-						</view>
+							<view class="ai-optimize" @click="goAIReview">
+								<uni-icons type="compose" size="14" color="#0EA5E9" />
+								<text class="optimize-text optimize-text--ai" :class="{ 'optimize-text--loading': reviewing }">{{ reviewing ? 'AI 诊断中...' : 'AI 诊断' }}</text>
+								<uni-icons v-if="!reviewing" type="arrowright" size="14" color="#0EA5E9" />
+							</view>
 					</view>
 				</view>
 				<view class="resume-card">
@@ -54,7 +54,7 @@
 						<view v-for="(proj, i) in parsedProject" :key="i" class="exp-item">
 							<text class="exp-title">{{ proj.name }}</text>
 							<text class="exp-sub">{{ proj.role || '' }}{{ proj.duration ? ' · ' + proj.duration : '' }}</text>
-							<text v-if="proj.description" class="section-value" style="margin-top:6px;font-size:13px;color:#4E5969;line-height:1.6;">{{ proj.description }}</text>
+							<text v-if="proj.description" class="exp-desc">{{ proj.description }}</text>
 						</view>
 					</view>
 						<text v-else class="value-empty">未填写</text>
@@ -106,7 +106,7 @@
 							<view class="ai-section" v-if="aiAnalysisResult.recommendedSkills && aiAnalysisResult.recommendedSkills.length">
 								<text class="ai-subtitle">推荐补充技能</text>
 								<view class="tag-container">
-									<text v-for="(sk, i) in aiAnalysisResult.recommendedSkills" :key="i" class="skill-tag" style="background:rgba(14, 165, 233,0.1);color:#0EA5E9;">{{ sk }}</text>
+									<text v-for="(sk, i) in aiAnalysisResult.recommendedSkills" :key="i" class="skill-tag skill-tag--ai">{{ sk }}</text>
 								</view>
 							</view>
 						</template>
@@ -320,6 +320,13 @@ const formatTime = (time) => {
 .optimize-text--ai {
 	color: $uni-color-ai;
 }
+.optimize-text--loading {
+	animation: ai-pulse 1.2s ease-in-out infinite;
+}
+@keyframes ai-pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.45; }
+}
 .resume-card {
 	background: $uni-bg-color;
 	border-radius: 12px;
@@ -379,6 +386,7 @@ const formatTime = (time) => {
 .exp-item { gap: 2px; }
 .exp-title { font-size: 15px; font-weight: 500; color: $uni-text-color-title; }
 .exp-sub { font-size: 13px; color: $uni-text-color-secondary; }
+.exp-desc { font-size: 13px; color: $uni-text-color; line-height: 1.6; margin-top: 6px; display: block; }
 .skill-tags { flex-direction: row; flex-wrap: wrap; gap: 6px; }
 .skill-tag {
 	font-size: 13px;
@@ -386,6 +394,10 @@ const formatTime = (time) => {
 	background: $uni-color-primary-light;
 	padding: 4px 10px;
 	border-radius: 4px;
+}
+.skill-tag--ai {
+	color: $uni-color-ai;
+	background: $uni-color-ai-light;
 }
 .resume-footer { padding-top: 12px; }
 .update-time { font-size: 12px; color: $uni-text-color-placeholder; }
@@ -413,6 +425,11 @@ const formatTime = (time) => {
 	padding: 16px;
 	margin: 0 16px 12px;
 	box-shadow: $uni-shadow-card;
+	animation: fade-up 0.3s ease-out;
+}
+@keyframes fade-up {
+	from { opacity: 0; transform: translateY(8px); }
+	to { opacity: 1; transform: translateY(0); }
 }
 .section-title-row {
 	flex-direction: row;

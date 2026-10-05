@@ -4,7 +4,7 @@
 		<scroll-view class="scroll-area" scroll-y>
 			<!-- 导入PDF简历 -->
 			<view class="import-section" @click="handleImportPdf">
-				<uni-icons type="cloud-upload" size="22" color="#165DFF" />
+				<uni-icons type="cloud-upload" size="22" color="#0EA5E9" />
 				<view class="import-texts">
 					<text class="import-title">导入PDF简历</text>
 					<text class="import-desc">上传PDF自动解析，快速填写简历</text>
@@ -537,8 +537,8 @@ const handleSave = async () => {
 	flex-direction: row;
 	align-items: center;
 	gap: 12px;
-	background: $uni-color-primary-light;
-	border: 1px dashed $uni-color-primary-light;
+	background: $uni-color-ai-light;
+	border: 1px dashed rgba($uni-color-ai, 0.25);
 	border-radius: 12px;
 	padding: 14px 16px;
 	margin: 12px 16px;

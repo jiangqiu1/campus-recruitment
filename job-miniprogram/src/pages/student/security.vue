@@ -21,7 +21,7 @@
 					<text class="menu-value">{{ userInfo.email || '未绑定' }}</text>
 					<uni-icons type="arrowright" size="16" color="#C9CDD4" />
 				</view>
-				<view class="menu-item" style="border:none;" @click="handleDeleteAccount">
+				<view class="menu-item" @click="handleDeleteAccount">
 					<view class="menu-icon red"><uni-icons type="trash" size="20" color="#F53F3F" /></view>
 					<text class="menu-text">账号注销</text>
 					<uni-icons type="arrowright" size="16" color="#C9CDD4" />

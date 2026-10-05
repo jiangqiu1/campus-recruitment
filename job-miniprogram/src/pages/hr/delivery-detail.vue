@@ -427,8 +427,8 @@ const goBack = () => uni.navigateBack()
 
 /* ===== AI 评分 Signature ===== */
 .score-card {
-	background: linear-gradient(135deg, #EEF2FF 0%, #E0F2FE 100%);
-	border: 1px solid $uni-color-primary-light;
+	background: linear-gradient(135deg, $uni-color-ai-light 0%, rgba($uni-color-ai, 0.16) 100%);
+	border: 1px solid rgba($uni-color-ai, 0.2);
 }
 .score-hero {
 	flex-direction: row;
@@ -478,7 +478,7 @@ const goBack = () => uni.navigateBack()
 	flex-direction: row;
 	align-items: center;
 	gap: 12px;
-	background: rgba(14, 165, 233, 0.08);
+	background: $uni-color-ai-light;
 	border-radius: 10px;
 	padding: 12px 14px;
 	margin-top: 10px;
