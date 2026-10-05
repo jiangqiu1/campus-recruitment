@@ -7,13 +7,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 消息通知控制器 - 学生端
  */
 @RestController
 @RequestMapping("/messages")
-public class MessageController {
+public class MessageController extends BaseController {
 
     @Autowired
     private MessageService messageService;
@@ -24,6 +25,10 @@ public class MessageController {
     @GetMapping
     public Result<List<Message>> getMessages(@RequestParam(required = false) Long studentId,
                                               @RequestParam(required = false) Integer type) {
+        // 学生强制只读自己的消息，防传参越权
+        if (Objects.equals(getCurrentRole(), 0)) {
+            studentId = getCurrentUserId();
+        }
         if (studentId == null) {
             return Result.success(List.of());
         }
@@ -45,6 +50,9 @@ public class MessageController {
         if (msg == null) {
             return Result.error(404, "消息不存在");
         }
+        if (Objects.equals(getCurrentRole(), 0) && !Objects.equals(msg.getStudentId(), getCurrentUserId())) {
+            return Result.error(403, "无权操作他人消息");
+        }
         msg.setIsRead(1);
         messageService.updateById(msg);
         return Result.success("ok");
@@ -55,6 +63,9 @@ public class MessageController {
      */
     @GetMapping("/unread-count")
     public Result<Integer> getUnreadCount(@RequestParam Long studentId) {
+        if (Objects.equals(getCurrentRole(), 0)) {
+            studentId = getCurrentUserId();
+        }
         int count = messageService.lambdaQuery()
                 .eq(Message::getStudentId, studentId)
                 .eq(Message::getIsRead, 0)

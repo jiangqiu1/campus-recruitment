@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Map;
 
 /**
@@ -15,7 +16,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/favorites")
-public class FavoriteController {
+public class FavoriteController extends BaseController {
 
     @Autowired
     private FavoriteService favoriteService;
@@ -48,6 +49,10 @@ public class FavoriteController {
         if (studentId == null || jobId == null) {
             return Result.error("studentId和jobId不能为空");
         }
+        // 学生强制收藏到自己名下
+        if (Objects.equals(getCurrentRole(), 0)) {
+            studentId = getCurrentUserId();
+        }
         // 优先恢复逻辑删除的记录（绕过 MyBatis-Plus 的 deleted=0 过滤）
         int restored = favoriteMapper.restoreFavorite(studentId, jobId);
         if (restored > 0) {
@@ -74,6 +79,9 @@ public class FavoriteController {
     @DeleteMapping("/{jobId}")
     public Result<String> removeFavorite(@PathVariable Long jobId,
                                           @RequestParam(required = false) Long studentId) {
+        if (Objects.equals(getCurrentRole(), 0)) {
+            studentId = getCurrentUserId();
+        }
         if (studentId == null) {
             return Result.error("studentId不能为空");
         }

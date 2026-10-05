@@ -77,8 +77,8 @@ public class ResumeScoreLogServiceImpl extends ServiceImpl<ResumeScoreLogMapper,
     }
     
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public boolean scoreResume(Long jobId, Long deliveryId) {
+        // 注意：AI 远程调用（秒级耗时）不放入 DB 事务，避免长事务占用连接；落库单条 save 自带隐式事务
         // 查询岗位信息
         Job job = jobMapper.selectById(jobId);
         // 查询投递记录（获取学生ID）
@@ -149,8 +149,8 @@ public class ResumeScoreLogServiceImpl extends ServiceImpl<ResumeScoreLogMapper,
     }
     
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public int batchScoreResumes(Long jobId) {
+        // 逐条调用 scoreResume（各自短事务），避免整批包在一个长事务里循环调 AI
         // 查询该岗位的所有投递记录
         List<Delivery> deliveries = deliveryMapper.selectByJobId(jobId);
         int count = 0;

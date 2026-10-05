@@ -11,13 +11,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 企业子账号管理控制器
  */
 @RestController
 @RequestMapping("/companies/{companyId}/accounts")
-public class CompanyAccountController {
+public class CompanyAccountController extends BaseController {
 
     @Autowired
     private UserService userService;
@@ -36,6 +37,7 @@ public class CompanyAccountController {
      */
     @GetMapping
     public Result<List<SysUser>> listAccounts(@PathVariable Long companyId) {
+        checkCompanyMembership(companyId);
         Company company = companyService.getById(companyId);
         if (company == null) {
             return Result.error(404, "企业不存在");
@@ -64,6 +66,7 @@ public class CompanyAccountController {
      */
     @PostMapping
     public Result<String> createAccount(@PathVariable Long companyId, @RequestBody SysUser user) {
+        checkCompanyMembership(companyId);
         Company company = companyService.getById(companyId);
         if (company == null) {
             return Result.error(404, "企业不存在");
@@ -93,13 +96,14 @@ public class CompanyAccountController {
     public Result<String> updateAccount(@PathVariable Long companyId,
                                         @PathVariable Long userId,
                                         @RequestBody SysUser user) {
+        checkCompanyMembership(companyId);
         SysUser exist = userService.getById(userId);
         if (exist == null || !companyId.equals(exist.getCompanyId())) {
             return Result.error(404, "账号不存在");
         }
 
         if (user.getRealName() != null) exist.setRealName(user.getRealName());
-        if (user.getPhone() != null) exist.setPhone(user.getPhone());
+        if (user.getPhone() != null) exist.setPhone(user.getPhone() != null && !user.getPhone().isEmpty() ? aesUtil.encrypt(user.getPhone()) : user.getPhone());
         if (user.getPassword() != null && !user.getPassword().isEmpty()) {
             exist.setPassword(passwordEncoder.encode(user.getPassword()));
         }
@@ -115,11 +119,24 @@ public class CompanyAccountController {
     @DeleteMapping("/{userId}")
     public Result<String> deleteAccount(@PathVariable Long companyId,
                                         @PathVariable Long userId) {
+        checkCompanyMembership(companyId);
         SysUser exist = userService.getById(userId);
         if (exist == null || !companyId.equals(exist.getCompanyId())) {
             return Result.error(404, "账号不存在");
         }
         userService.removeById(userId);
         return Result.success("删除成功");
+    }
+
+    /**
+     * 校验当前登录 HR 属于该企业（管理员放行）
+     */
+    private void checkCompanyMembership(Long companyId) {
+        Integer role = getCurrentRole();
+        if (Objects.equals(role, 3)) return;
+        SysUser current = userService.getById(getCurrentUserId());
+        if (current == null || !Objects.equals(current.getCompanyId(), companyId)) {
+            throw new com.recruit.exception.BusinessException(403, "无权管理其他企业的账号");
+        }
     }
 }

@@ -116,7 +116,19 @@ public class DeliveryServiceImpl extends ServiceImpl<DeliveryMapper, Delivery> i
         if (delivery == null) {
             throw new RuntimeException("投递记录不存在");
         }
-        
+
+        // 状态机：0待查看 1已查看 2面试 3录用 4不合适；只允许单向推进，终态不可再变更
+        int cur = delivery.getStatus() == null ? 0 : delivery.getStatus();
+        if (status == null || status < 0 || status > 4) {
+            throw new RuntimeException("非法的投递状态");
+        }
+        if (cur == 3 || cur == 4) {
+            throw new RuntimeException("该投递已定档（已录用/不合适），不可再变更");
+        }
+        if (status <= cur) {
+            throw new RuntimeException("投递状态不可回退或重复设置");
+        }
+
         delivery.setStatus(status);
         
         if (feedback != null && !feedback.isEmpty()) {

@@ -17,7 +17,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/operation-logs")
-public class OperationLogController {
+public class OperationLogController extends BaseController {
 
     @Autowired
     private OperationLogService operationLogService;
@@ -29,6 +29,7 @@ public class OperationLogController {
      */
     @GetMapping
     public Result<List<OperationLog>> getAllLogs() {
+        requireAdmin();
         List<OperationLog> logs = operationLogService.list();
         return Result.success(logs);
     }
@@ -41,6 +42,7 @@ public class OperationLogController {
      */
     @GetMapping("/{id}")
     public Result<OperationLog> getLogById(@PathVariable Long id) {
+        requireAdmin();
         OperationLog log = operationLogService.getById(id);
         if (log == null) {
             return Result.error(404, "操作日志不存在");
@@ -56,6 +58,7 @@ public class OperationLogController {
      */
     @GetMapping("/by-user/{userId}")
     public Result<List<OperationLog>> getLogsByUserId(@PathVariable Long userId) {
+        requireAdmin();
         List<OperationLog> logs = operationLogService.selectByUserId(userId);
         return Result.success(logs);
     }
@@ -68,6 +71,7 @@ public class OperationLogController {
      */
     @GetMapping("/by-operation-type/{operationType}")
     public Result<List<OperationLog>> getLogsByOperationType(@PathVariable String operationType) {
+        requireAdmin();
         List<OperationLog> logs = operationLogService.selectByOperationType(operationType);
         return Result.success(logs);
     }
@@ -110,6 +114,7 @@ public class OperationLogController {
      */
     @PostMapping
     public Result<String> logOperation(@RequestBody Map<String, Object> params) {
+        requireAdmin();
         Long userId = Long.valueOf(params.get("userId").toString());
         String operationType = params.get("operationType").toString();
         String targetId = params.get("targetId").toString();
@@ -131,6 +136,7 @@ public class OperationLogController {
      */
     @DeleteMapping("/{id}")
     public Result<String> deleteLog(@PathVariable Long id) {
+        requireAdmin();
         boolean success = operationLogService.removeById(id);
         if (!success) {
             return Result.error("删除失败");
@@ -147,6 +153,7 @@ public class OperationLogController {
      */
     @DeleteMapping("/cleanup")
     public Result<Map<String, Integer>> cleanupLogs(@RequestParam LocalDateTime beforeTime) {
+        requireAdmin();
         int count = operationLogService.cleanupLogsBeforeTime(beforeTime);
 
         Map<String, Integer> result = new java.util.HashMap<>();
@@ -163,6 +170,7 @@ public class OperationLogController {
      */
     @GetMapping("/statistics/count-by-user/{userId}")
     public Result<Map<String, Integer>> countByUserIdAndGroupByOperationType(@PathVariable Long userId) {
+        requireAdmin();
         Map<String, Integer> statistics = operationLogService.countByUserIdAndGroupByOperationType(userId);
         return Result.success(statistics);
     }
@@ -175,6 +183,7 @@ public class OperationLogController {
      */
     @GetMapping("/recent")
     public Result<List<OperationLog>> getRecentLogs(@RequestParam(defaultValue = "10") Integer limit) {
+        requireAdmin();
         List<OperationLog> logs = operationLogService.lambdaQuery()
                 .orderByDesc(OperationLog::getCreateTime)
                 .last("LIMIT " + limit)

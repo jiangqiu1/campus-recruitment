@@ -62,6 +62,10 @@ public class ResumeController extends BaseController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Long studentId) {
         LambdaQueryWrapper<Resume> wrapper = new LambdaQueryWrapper<>();
+        // 学生只允许查询自己的简历列表，防全库翻阅
+        if (Objects.equals(getCurrentRole(), 0)) {
+            studentId = getCurrentUserId();
+        }
         if (studentId != null) {
             wrapper.eq(Resume::getStudentId, studentId);
         }
@@ -99,6 +103,9 @@ public class ResumeController extends BaseController {
      */
     @GetMapping("/my/default")
     public Result<Resume> getMyDefaultResume(@RequestParam Long studentId) {
+        if (Objects.equals(getCurrentRole(), 0) && !Objects.equals(studentId, getCurrentUserId())) {
+            return Result.error(403, "无权查看他人简历");
+        }
         Resume resume = resumeService.selectDefaultByStudentId(studentId);
         if (resume == null) {
             return Result.error(404, "默认简历不存在");
@@ -118,6 +125,9 @@ public class ResumeController extends BaseController {
     public Result<String> createOrUpdateResume(
             @RequestParam Long studentId,
             @RequestBody Map<String, Object> body) {
+        if (Objects.equals(getCurrentRole(), 0) && !Objects.equals(studentId, getCurrentUserId())) {
+            return Result.error(403, "只能操作自己的简历");
+        }
 
         // 同步更新用户基本信息（姓名、性别、手机号、邮箱）
         Object name = body.get("name");
@@ -254,6 +264,9 @@ public class ResumeController extends BaseController {
             @RequestParam Long studentId,
             @PathVariable Long resumeId) {
         
+        if (Objects.equals(getCurrentRole(), 0) && !Objects.equals(studentId, getCurrentUserId())) {
+            return Result.error(403, "只能操作自己的简历");
+        }
         boolean success = resumeService.setDefaultResume(studentId, resumeId);
         if (!success) {
             return Result.error("设置默认简历失败");
@@ -299,7 +312,14 @@ public class ResumeController extends BaseController {
         if (resume == null) {
             return Result.error(404, "简历不存在");
         }
-        
+        Integer role = getCurrentRole();
+        if (Objects.equals(role, 0) && !Objects.equals(resume.getStudentId(), getCurrentUserId())) {
+            return Result.error(403, "只能删除自己的简历");
+        }
+        if (Objects.equals(role, 2)) {
+            return Result.error(403, "无权删除学生简历");
+        }
+
         resumeService.removeById(resume.getId());
         return Result.success("简历删除成功");
     }
@@ -312,6 +332,9 @@ public class ResumeController extends BaseController {
         Resume resume = resumeService.getById(id);
         if (resume == null) {
             return Result.error(404, "简历不存在");
+        }
+        if (Objects.equals(getCurrentRole(), 0) && !Objects.equals(resume.getStudentId(), getCurrentUserId())) {
+            return Result.error(403, "无权查看他人简历");
         }
         return Result.success(resume);
     }

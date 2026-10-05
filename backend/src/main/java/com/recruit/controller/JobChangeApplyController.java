@@ -57,6 +57,17 @@ public class JobChangeApplyController extends BaseController {
                     .list();
         }
 
+        // 批量组装：HR/岗位/企业各一次批查，替代循环内逐条查询
+        List<Long> hrIds = list.stream().map(JobChangeApply::getHrId).filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
+        Map<Long, SysUser> hrMap = hrIds.isEmpty() ? new HashMap<>() : userService.listByIds(hrIds).stream()
+                .collect(Collectors.toMap(SysUser::getId, u -> u));
+        List<Long> jobIds = list.stream().map(JobChangeApply::getJobId).filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
+        Map<Long, Job> jobMap = jobIds.isEmpty() ? new HashMap<>() : jobService.listByIds(jobIds).stream()
+                .collect(Collectors.toMap(Job::getId, j -> j));
+        List<Long> companyIds = jobMap.values().stream().map(Job::getCompanyId).filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
+        Map<Long, Company> companyMap = companyIds.isEmpty() ? new HashMap<>() : companyService.listByIds(companyIds).stream()
+                .collect(Collectors.toMap(Company::getId, c -> c));
+
         List<Map<String, Object>> result = new ArrayList<>();
         for (JobChangeApply apply : list) {
             Map<String, Object> item = new HashMap<>();
@@ -67,7 +78,7 @@ public class JobChangeApplyController extends BaseController {
             // 查询申请人姓名
             String applyUserName = "未知用户";
             if (apply.getHrId() != null) {
-                SysUser hrUser = userService.getById(apply.getHrId());
+                SysUser hrUser = hrMap.get(apply.getHrId());
                 if (hrUser != null) {
                     applyUserName = hrUser.getRealName() != null ? hrUser.getRealName() : hrUser.getUsername();
                 }
@@ -78,10 +89,10 @@ public class JobChangeApplyController extends BaseController {
 
             // 关联岗位和企业名称
             if (apply.getJobId() != null) {
-                Job job = jobService.getById(apply.getJobId());
+                Job job = jobMap.get(apply.getJobId());
                 if (job != null) {
                     item.put("jobTitle", job.getTitle());
-                    Company company = companyService.getById(job.getCompanyId());
+                    Company company = companyMap.get(job.getCompanyId());
                     item.put("companyName", company != null ? company.getName() : "未知企业");
                 } else {
                     item.put("jobTitle", "已删除岗位");
@@ -99,12 +110,14 @@ public class JobChangeApplyController extends BaseController {
      */
     @PostMapping
     public Result<String> submit(@RequestBody Map<String, Object> params) {
+        requireHr();
         Long jobId = params.get("jobId") != null ? Long.valueOf(params.get("jobId").toString()) : null;
-        Long hrId = params.get("hrId") != null ? Long.valueOf(params.get("hrId").toString()) : null;
+        // hrId 一律取当前登录人，防伪造他人名义提交
+        Long hrId = getCurrentUserId();
         String changeContent = params.get("changeContent") != null ? params.get("changeContent").toString() : "";
 
-        if (jobId == null || hrId == null) {
-            return Result.error("岗位ID和HR ID不能为空");
+        if (jobId == null) {
+            return Result.error("岗位ID不能为空");
         }
 
         boolean success = jobChangeApplyService.submitChangeApply(jobId, hrId, changeContent);

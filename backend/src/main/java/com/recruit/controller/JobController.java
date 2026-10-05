@@ -3,6 +3,7 @@ package com.recruit.controller;
 import com.recruit.entity.Company;
 import com.recruit.entity.Job;
 import com.recruit.service.CompanyService;
+import com.recruit.service.DeliveryService;
 import com.recruit.service.JobService;
 import com.recruit.service.UserService;
 import com.recruit.entity.SysUser;
@@ -31,6 +32,9 @@ public class JobController extends BaseController {
     
     @Autowired
     private JobService jobService;
+
+    @Autowired
+    private DeliveryService deliveryService;
 
     @Autowired
     private CompanyService companyService;
@@ -173,9 +177,23 @@ public class JobController extends BaseController {
                 .eq(Job::getCreatedBy, userId)
                 .orderByDesc(Job::getCreateTime)
                 .list();
-        // 补充每个岗位的真实投递数量
-        for (Job job : jobs) {
-            job.setDeliveryCount(jobService.countDeliveries(job.getId()));
+        // 一次 group by 补充每个岗位的真实投递数量
+        if (!jobs.isEmpty()) {
+            List<Long> jobIds = jobs.stream().map(Job::getId).collect(Collectors.toList());
+            List<Map<String, Object>> countRows = deliveryService.getBaseMapper().selectMaps(
+                    new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                            .select("job_id, COUNT(*) AS cnt")
+                            .in("job_id", jobIds)
+                            .groupBy("job_id"));
+            Map<Long, Integer> countMap = new HashMap<>();
+            for (Map<String, Object> row : countRows) {
+                if (row.get("job_id") != null) {
+                    countMap.put(Long.valueOf(row.get("job_id").toString()), Integer.valueOf(row.get("cnt").toString()));
+                }
+            }
+            for (Job job : jobs) {
+                job.setDeliveryCount(countMap.getOrDefault(job.getId(), 0));
+            }
         }
         return Result.success(jobs);
     }
@@ -259,6 +277,8 @@ public class JobController extends BaseController {
         } else if (Objects.equals(role, 1)) {
             // 教师不可编辑企业岗位内容（仅可标记问题或关闭）
             return Result.error(403, "教师不可编辑企业岗位内容");
+        } else {
+            return Result.error(403, "无权编辑岗位");
         }
         
         job.setId(id);
@@ -305,6 +325,8 @@ public class JobController extends BaseController {
         // 教师可强制关闭任何岗位（监管干预）
         if (Objects.equals(role, 1)) {
             requireTeacher();
+        } else if (!Objects.equals(role, 2)) {
+            return Result.error(403, "无权关闭岗位");
         }
         
         boolean success = jobService.closeJob(id);
@@ -329,6 +351,9 @@ public class JobController extends BaseController {
         
         if (Objects.equals(role, 2) && !isSameCompanyHr(userId, job.getCreatedBy())) {
             return Result.error(403, "无权暂停其他企业HR的岗位");
+        }
+        if (!Objects.equals(role, 1) && !Objects.equals(role, 2)) {
+            return Result.error(403, "无权暂停岗位");
         }
         
         boolean success = jobService.pauseJob(id);
@@ -369,6 +394,8 @@ public class JobController extends BaseController {
             if (job.getStatus() != 0 && job.getStatus() != 2) {
                 return Result.error("仅允许删除草稿或已关闭的岗位");
             }
+        } else {
+            return Result.error(403, "无权删除岗位");
         }
         
         jobService.removeById(id);
@@ -444,6 +471,19 @@ public class JobController extends BaseController {
                 .orderByDesc(Job::getCreateTime)
                 .last("LIMIT 20")
                 .list();
+        // 一次批查公司名，避免前端逐岗位请求公司详情
+        if (!active.isEmpty()) {
+            List<Long> companyIds = active.stream().map(Job::getCompanyId).filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
+            if (!companyIds.isEmpty()) {
+                Map<Long, String> nameMap = companyService.listByIds(companyIds).stream()
+                        .collect(Collectors.toMap(Company::getId, c -> c.getShortName() != null && !c.getShortName().isEmpty() ? c.getShortName() : c.getName()));
+                active.forEach(j -> {
+                    if (j.getCompanyId() != null) {
+                        j.setCompanyName(nameMap.get(j.getCompanyId()));
+                    }
+                });
+            }
+        }
         return Result.success(active);
     }
 

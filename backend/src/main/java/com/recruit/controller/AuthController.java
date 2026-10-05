@@ -225,7 +225,12 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public Result<SysUser> getCurrentUser(@RequestParam String token) {
+    public Result<SysUser> getCurrentUser(@RequestParam(required = false) String token,
+                                          @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        // token 优先从 header 取，避免进访问日志；兼容旧 query 方式
+        if (token == null || token.isEmpty()) {
+            token = authHeader;
+        }
         if (token == null || token.isEmpty()) {
             return Result.error(401, "Token 不能为空");
         }

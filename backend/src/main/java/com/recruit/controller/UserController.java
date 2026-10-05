@@ -18,7 +18,7 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/admin/users")
-public class UserController {
+public class UserController extends BaseController {
     
     @Autowired
     private UserService userService;
@@ -36,6 +36,7 @@ public class UserController {
      */
     @GetMapping
     public Result<List<SysUser>> getAllUsers() {
+        requireAdmin();
         List<SysUser> users = userService.list();
         
         // AES解密敏感字段（手机号），失败时不阻断整个列表
@@ -60,6 +61,7 @@ public class UserController {
      */
     @GetMapping("/{id}")
     public Result<SysUser> getUserById(@PathVariable Long id) {
+        requireAdmin();
         SysUser user = userService.getById(id);
         if (user == null) {
             return Result.error(404, "用户不存在");
@@ -81,6 +83,7 @@ public class UserController {
      */
     @GetMapping("/by-role/{role}")
     public Result<List<SysUser>> getUsersByRole(@PathVariable Integer role) {
+        requireAdmin();
         List<SysUser> users = userService.list().stream()
                 .filter(user -> user.getRole().equals(role))
                 .collect(java.util.stream.Collectors.toList());
@@ -107,6 +110,7 @@ public class UserController {
      */
     @PostMapping
     public Result<String> createUser(@RequestBody SysUser user) {
+        requireAdmin();
         // 1. 检查用户名是否已存在
         SysUser existUser = userService.lambdaQuery()
                 .eq(SysUser::getUsername, user.getUsername())
@@ -140,6 +144,7 @@ public class UserController {
      */
     @PutMapping("/{id}")
     public Result<String> updateUser(@PathVariable Long id, @RequestBody SysUser user) {
+        requireAdmin();
         SysUser existUser = userService.getById(id);
         if (existUser == null) {
             return Result.error(404, "用户不存在");
@@ -169,6 +174,7 @@ public class UserController {
      */
     @DeleteMapping("/{id}")
     public Result<String> deleteUser(@PathVariable Long id) {
+        requireAdmin();
         boolean ok = userService.removeById(id);
         if (!ok) {
             return Result.error(404, "用户不存在");
@@ -185,6 +191,7 @@ public class UserController {
      */
     @PutMapping("/{id}/status")
     public Result<String> updateUserStatus(@PathVariable Long id, @RequestBody Map<String, Integer> params) {
+        requireAdmin();
         Integer status = params.get("status");
         if (status == null || (status != 0 && status != 1)) {
             return Result.error("status参数错误（应为0或1）");
@@ -208,6 +215,7 @@ public class UserController {
      */
     @PutMapping("/{id}/reset-password")
     public Result<String> resetPassword(@PathVariable Long id, @RequestBody Map<String, String> params) {
+        requireAdmin();
         SysUser user = userService.getById(id);
         if (user == null) {
             return Result.error(404, "用户不存在");

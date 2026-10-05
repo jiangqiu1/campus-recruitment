@@ -40,6 +40,13 @@ public class ResumeScoreController {
     @GetMapping("/by-job/{jobId}")
     public Result<List<Map<String, Object>>> getScoresByJobId(@PathVariable Long jobId) {
         List<ResumeScoreLog> logs = resumeScoreLogService.selectByJobIdOrderByScore(jobId);
+        // 批量组装：一次查投递 + 一次查学生，替代循环内逐条查询
+        List<Long> deliveryIds = logs.stream().map(ResumeScoreLog::getDeliveryId).filter(java.util.Objects::nonNull).collect(Collectors.toList());
+        Map<Long, Delivery> deliveryMap = deliveryIds.isEmpty() ? new HashMap<>() : deliveryService.listByIds(deliveryIds).stream()
+                .collect(Collectors.toMap(Delivery::getId, d -> d));
+        List<Long> studentIds = deliveryMap.values().stream().map(Delivery::getStudentId).filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
+        Map<Long, SysUser> studentMap = studentIds.isEmpty() ? new HashMap<>() : userService.listByIds(studentIds).stream()
+                .collect(Collectors.toMap(SysUser::getId, u -> u));
         List<Map<String, Object>> result = new ArrayList<>();
         for (ResumeScoreLog log : logs) {
             Map<String, Object> item = new HashMap<>();
@@ -49,12 +56,11 @@ public class ResumeScoreController {
             item.put("score", log.getScore());
             item.put("scoreDetail", log.getScoreDetail());
             item.put("createTime", log.getCreateTime());
-            // 查询学生姓名
             String studentName = "未知";
             if (log.getDeliveryId() != null) {
-                Delivery delivery = deliveryService.getById(log.getDeliveryId());
+                Delivery delivery = deliveryMap.get(log.getDeliveryId());
                 if (delivery != null && delivery.getStudentId() != null) {
-                    SysUser student = userService.getById(delivery.getStudentId());
+                    SysUser student = studentMap.get(delivery.getStudentId());
                     if (student != null && student.getRealName() != null) {
                         studentName = student.getRealName();
                     }

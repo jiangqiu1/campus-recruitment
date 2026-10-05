@@ -92,6 +92,31 @@ public class DeliveryController extends BaseController {
                 list = p.getRecords();
                 total = p.getTotal();
             }
+        } else if (Objects.equals(role, 2)) {
+            // HR 仅可见本企业岗位的投递
+            SysUser hr = userService.getById(getCurrentUserId());
+            List<Long> companyJobIds = hr != null && hr.getCompanyId() != null
+                    ? jobService.lambdaQuery().eq(Job::getCompanyId, hr.getCompanyId()).list().stream().map(Job::getId).collect(Collectors.toList())
+                    : new ArrayList<>();
+            if (companyJobIds.isEmpty()) {
+                list = new ArrayList<>();
+                total = 0;
+            } else {
+                com.baomidou.mybatisplus.core.metadata.IPage<Delivery> p = deliveryService.lambdaQuery()
+                        .in(Delivery::getJobId, companyJobIds)
+                        .orderByDesc(Delivery::getCreateTime)
+                        .page(new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(page, size));
+                list = p.getRecords();
+                total = p.getTotal();
+            }
+        } else if (Objects.equals(role, 0)) {
+            // 学生仅可见自己的投递
+            com.baomidou.mybatisplus.core.metadata.IPage<Delivery> p = deliveryService.lambdaQuery()
+                    .eq(Delivery::getStudentId, getCurrentUserId())
+                    .orderByDesc(Delivery::getCreateTime)
+                    .page(new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(page, size));
+            list = p.getRecords();
+            total = p.getTotal();
         } else {
             com.baomidou.mybatisplus.core.metadata.IPage<Delivery> p = deliveryService.page(new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(page, size));
             list = p.getRecords();
@@ -176,6 +201,9 @@ public class DeliveryController extends BaseController {
     @LogOperation("更新投递状态")
     @PutMapping("/{id}/status")
     public Result<String> updateDeliveryStatus(@PathVariable Long id, @Valid @RequestBody DeliveryStatusUpdateRequest request) {
+        Delivery delivery = deliveryService.getById(id);
+        if (delivery == null) return Result.error(404, "投递记录不存在");
+        checkDeliveryManagePermission(delivery);
         boolean ok = deliveryService.updateDeliveryStatus(id, request.getStatus(), request.getFeedback());
         return ok ? Result.success("投递状态更新成功") : Result.error("更新失败");
     }
@@ -183,15 +211,49 @@ public class DeliveryController extends BaseController {
     @LogOperation("安排面试")
     @PutMapping("/{id}/arrange-interview")
     public Result<String> arrangeInterview(@PathVariable Long id, @Valid @RequestBody InterviewArrangeRequest request) {
+        Delivery delivery = deliveryService.getById(id);
+        if (delivery == null) return Result.error(404, "投递记录不存在");
+        checkDeliveryManagePermission(delivery);
         boolean ok = deliveryService.arrangeInterview(id, request.getInterviewTime(), request.getInterviewLocation());
         return ok ? Result.success("面试安排成功") : Result.error("面试安排失败");
     }
 
     @DeleteMapping("/{id}")
     public Result<String> deleteDelivery(@PathVariable Long id) {
+        Delivery delivery = deliveryService.getById(id);
+        if (delivery == null) return Result.error(404, "投递记录不存在或已取消");
+        Integer role = getCurrentRole();
+        if (Objects.equals(role, 0)) {
+            // 学生仅能撤回自己的投递
+            if (!Objects.equals(delivery.getStudentId(), getCurrentUserId())) {
+                return Result.error(403, "只能撤回自己的投递");
+            }
+        } else if (Objects.equals(role, 2)) {
+            checkDeliveryManagePermission(delivery);
+        } else if (!Objects.equals(role, 1) && !Objects.equals(role, 3)) {
+            return Result.error(403, "无权删除该投递");
+        }
         boolean ok = deliveryService.removeById(id);
         if (!ok) return Result.error(404, "投递记录不存在或已取消");
         return Result.success("投递记录删除成功");
+    }
+
+    /**
+     * 投递管理权限：HR 仅可操作本企业岗位的投递；教师/管理员放行；学生不可管理投递状态
+     */
+    private void checkDeliveryManagePermission(Delivery delivery) {
+        Integer role = getCurrentRole();
+        if (Objects.equals(role, 1) || Objects.equals(role, 3)) return;
+        if (Objects.equals(role, 2)) {
+            Job job = jobService.getById(delivery.getJobId());
+            SysUser hr = userService.getById(getCurrentUserId());
+            Long myCompanyId = hr != null ? hr.getCompanyId() : null;
+            if (job == null || myCompanyId == null || !Objects.equals(job.getCompanyId(), myCompanyId)) {
+                throw new com.recruit.exception.BusinessException(403, "无权操作其他企业的投递");
+            }
+            return;
+        }
+        throw new com.recruit.exception.BusinessException(403, "无权操作该投递");
     }
 
     /**
@@ -391,7 +453,6 @@ public class DeliveryController extends BaseController {
     /**
      * 批量更新投递状态
      */
-    @Transactional(rollbackFor = Exception.class)
     @PutMapping("/batch-status")
     public Result<String> batchUpdateStatus(@RequestBody Map<String, Object> params) {
         @SuppressWarnings("unchecked")
@@ -400,13 +461,31 @@ public class DeliveryController extends BaseController {
         if (ids == null || ids.isEmpty() || status == null) {
             return Result.error("参数错误");
         }
-        for (Integer id : ids) {
-            Delivery d = deliveryService.getById(id);
-            if (d != null) {
-                d.setStatus(status);
-                deliveryService.updateById(d);
-            }
+        if (status < 0 || status > 4) {
+            return Result.error("非法的投递状态");
         }
+        List<Long> idList = ids.stream().map(Integer::longValue).collect(Collectors.toList());
+        List<Delivery> deliveries = deliveryService.listByIds(idList);
+        Integer role = getCurrentRole();
+        if (Objects.equals(role, 2)) {
+            // HR 只能批量操作本企业岗位的投递
+            SysUser hr = userService.getById(getCurrentUserId());
+            List<Long> companyJobIds = hr != null && hr.getCompanyId() != null
+                    ? jobService.lambdaQuery().eq(Job::getCompanyId, hr.getCompanyId()).list().stream().map(Job::getId).collect(Collectors.toList())
+                    : new ArrayList<>();
+            deliveries = deliveries.stream()
+                    .filter(d -> companyJobIds.contains(d.getJobId()))
+                    .collect(Collectors.toList());
+        } else if (!Objects.equals(role, 1) && !Objects.equals(role, 3)) {
+            return Result.error(403, "无权批量更新投递");
+        }
+        if (deliveries.isEmpty()) {
+            return Result.error("没有可更新的投递记录");
+        }
+        List<Long> validIds = deliveries.stream().map(Delivery::getId).collect(Collectors.toList());
+        deliveryService.update(new com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper<Delivery>()
+                .in(Delivery::getId, validIds)
+                .set(Delivery::getStatus, status));
         return Result.success("批量更新成功");
     }
 }
