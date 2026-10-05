@@ -207,6 +207,7 @@ export const teacherAPI = {
   createClass: (data) => request({ url: '/classes', method: 'POST', data }),
   deleteClass: (id) => request({ url: '/classes/' + id, method: 'DELETE' }),
   getStudentsByClass: (classId) => request({ url: '/classes/' + classId + '/students' }),
+  getAllStudents: () => request({ url: '/classes/students' }),
   getStudentResume: (studentId) => request({ url: '/resumes/student/' + studentId }),
   getStudentInfo: (studentId) => request({ url: '/resumes/student/' + studentId + '/info' }),
   getStudentDeliveries: (studentId) => request({ url: '/deliveries/by-student/' + studentId }),
@@ -243,7 +244,7 @@ export const hrAPI = {
   updateCompany: (id, data) => request({ url: '/companies/' + id, method: 'PUT', data }),
   getCompanyName: (companyId) => request({ url: '/companies/' + companyId }),
   getJobStats: (jobId) => request({ url: '/jobs/' + jobId + '/statistics' }),
-  getRangeStats: (companyId, days) => request({ url: '/statistics/hr/range-stats', data: { companyId, days } }),
+  getRangeStats: (days) => request({ url: '/statistics/hr/range-stats', data: { days } }),
 }
 
 /* ======================== AI人岗匹配模块 ======================== */

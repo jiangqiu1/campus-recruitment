@@ -126,10 +126,9 @@ const switchRange = (days) => {
 }
 
 const loadRangeStats = async () => {
-	const cId = getCompanyId()
-	if (!cId) return
 	try {
-		const res = await hrAPI.getRangeStats(cId, rangeDays.value)
+		// 公司归属由后端从登录态解析，前端无需传 companyId
+		const res = await hrAPI.getRangeStats(rangeDays.value)
 		rangeStats.value = res.data || { newDeliveries: 0, pendingCount: 0, interviewCount: 0 }
 	} catch (e) { console.error('加载区间统计失败', e) }
 }
@@ -158,27 +157,14 @@ const onRefresh = async () => {
 const loadData = async () => {
 	loading.value = true
 	try {
-		const cId = getCompanyId()
-		if (!cId) return
-		const res = await hrAPI.getDashboard(cId)
+		// /hr/dashboard 后端从登录态解析公司，前端不传 companyId（存量缓存里可能没有该字段）
+		const res = await hrAPI.getDashboard()
 		stats.value = res.data || {}
 		loadRangeStats()
 	} catch (e) {
 		console.error('加载统计数据失败', e)
 	} finally {
 		loading.value = false
-	}
-}
-
-const getCompanyId = () => {
-	try {
-		const raw = uni.getStorageSync('userInfo')
-		if (!raw) return null
-		const obj = JSON.parse(raw)
-		return obj.companyId || obj.id || null
-	} catch (e) {
-		console.error('获取公司ID失败', e)
-		return null
 	}
 }
 </script>
@@ -221,6 +207,55 @@ const getCompanyId = () => {
 	color: $uni-text-color-title;
 	margin-bottom: 12px;
 	display: block;
+}
+
+/* 时间筛选 + 区间概览 */
+.range-section {
+	background: $uni-bg-color;
+	border-radius: 12px;
+	margin: 0 16px 12px;
+	padding: 16px;
+	box-shadow: $uni-shadow-card;
+}
+.range-chips {
+	flex-direction: row;
+	gap: 8px;
+	margin-bottom: 16px;
+}
+.range-chip {
+	font-size: 13px;
+	color: $uni-text-color-secondary;
+	background: $uni-bg-color-page;
+	padding: 6px 16px;
+	border-radius: 999px;
+}
+.range-chip.active {
+	color: $uni-text-color-inverse;
+	background: $uni-color-primary;
+	font-weight: 500;
+}
+.range-stats-row {
+	flex-direction: row;
+	align-items: center;
+}
+.range-item {
+	flex: 1;
+	align-items: center;
+}
+.range-num {
+	font-size: 22px;
+	font-weight: 800;
+	color: $uni-text-color-title;
+}
+.range-label {
+	font-size: 12px;
+	color: $uni-text-color-secondary;
+	margin-top: 4px;
+}
+.range-divider {
+	width: 1px;
+	height: 36px;
+	background: $uni-border-color-divider;
 }
 
 /* 今日数据 */

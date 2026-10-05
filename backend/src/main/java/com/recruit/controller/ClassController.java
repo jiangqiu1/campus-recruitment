@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -336,6 +337,27 @@ public class ClassController extends BaseController {
     }
     
     /**
+     * 教师名下全部班级的学生聚合列表（工作台「全部学生」入口）
+     */
+    @GetMapping("/students")
+    public Result<List<Map<String, Object>>> getAllClassStudents() {
+        Long teacherId = getCurrentUserId();
+        List<Class> myClasses = classService.selectByTeacherId(teacherId);
+        Set<Long> studentIds = new LinkedHashSet<>();
+        if (myClasses != null) {
+            for (Class cls : myClasses) {
+                List<Long> ids = classService.getStudentIdsByClassId(cls.getId());
+                if (ids != null) studentIds.addAll(ids);
+            }
+        }
+        List<Map<String, Object>> students = studentIds.stream()
+                .map(this::buildStudentSummary)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+        return Result.success(students);
+    }
+
+    /**
      * 获取班级学生列表（校验班级所属权）
      */
     @GetMapping("/{classId}/students")
@@ -343,52 +365,58 @@ public class ClassController extends BaseController {
         checkClassOwnership(classId);
         List<Long> studentIds = classService.getStudentIdsByClassId(classId);
         List<Map<String, Object>> students = studentIds.stream()
-                .map(studentId -> {
-                    SysUser user = userService.getById(studentId);
-                    if (user == null) return null;
-                    Map<String, Object> map = new HashMap<>();
-                    map.put("id", user.getId());
-                    map.put("username", user.getUsername());
-                    map.put("realName", user.getRealName());
-                    // 解密手机号
-                    String phone = user.getPhone();
-                    if (phone != null && !phone.isEmpty()) {
-                        try { phone = aesUtil.decrypt(phone); } catch (Exception ignored) { }
-                    }
-                    map.put("phone", phone != null ? phone : "");
-                    // 计算简历完整度
-                    Resume resume = resumeService.selectByStudentId(studentId);
-                    int resumeComplete = 0;
-                    if (resume != null) {
-                        if (resume.getEducation() != null && !resume.getEducation().isEmpty()) resumeComplete += 40;
-                        if (resume.getSkills() != null && !resume.getSkills().isEmpty()) resumeComplete += 30;
-                        if (resume.getSelfEvaluation() != null && !resume.getSelfEvaluation().isEmpty()) resumeComplete += 30;
-                    }
-                    map.put("resumeComplete", resumeComplete);
-                    // 提取AI评分（从 resume.aiAnalysis JSON 中读取 overallScore）
-                    Integer aiScore = null;
-                    if (resume != null && resume.getAiAnalysis() != null && !resume.getAiAnalysis().isEmpty()) {
-                        try {
-                            Map<String, Object> analysis = OBJECT_MAPPER.readValue(resume.getAiAnalysis(), Map.class);
-                            Object score = analysis.get("overallScore");
-                            if (score instanceof Number) {
-                                aiScore = ((Number) score).intValue();
-                            } else if (score instanceof String) {
-                                aiScore = Integer.parseInt((String) score);
-                            }
-                        } catch (Exception ignored) { }
-                    }
-                    map.put("aiScore", aiScore);
-                    // 计算投递数
-                    Integer deliveryCount = deliveryService.countByStudentId(studentId);
-                    map.put("deliveryCount", deliveryCount != null ? deliveryCount : 0);
-                    return map;
-                })
-                .filter(map -> map != null)
+                .map(this::buildStudentSummary)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         return Result.success(students);
     }
-    
+
+    /**
+     * 学生列表行构建：基本信息 + 简历完整度 + AI 评分 + 投递数
+     * 用户不存在时返回 null 由调用方过滤
+     */
+    private Map<String, Object> buildStudentSummary(Long studentId) {
+        SysUser user = userService.getById(studentId);
+        if (user == null) return null;
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", user.getId());
+        map.put("username", user.getUsername());
+        map.put("realName", user.getRealName());
+        // 解密手机号
+        String phone = user.getPhone();
+        if (phone != null && !phone.isEmpty()) {
+            try { phone = aesUtil.decrypt(phone); } catch (Exception ignored) { }
+        }
+        map.put("phone", phone != null ? phone : "");
+        // 计算简历完整度
+        Resume resume = resumeService.selectByStudentId(studentId);
+        int resumeComplete = 0;
+        if (resume != null) {
+            if (resume.getEducation() != null && !resume.getEducation().isEmpty()) resumeComplete += 40;
+            if (resume.getSkills() != null && !resume.getSkills().isEmpty()) resumeComplete += 30;
+            if (resume.getSelfEvaluation() != null && !resume.getSelfEvaluation().isEmpty()) resumeComplete += 30;
+        }
+        map.put("resumeComplete", resumeComplete);
+        // 提取AI评分（从 resume.aiAnalysis JSON 中读取 overallScore）
+        Integer aiScore = null;
+        if (resume != null && resume.getAiAnalysis() != null && !resume.getAiAnalysis().isEmpty()) {
+            try {
+                Map<String, Object> analysis = OBJECT_MAPPER.readValue(resume.getAiAnalysis(), Map.class);
+                Object score = analysis.get("overallScore");
+                if (score instanceof Number) {
+                    aiScore = ((Number) score).intValue();
+                } else if (score instanceof String) {
+                    aiScore = Integer.parseInt((String) score);
+                }
+            } catch (Exception ignored) { }
+        }
+        map.put("aiScore", aiScore);
+        // 计算投递数
+        Integer deliveryCount = deliveryService.countByStudentId(studentId);
+        map.put("deliveryCount", deliveryCount != null ? deliveryCount : 0);
+        return map;
+    }
+
     /**
      * 批量添加学生到班级（校验班级所属权）
      */

@@ -193,7 +193,8 @@ const getCompanyId = () => {
 		const raw = uni.getStorageSync('userInfo')
 		if (!raw) return null
 		const obj = JSON.parse(raw)
-		return obj.companyId || obj.id || null
+		// 只认 companyId：用户 ID 传给公司维度接口会静默查出错误空数据
+		return obj.companyId || null
 	} catch (e) {
 		console.error('获取公司ID失败', e)
 		return null

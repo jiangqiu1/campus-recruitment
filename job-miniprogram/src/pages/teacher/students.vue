@@ -42,6 +42,7 @@ import { checkRole } from '@/utils/auth'
 checkRole(1)
 
 const refreshing = ref(false)
+const loading = ref(true)
 const className = ref('')
 const classId = ref('')
 const students = ref([])
@@ -67,14 +68,19 @@ onMounted(() => {
 	const currentPage = pages[pages.length - 1]
 	if (currentPage.options) {
 		classId.value = currentPage.options.classId || ''
-		className.value = decodeURIComponent(currentPage.options.className || '班级')
+		className.value = decodeURIComponent(currentPage.options.className || (currentPage.options.classId ? '班级' : '全部学生'))
+	} else {
+		className.value = '全部学生'
 	}
 	loadStudents()
 })
 
 const loadStudents = async () => {
 	try {
-		const res = await teacherAPI.getStudentsByClass(classId.value)
+		// 无 classId 时（首页「全部学生」入口）加载教师名下全部班级的聚合列表
+		const res = classId.value
+			? await teacherAPI.getStudentsByClass(classId.value)
+			: await teacherAPI.getAllStudents()
 		students.value = (res.data || []).map(mapStudent)
 	} catch (e) {
 		console.error('加载学生列表失败', e)

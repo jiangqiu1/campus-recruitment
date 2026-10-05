@@ -264,6 +264,10 @@ public class AiService {
         requestBody.put("model", provider.getModel());
         requestBody.put("temperature", 0.3);
         requestBody.put("max_tokens", maxTokens);
+        // 智谱 GLM 是思考模型：不关思考链的话 max_tokens 会被 reasoning 耗尽，content 返回空
+        if (provider.getUrl() != null && provider.getUrl().contains("bigmodel.cn")) {
+            requestBody.put("thinking", Map.of("type", "disabled"));
+        }
 
         List<Map<String, String>> messages = new ArrayList<>();
         messages.add(Map.of("role", "user", "content", prompt));
@@ -272,26 +276,32 @@ public class AiService {
         String content = null;
         try {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
-            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                    provider.getUrl(), HttpMethod.POST, request, new ParameterizedTypeReference<Map<String, Object>>() {});
+            // 小模型输出的 JSON 偶有概率性格式瑕疵（如字符串内未转义引号），解析失败时重试一次
+            for (int attempt = 1; attempt <= 2; attempt++) {
+                ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                        provider.getUrl(), HttpMethod.POST, request, new ParameterizedTypeReference<Map<String, Object>>() {});
 
-            Map<String, Object> body = response.getBody();
-            if (body != null && body.containsKey("choices")) {
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) body.get("choices");
-                if (choices != null && !choices.isEmpty()) {
-                    Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
-                    content = (String) message.get("content");
-                    Map<String, Object> parsed = parseJsonResponse(content, taskName);
-                    // 解析失败视为一次降级
-                    boolean mock = parsed == null;
-                    if (mock) {
-                        parsed = fallbackMock(taskName);
+                Map<String, Object> body = response.getBody();
+                if (body != null && body.containsKey("choices")) {
+                    List<Map<String, Object>> choices = (List<Map<String, Object>>) body.get("choices");
+                    if (choices != null && !choices.isEmpty()) {
+                        Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
+                        content = (String) message.get("content");
+                        Map<String, Object> parsed = parseJsonResponse(content, taskName);
+                        if (parsed != null) {
+                            logAiCall(taskName, name, System.currentTimeMillis() - start, false, prompt, content);
+                            return parsed;
+                        }
+                        if (attempt == 1) {
+                            log.warn("[AiService] JSON 解析失败，重试一次 (task={}, provider={})", taskName, name);
+                            continue;
+                        }
                     }
-                    logAiCall(taskName, name, System.currentTimeMillis() - start, mock, prompt, content);
-                    return parsed;
+                } else {
+                    log.error("[AiService] API 返回异常, provider={}, response={}", name, body);
+                    break;
                 }
             }
-            log.error("[AiService] API 返回异常, provider={}, response={}", name, body);
         } catch (Exception e) {
             log.error("[AiService] API 调用失败 (task={}, provider={}), {}", taskName, name, e.getMessage());
         }

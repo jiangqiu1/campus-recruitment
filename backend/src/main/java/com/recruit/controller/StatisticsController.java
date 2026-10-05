@@ -658,18 +658,27 @@ public class StatisticsController extends BaseController {
      * HR 区间统计（时间筛选）：只统计真实可查口径，不编造数据
      * 新增投递=投递时间在区间内；待处理=区间内投递且仍为待查看；面试安排=面试时间在区间内
      *
-     * @param companyId 企业ID
-     * @param days      区间天数（7/30/90，0或不传=全部）
+     * @param days 区间天数（7/30，0或不传=全部）
      */
     @GetMapping("/hr/range-stats")
-    public Result<Map<String, Object>> getHrRangeStats(@RequestParam Long companyId,
+    public Result<Map<String, Object>> getHrRangeStats(HttpServletRequest request,
             @RequestParam(required = false, defaultValue = "0") Integer days) {
+        // 与 /hr/dashboard 同口径：公司归属从登录态解析，不信任前端传参
+        Long userId = (Long) request.getAttribute("userId");
+        SysUser currentUser = userId != null ? userService.getById(userId) : null;
+        Long companyId = currentUser != null ? currentUser.getCompanyId() : null;
+        Map<String, Object> data = new HashMap<>();
+        data.put("days", days);
+        if (companyId == null) {
+            data.put("newDeliveries", 0);
+            data.put("pendingCount", 0);
+            data.put("interviewCount", 0);
+            return Result.success(data);
+        }
         List<Job> jobs = jobService.lambdaQuery()
                 .eq(Job::getCompanyId, companyId)
                 .list();
         List<Long> jobIds = jobs.stream().map(Job::getId).collect(Collectors.toList());
-        Map<String, Object> data = new HashMap<>();
-        data.put("days", days);
         if (jobIds.isEmpty()) {
             data.put("newDeliveries", 0);
             data.put("pendingCount", 0);
