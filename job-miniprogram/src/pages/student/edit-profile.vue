@@ -75,6 +75,12 @@ const onSchoolChange = (e) => {
 }
 
 onMounted(async () => {
+	// 学校字典（放最前：下方 getUserInfo 成功分支会提前 return；加载失败不阻塞表单）
+	try {
+		const dictRes = await dictAPI.getSchools()
+		schools.value = dictRes.data || []
+	} catch (e) { console.error('学校字典加载失败', e) }
+
 	// 优先从 API 获取最新用户信息（手机号/邮箱等仅在服务端有完整数据）
 	try {
 		const userRes = await authAPI.getUserInfo()
@@ -109,12 +115,6 @@ onMounted(async () => {
 			form.value.gender = ui.gender != null ? ui.gender : 0
 		}
 		} catch (e) {}
-
-	// 学校字典（加载失败不阻塞表单，picker 显示空列表时仍可保存原值）
-	try {
-		const dictRes = await dictAPI.getSchools()
-		schools.value = dictRes.data || []
-	} catch (e) {}
 })
 
 const handleSave = async () => {
