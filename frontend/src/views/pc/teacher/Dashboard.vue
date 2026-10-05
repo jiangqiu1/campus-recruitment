@@ -28,6 +28,7 @@
       <div class="chart-box">
         <div class="chart-title">投递趋势（近7日）</div>
         <div ref="trendChartRef" style="height: 260px"></div>
+        <div v-if="!hasTrendData" class="chart-empty">近7日暂无投递数据</div>
       </div>
       <div class="chart-box">
         <div class="chart-title">投递状态分布</div>
@@ -65,6 +66,7 @@ const deliveryData = ref([])
 const loading = ref(false)
 
 const trendChartRef = ref(null)
+const hasTrendData = ref(false)
 const pieChartRef = ref(null)
 let trendChart = null
 let pieChart = null
@@ -119,10 +121,12 @@ const loadTrendData = async () => {
 }
 
 function initCharts() {
-  // ----- 投递趋势折线图 -----
-  if (trendChartRef.value) {
+  // ----- 投递趋势折线图（全 0 时不出图，显示空态） -----
+  const trendData = window._trendData || []
+  const trendHasData = trendData.some(d => (d.value || 0) > 0)
+  hasTrendData.value = trendHasData
+  if (trendChartRef.value && trendHasData) {
     trendChart = echarts.init(trendChartRef.value)
-    const trendData = window._trendData || []
     const days = trendData.map(d => typeof d.label === 'string' ? d.label : '')
     const counts = trendData.map(d => d.value || 0)
     // 如果后端没返回数据，用前端计算
@@ -190,12 +194,13 @@ const statusLabel = (status) => {
 </script>
 
 <style scoped>
+.chart-empty { position: absolute; inset: 40px 0 0; display: flex; align-items: center; justify-content: center; color: #86909C; font-size: 14px; background: white; }
 .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px; }
 .stat-card { background: white; padding: 24px; border-radius: 16px; border-left: 6px solid; box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
 .stat-card h3 { margin: 0 0 8px; font-size: 14px; color: #86909C; font-weight: 500; }
 .stat-card .num { font-size: 32px; font-weight: 700; color: #1D2129; }
 .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
-.chart-box { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
+.chart-box { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 6px 16px rgba(0,0,0,0.06); position: relative; }
 .chart-title { font-size: 15px; font-weight: 600; color: #1D2129; margin-bottom: 12px; }
 .content-card { background: #fff; border-radius: 16px; padding: 24px; margin-bottom: 24px; box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
 .content-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }

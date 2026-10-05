@@ -38,7 +38,7 @@
       <div class="chart-box">
         <div class="chart-title">近7天投递趋势</div>
         <div ref="trendChart" class="chart-container" style="height: 260px;"></div>
-        <div v-if="!loading && trendData.length === 0" class="chart-empty">暂无投递数据</div>
+        <div v-if="!loading && !hasTrendData" class="chart-empty">近7日暂无投递数据</div>
       </div>
       <div class="chart-box">
         <div class="chart-title">各岗位投递量分布</div>
@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useUserStore } from '@/stores/user.js'
 import { statisticsAPI, jobAPI, deliveryAPI } from '@/api/index.js'
 import echarts from '@/utils/echarts'
@@ -63,6 +63,8 @@ const loading = ref(false)
 const trendChart = ref(null)
 const barChart = ref(null)
 const trendData = ref([])
+// 近7日全为 0 时视为无数据，避免渲染"空图"
+const hasTrendData = computed(() => trendData.value.some(d => (d.value || 0) > 0))
 const jobDistribution = ref([])
 let trendInstance = null
 let barInstance = null
@@ -124,7 +126,7 @@ const loadJobDistribution = async () => {
 }
 
 const renderCharts = () => {
-  if (trendChart.value) {
+  if (trendChart.value && hasTrendData.value) {
     trendInstance = echarts.init(trendChart.value)
     trendInstance.setOption({
       tooltip: { trigger: 'axis' },
@@ -145,11 +147,11 @@ const renderCharts = () => {
     barInstance.setOption({
       tooltip: { trigger: 'axis' },
       grid: { left: 50, right: 20, top: 20, bottom: 30 },
-      xAxis: { type: 'category', data: jobDistribution.value.map(d => d.name), axisLabel: { fontSize: 12, color: '#86909C', rotate: 15 } },
+      xAxis: { type: 'category', data: jobDistribution.value.map(d => d.name), axisLabel: { fontSize: 12, color: '#86909C', rotate: 15, formatter: v => v.length > 8 ? v.slice(0, 8) + '…' : v } },
       yAxis: { type: 'value', minInterval: 1, axisLabel: { fontSize: 12, color: '#86909C' } },
       series: [{
         type: 'bar',
-        data: jobDistribution.value.map((d, i) => ({ value: d.value, itemStyle: { color: ['#165DFF','#10B981','#F59E0B','#8B5CF6','#EF4444','#06B6D4'][i % 6] } })),
+        data: jobDistribution.value.map(d => ({ value: d.value, itemStyle: { color: '#165DFF' } })),
         barWidth: 36, borderRadius: [4, 4, 0, 0]
       }]
     })

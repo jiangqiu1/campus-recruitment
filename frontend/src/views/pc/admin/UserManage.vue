@@ -33,8 +33,12 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="phone" label="手机号" />
-      <el-table-column prop="email" label="邮箱" />
+      <el-table-column label="手机号" min-width="120">
+        <template #default="{ row }">
+          {{ row.phone && row.phone.includes('加密') ? '—' : row.phone }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="email" label="邮箱" min-width="160" show-overflow-tooltip />
       <el-table-column prop="status" label="状态">
         <template #default="{ row }">
           <el-switch v-model="row.status" :active-value="1" :inactive-value="0" @change="toggleStatus(row)" />

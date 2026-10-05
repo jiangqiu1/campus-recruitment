@@ -242,12 +242,12 @@ const renderCharts = () => {
     const sorted = [...jobScores.value].sort((a, b) => b.avgScore - a.avgScore)
     rankBarInstance.setOption({
       tooltip: { trigger: 'axis' },
-      grid: { left: 100, right: 40, top: 20, bottom: 20 },
+      grid: { left: 8, right: 40, top: 20, bottom: 20, containLabel: true },
       xAxis: { type: 'value', max: 100, axisLabel: { fontSize: 12, color: '#86909C' } },
       yAxis: {
         type: 'category',
         data: sorted.map(d => d.title).reverse(),
-        axisLabel: { fontSize: 12, color: '#4E5969' }
+        axisLabel: { fontSize: 12, color: '#4E5969', width: 105, overflow: 'truncate' }
       },
       series: [{
         type: 'bar',

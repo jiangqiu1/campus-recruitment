@@ -28,7 +28,7 @@
       <div class="chart-box">
         <div class="chart-title">岗位投递趋势（近7日）</div>
         <div ref="trendChart" class="chart-container" style="height: 260px;"></div>
-        <div v-if="!loading && trendData.length === 0" class="chart-empty">暂无投递数据</div>
+        <div v-if="!loading && !hasTrendData" class="chart-empty">近7日暂无投递数据</div>
       </div>
       <div class="chart-box">
         <div class="chart-title">热门岗位 Top 10</div>
@@ -59,13 +59,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { statisticsAPI } from '@/api'
 import echarts from '@/utils/echarts'
 
 const loading = ref(false)
 const overview = ref({})
 const recentActivities = ref([])
+// 近7日全为 0 时视为无数据，避免渲染一张"空图"
+const hasTrendData = computed(() => trendData.value.some(d => (d.value || 0) > 0))
 const trendData = ref([])
 const hotBarData = ref([])
 const trendChart = ref(null)
@@ -116,13 +118,16 @@ const loadHotJobs = async () => {
 const loadRecentActivities = async () => {
   try {
     const res = await statisticsAPI.getRecentActivities()
-    if (res.code === 200) recentActivities.value = res.data
+    if (res.code === 200) recentActivities.value = (res.data || []).map(a => ({
+      ...a,
+      action: (a.action || '').replace(/^OPERATION:/, '')
+    }))
   } catch (e) { console.error('加载最近动态失败', e) }
 }
 
 const renderCharts = () => {
-  // 投递趋势折线图
-  if (trendChart.value && trendData.value.length > 0) {
+  // 投递趋势折线图（全 0 时不出图，显示空态）
+  if (trendChart.value && hasTrendData.value) {
     trendInstance = echarts.init(trendChart.value)
     trendInstance.setOption({
       tooltip: { trigger: 'axis' },
@@ -145,16 +150,16 @@ const renderCharts = () => {
     hotInstance = echarts.init(hotChart.value)
     hotInstance.setOption({
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      grid: { left: 100, right: 30, top: 10, bottom: 20 },
+      grid: { left: 8, right: 30, top: 10, bottom: 20, containLabel: true },
       xAxis: { type: 'value', minInterval: 1, axisLabel: { fontSize: 12, color: '#86909C' } },
       yAxis: {
         type: 'category', data: hotBarData.value.map(d => d.name),
-        axisLabel: { fontSize: 12, color: '#4E5969' }
+        axisLabel: { fontSize: 12, color: '#4E5969', width: 105, overflow: 'truncate' }
       },
       series: [{
-        type: 'bar', data: hotBarData.value.map((d, i) => ({
+        type: 'bar', data: hotBarData.value.map(d => ({
           value: d.count || 0,
-          itemStyle: { color: ['#165DFF','#10B981','#F59E0B','#8B5CF6','#EF4444','#06B6D4','#D4537E','#639922','#BA7517','#7F77DD'][i % 10] }
+          itemStyle: { color: '#165DFF' }
         })),
         barWidth: 20, borderRadius: [0, 4, 4, 0]
       }]
