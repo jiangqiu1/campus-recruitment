@@ -141,7 +141,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { deliveryAPI, aiAssistantAPI } from '@/utils/request'
+import { aiAssistantAPI, deliveryAPI, getStudentId } from '@/utils/request'
 import NavBar from '@/components/NavBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import LoadingState from '@/components/LoadingState.vue'
@@ -177,15 +177,6 @@ const abilityBars = computed(() => {
 		return { label, value: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) }
 	}).filter(Boolean)
 })
-
-const getStudentId = () => {
-	try {
-		const raw = uni.getStorageSync('userInfo')
-		if (!raw) return null
-		const obj = JSON.parse(raw)
-		return obj.id || obj.userId ? Number(obj.id || obj.userId) : null
-	} catch (e) { return null }
-}
 
 onLoad(() => { loadDeliveries() })
 

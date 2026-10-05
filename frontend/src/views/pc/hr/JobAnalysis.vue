@@ -135,44 +135,38 @@ const loadJobScores = async () => {
     const res = await jobAPI.getJobsByCompany(userStore.companyId, {})
     if (res.code !== 200 || !Array.isArray(res.data)) return
 
-    const data = []
+    // 各岗位的评分/分布并行请求，替代串行循环
     let dimensionAvg = null
+    const dimJobId = res.data.find(j => j.id)?.id
 
-    for (const job of res.data) {
-      try {
-        const avgRes = await resumeScoreAPI.getAverageScoreByJobId(job.id)
-        const distRes = await resumeScoreAPI.getMatchDistribution(job.id)
-        const avgScore = avgRes.code === 200 ? Math.round(avgRes.data.averageScore) : 0
-        const dist = distRes.code === 200 ? distRes.data : {}
-
-        let scored = 0
-        if (dist) {
-          Object.values(dist).forEach(v => {
-            if (v > 0) scored += v
-          })
-        }
-
-        data.push({
-          id: job.id,
-          title: job.title,
-          total: job.viewCount || 0,
-          scored: scored,
-          avgScore: avgScore
-        })
-
-        if (!dimensionAvg && job.id) {
-          const dimRes = await resumeScoreAPI.getDimensionScores(job.id)
-          if (dimRes.code === 200 && dimRes.data) {
-            const d = dimRes.data
-            if (d.overall > 0) {
-              dimensionAvg = d
-            }
+    const [dimRes, ...jobResults] = await Promise.all([
+      dimJobId ? resumeScoreAPI.getDimensionScores(dimJobId).catch(() => null) : Promise.resolve(null),
+      ...res.data.map(async (job) => {
+        try {
+          const [avgRes, distRes] = await Promise.all([
+            resumeScoreAPI.getAverageScoreByJobId(job.id),
+            resumeScoreAPI.getMatchDistribution(job.id)
+          ])
+          const avgScore = avgRes.code === 200 ? Math.round(avgRes.data.averageScore) : 0
+          const dist = distRes.code === 200 ? distRes.data : {}
+          let scored = 0
+          if (dist) {
+            Object.values(dist).forEach(v => {
+              if (v > 0) scored += v
+            })
           }
+          return { id: job.id, title: job.title, total: job.viewCount || 0, scored: scored, avgScore: avgScore }
+        } catch {
+          return { id: job.id, title: job.title, total: 0, scored: 0, avgScore: 0 }
         }
-      } catch {
-        data.push({ id: job.id, title: job.title, total: 0, scored: 0, avgScore: 0 })
-      }
+      })
+    ])
+
+    if (dimRes && dimRes.code === 200 && dimRes.data && dimRes.data.overall > 0) {
+      dimensionAvg = dimRes.data
     }
+
+    const data = jobResults
     jobScores.value = data
 
     if (dimensionAvg) {

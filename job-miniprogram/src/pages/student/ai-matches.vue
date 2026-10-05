@@ -113,7 +113,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { matchAPI, jobAPI } from '@/utils/request'
+import { getStudentId, jobAPI, matchAPI } from '@/utils/request'
 import { formatTimeSemantic } from '@/utils/format'
 import NavBar from '@/components/NavBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -131,15 +131,6 @@ const sortOptions = [
 	{ label: '最新', value: 'time' },
 	{ label: '薪资', value: 'salary' }
 ]
-
-const getStudentId = () => {
-	try {
-		const raw = uni.getStorageSync('userInfo')
-		if (!raw) return null
-		const obj = JSON.parse(raw)
-		return obj.id || obj.userId ? Number(obj.id || obj.userId) : null
-	} catch (e) { return null }
-}
 
 async function loadData() {
 	const studentId = getStudentId()

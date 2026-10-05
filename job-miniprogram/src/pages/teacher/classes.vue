@@ -111,7 +111,7 @@ const loadClasses = async () => {
 	try {
 		const res = await teacherAPI.getClasses()
 		classes.value = res.data || []
-	} catch (e) { console.log('加载班级失败', e) }
+	} catch (e) { console.error('加载班级失败', e) }
 	finally { loading.value = false }
 }
 

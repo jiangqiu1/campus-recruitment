@@ -138,7 +138,7 @@
 const loading = ref(true)
 import LoadingState from '@/components/LoadingState.vue'
 import { ref, computed } from 'vue'
-import { deliveryAPI, scoreAPI, DELIVERY_STATUS } from '@/utils/request'
+import { DELIVERY_STATUS, deliveryAPI, getStudentId, scoreAPI } from '@/utils/request'
 import { formatTimeSemantic } from '@/utils/format'
 import TabBar from '@/components/TabBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -240,14 +240,6 @@ const stats = computed(() => {
 	}
 })
 
-function getStudentId() {
-	try {
-		const raw = uni.getStorageSync('userInfo')
-		if (!raw) return null
-		const obj = JSON.parse(raw)
-		return obj.id || obj.userId ? Number(obj.id || obj.userId) : null
-	} catch (e) { return null }
-}
 
 loadData()
 async function loadData() {
@@ -257,7 +249,7 @@ async function loadData() {
 		const res = await deliveryAPI.getDeliveriesByStudentId({ studentId: sid })
 		deliveries.value = (res.data || []).map(mapDelivery)
 		loadScores()
-	} catch (e) { console.log('加载投递记录失败', e) }
+	} catch (e) { console.error('加载投递记录失败', e) }
 	finally { loading.value = false }
 }
 

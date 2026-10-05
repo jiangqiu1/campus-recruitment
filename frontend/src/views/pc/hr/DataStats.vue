@@ -69,9 +69,8 @@ let barInstance = null
 
 onMounted(async () => {
   loading.value = true
-  await loadDashboard()
-  await loadTrend()
-  await loadJobDistribution()
+  // 三个数据源并行加载，缩短首屏等待
+  await Promise.all([loadDashboard(), loadTrend(), loadJobDistribution()])
   await nextTick()
   renderCharts()
   loading.value = false

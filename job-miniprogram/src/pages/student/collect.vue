@@ -37,7 +37,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { favoriteAPI, deliveryAPI, jobAPI } from '@/utils/request'
+import { deliveryAPI, favoriteAPI, getStudentId, jobAPI } from '@/utils/request'
 import NavBar from '@/components/NavBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 
@@ -68,15 +68,6 @@ const parseSalary = (s) => {
 	if (!s) return 0
 	const nums = s.match(/\d+/g)
 	return nums ? parseInt(nums[0]) : 0
-}
-
-const getStudentId = () => {
-	try {
-		const raw = uni.getStorageSync('userInfo')
-		if (!raw) return null
-		const obj = JSON.parse(raw)
-		return obj.id || obj.userId ? Number(obj.id || obj.userId) : null
-	} catch (e) { return null }
 }
 
 loadData()

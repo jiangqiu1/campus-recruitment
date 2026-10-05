@@ -119,7 +119,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { resumeAPI, authAPI } from '@/utils/request'
+import { BASE_URL, authAPI, getStudentId, resumeAPI } from '@/utils/request'
 import NavBar from '@/components/NavBar.vue'
 import TagInput from '@/components/TagInput.vue'
 
@@ -143,15 +143,6 @@ const form = ref({
 	skills: '',
 	selfEvaluation: ''
 })
-
-const getStudentId = () => {
-	try {
-		const raw = uni.getStorageSync('userInfo')
-		if (!raw) return null
-		const obj = JSON.parse(raw)
-		return obj.id || obj.userId || null
-	} catch (e) { return null }
-}
 
 onMounted(async () => {
 	await loadExisting()
@@ -328,12 +319,8 @@ const uploadAndParse = async (filePath) => {
 }
 
 const getApiBaseUrl = () => {
-	// 从已有请求配置中获取 baseURL
-	try {
-		const app = getApp()
-		if (app?.globalData?.baseUrl) return app.globalData.baseUrl
-	} catch (e) {}
-	return 'http://localhost:8080/api'
+	// 统一走 request.js 的配置（支持 api_base_url 自定义），不再本地兜底 localhost
+	return BASE_URL
 }
 
 const handleBack = () => {

@@ -1,7 +1,6 @@
 <script>
 	export default {
 		onLaunch: function() {
-			console.log('App Launch')
 			const token = uni.getStorageSync('token')
 			const userInfoStr = uni.getStorageSync('userInfo')
 			if (token && userInfoStr) {

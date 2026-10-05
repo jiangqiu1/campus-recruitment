@@ -150,7 +150,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { jobAPI, deliveryAPI, favoriteAPI, resumeAPI, hrAPI, matchAPI } from '@/utils/request'
+import { deliveryAPI, favoriteAPI, getStudentId, hrAPI, jobAPI, matchAPI, resumeAPI } from '@/utils/request'
 import { formatSalary, formatTimeSemantic } from '@/utils/format'
 import { addBrowseRecord } from '@/utils/browseHistory'
 import NavBar from '@/components/NavBar.vue'
@@ -221,7 +221,7 @@ const loadJobDetail = async (id) => {
 		loadCompany()
 		loadMatch()
 	} catch (e) {
-		console.log('加载岗位详情失败', e)
+		console.error('加载岗位详情失败', e)
 		loadFailed.value = true
 		uni.showToast({ title: '加载失败', icon: 'none' })
 	}
@@ -246,18 +246,8 @@ const loadCompany = async () => {
 		const res = await hrAPI.getCompanyProfile(cid)
 		if (res.data) company.value = res.data
 	} catch (e) {
-		console.log('加载企业信息失败', e)
+		console.error('加载企业信息失败', e)
 	}
-}
-
-const getStudentId = () => {
-	try {
-		const raw = uni.getStorageSync('userInfo')
-		if (!raw) return null
-		const obj = JSON.parse(raw)
-		const sid = obj.id || obj.userId
-		return sid ? Number(sid) : null
-	} catch (e) { return null }
 }
 
 const loadUserState = async () => {
@@ -272,7 +262,7 @@ const loadUserState = async () => {
 		isDelivered.value = (dRes.data || []).some(d => Number(d.jobId) === Number(theId))
 		isFavorited.value = (fRes.data || []).some(f => Number(f.jobId) === Number(theId))
 	} catch (e) {
-		console.log('加载用户状态失败', e)
+		console.error('加载用户状态失败', e)
 	}
 }
 

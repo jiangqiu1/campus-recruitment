@@ -120,7 +120,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { request, jobAPI, deliveryAPI, statisticsAPI, favoriteAPI, mapJobData, matchAPI, resumeAPI } from '@/utils/request'
+import { deliveryAPI, favoriteAPI, getStudentId, jobAPI, mapJobData, matchAPI, request, resumeAPI, statisticsAPI } from '@/utils/request'
 import TabBar from '@/components/TabBar.vue'
 import JobCard from '@/components/JobCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
@@ -157,13 +157,6 @@ const stageLine = computed(() => {
 	if ((d.deliveries || 0) > 0) return '简历已投出，静候反馈也别停下脚步'
 	return '从一份完整的简历开始你的求职计划'
 })
-
-const mockJobs = [
-	{ id: 1, title: '前端开发实习生', salaryRange: '4K-6K', location: '广州', education: '大专及以上', companyName: '广州科技公司', matchScore: 92 },
-	{ id: 2, title: 'Java开发助理', salaryRange: '5K-7K', location: '深圳', education: '大专及以上', companyName: '深圳信息科技', matchScore: 88 },
-	{ id: 3, title: 'UI设计实习生', salaryRange: '3K-5K', location: '广州', education: '大专及以上', companyName: '数字创意公司', matchScore: 85 }
-].map(mapJobData)
-const mockStats = { deliveries: 12, viewed: 8, interviews: 3, offers: 1 }
 
 const switchListTab = (tab) => {
 	if (currentListTab.value === tab) return
@@ -252,22 +245,16 @@ const loadResume = async () => {
 
 const loadData = async () => {
 	try {
+		const seq = ++loadSeq
 		const [jobsRes, statsRes] = await Promise.all([
 			jobAPI.getRecommendJobs({ sort: currentListTab.value }),
 			statisticsAPI.getStudentOverview()
 		])
 		const rawJobs = jobsRes.data || []
-		recommendJobs.value = await Promise.all(rawJobs.map(async (j) => {
-			const mapped = mapJobData(j)
-			if (j.companyId && !mapped.companyName) {
-				try {
-					const cRes = await request({ url: '/companies/' + j.companyId })
-					const c = cRes.data || {}
-					mapped.companyName = c.name || c.shortName || ''
-				} catch (ce) {}
-			}
-			return mapped
-		}))
+		const jobs = rawJobs.map(j => mapJobData(j))
+		if (seq !== loadSeq) return
+		recommendJobs.value = jobs
+		if (seq !== loadSeq) return
 		const d = statsRes.data || {}
 		stats.value = { deliveries: d.myDeliveries || 0, viewed: d.viewedDeliveries || 0, interviews: d.interviewCount || 0, offers: d.offersCount || 0 }
 
@@ -276,9 +263,11 @@ const loadData = async () => {
 			const studentId = getStudentId()
 			if (studentId) {
 				const matchRes = await matchAPI.getByStudent(studentId)
+				if (seq !== loadSeq) return
 				const matches = matchRes.data || []
 				matchCount.value = matches.length
 				const normalize = (v) => (typeof v === 'number' && v > 1 ? Math.round(v) : Math.round((v || 0) * 100))
+				if (seq !== loadSeq) return
 				topMatchScore.value = matches.reduce((max, m) => Math.max(max, normalize(m.matchScore)), 0)
 				const matchMap = {}
 				matches.forEach(m => { matchMap[m.jobId] = m.matchScore })
@@ -290,31 +279,26 @@ const loadData = async () => {
 							: Math.round(dbScore * 100)  // 小数(如 0.88)
 						return { ...j, matchScore: score }
 					}
-					// 退化：从 mock 数据取默认匹配度
-					const mock = mockJobs.find(m => m.id === j.id)
-					return { ...j, matchScore: mock ? mock.matchScore : 0 }
+					// 无匹配记录：保持原值（0），不造假数据
+					return j
 				})
 			}
 		} catch (me) {
-			console.log('加载匹配度失败', me)
+			console.error('加载匹配度失败', me)
 		}
 	} catch (e) {
-		console.log('API接口未就绪，使用模拟数据')
-		recommendJobs.value = currentListTab.value === 'latest' ? [...mockJobs].reverse() : mockJobs
-		stats.value = mockStats
-		matchCount.value = mockJobs.length
-		topMatchScore.value = 92
+		// 失败不造假数据：清空列表走空态，数字保持 0 可溯源
+		console.error('首页数据加载失败', e)
+		if (seq !== loadSeq) return
+		recommendJobs.value = []
+		stats.value = { deliveries: 0, viewed: 0, interviews: 0, offers: 0 }
+		matchCount.value = 0
+		topMatchScore.value = 0
 	}
 }
 
-const getStudentId = () => {
-	try {
-		const raw = uni.getStorageSync('userInfo')
-		if (!raw) return null
-		const obj = JSON.parse(raw)
-		return obj.id || obj.userId ? Number(obj.id || obj.userId) : null
-	} catch (e) { return null }
-}
+// 竞态守卫：tab 快速切换时旧响应不得覆盖新列表
+let loadSeq = 0
 
 const loadUserState = async () => {
 	try {
@@ -328,7 +312,7 @@ const loadUserState = async () => {
 		])
 		deliveredJobIds.value = new Set((dRes.data || []).map(d => d.jobId))
 	} catch (e) {
-		console.log('加载用户状态失败', e)
+		console.error('加载用户状态失败', e)
 	}
 }
 

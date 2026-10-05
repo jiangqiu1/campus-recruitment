@@ -34,20 +34,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { jobAPI, deliveryAPI } from '@/utils/request'
+import { deliveryAPI, getStudentId, jobAPI } from '@/utils/request'
 import { mapJobData } from '@/utils/request'
 import NavBar from '@/components/NavBar.vue'
 import JobCard from '@/components/JobCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
-
-const getStudentId = () => {
-	try {
-		const raw = uni.getStorageSync('userInfo')
-		if (!raw) return null
-		const obj = JSON.parse(raw)
-		return obj.id || obj.userId ? Number(obj.id || obj.userId) : null
-	} catch (e) { return null }
-}
 
 const jobs = ref([])
 const refreshing = ref(false)
@@ -70,7 +61,7 @@ const loadJobs = async () => {
 		hasMore.value = raw.length >= PAGE_SIZE
 		page.value = 1
 	} catch (e) {
-		console.log('加载热门岗位失败', e)
+		console.error('加载热门岗位失败', e)
 		uni.showToast({ title: '加载失败', icon: 'none' })
 	}
 }
@@ -90,7 +81,7 @@ const loadMore = async () => {
 			hasMore.value = false
 		}
 	} catch (e) {
-		console.log('加载更多失败', e)
+		console.error('加载更多失败', e)
 	} finally {
 		loadingMore.value = false
 	}
@@ -112,7 +103,7 @@ const loadUserState = async () => {
 		const dRes = await deliveryAPI.getDeliveriesByStudentId({ studentId: sid })
 		deliveredJobIds.value = new Set((dRes.data || []).map(d => d.jobId))
 	} catch (e) {
-		console.log('加载用户状态失败', e)
+		console.error('加载用户状态失败', e)
 	}
 }
 

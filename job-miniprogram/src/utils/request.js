@@ -9,9 +9,9 @@ const getBaseUrl = () => {
   return 'http://localhost:8080/api'
 }
 
-const BASE_URL = getBaseUrl()
+export const BASE_URL = getBaseUrl()
 
-const getStudentId = () => {
+export const getStudentId = () => {
   try {
     const raw = uni.getStorageSync('userInfo')
     if (!raw) return null
@@ -185,7 +185,7 @@ export const favoriteAPI = {
 
 /* ======================== 统计模块 ======================== */
 export const statisticsAPI = {
-  getStudentOverview: (studentId) => request({ url: '/statistics/student/overview' })
+  getStudentOverview: () => request({ url: '/statistics/student/overview' })
 }
 
 /* ======================== 班级模块 ======================== */

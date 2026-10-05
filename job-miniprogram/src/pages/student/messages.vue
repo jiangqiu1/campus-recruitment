@@ -47,7 +47,7 @@
 <script setup>
 import LoadingState from '@/components/LoadingState.vue'
 import { ref, computed } from 'vue'
-import { messageAPI, deliveryAPI, matchAPI } from '@/utils/request'
+import { deliveryAPI, getStudentId, matchAPI, messageAPI } from '@/utils/request'
 import TabBar from '@/components/TabBar.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import NavBar from '@/components/NavBar.vue'
@@ -116,14 +116,6 @@ const groupedMessages = computed(() => {
 	return buckets
 })
 
-function getStudentId() {
-	try {
-		const raw = uni.getStorageSync('userInfo')
-		if (!raw) return null
-		const obj = JSON.parse(raw)
-		return obj.id || obj.userId ? Number(obj.id || obj.userId) : null
-	} catch (e) { return null }
-}
 
 const TYPE_MAP = { 0: 'system', 1: 'company', 2: 'ai' }
 
@@ -138,7 +130,7 @@ async function loadData() {
 			type: TYPE_MAP[m.type] || 'system',
 			time: m.createTime ? m.createTime.replace('T', ' ').substring(0, 16) : ''
 		}))
-	} catch (e) { console.log('加载消息失败', e) }
+	} catch (e) { console.error('加载消息失败', e) }
 	finally { loading.value = false }
 	loadTodos()
 }
