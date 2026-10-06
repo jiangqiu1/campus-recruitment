@@ -337,6 +337,27 @@ public class ClassController extends BaseController {
     }
     
     /**
+     * 学生名册（教师添加学生进班时搜索用）
+     * 仅返回最小字段，不含手机号等敏感信息
+     */
+    @GetMapping("/student-directory")
+    public Result<List<Map<String, Object>>> getStudentDirectory() {
+        requireTeacher();
+        List<SysUser> students = userService.lambdaQuery()
+                .eq(SysUser::getRole, 0)
+                .select(SysUser::getId, SysUser::getUsername, SysUser::getRealName)
+                .list();
+        List<Map<String, Object>> result = students.stream().map(u -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", u.getId());
+            m.put("username", u.getUsername());
+            m.put("realName", u.getRealName());
+            return m;
+        }).collect(Collectors.toList());
+        return Result.success(result);
+    }
+
+    /**
      * 教师名下全部班级的学生聚合列表（工作台「全部学生」入口）
      */
     @GetMapping("/students")

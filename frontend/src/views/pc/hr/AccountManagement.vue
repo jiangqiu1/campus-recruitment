@@ -5,6 +5,24 @@
       <p>管理本企业下的 HR 操作账号</p>
     </div>
 
+    <div class="stats-row">
+      <div class="stat-box">
+        <span class="stat-num">{{ accountList.length }}</span>
+        <span class="stat-label">子账号总数</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-num stat-num--ok">{{ activeCount }}</span>
+        <span class="stat-label">启用中</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-num stat-num--off">{{ disabledCount }}</span>
+        <span class="stat-label">已禁用</span>
+      </div>
+      <div class="stat-box stat-box--tip">
+        <span class="stat-tip">子账号可独立登录处理简历与面试；建议按招聘小组分配，一人一号</span>
+      </div>
+    </div>
+
     <div class="operation-row">
       <el-button type="primary" @click="showCreateDialog">+ 新建子账号</el-button>
     </div>
@@ -93,6 +111,8 @@ const companyId = computed(() => userStore.companyId)
 
 
 const accountList = ref([])
+const activeCount = computed(() => accountList.value.filter(a => a.status === 1).length)
+const disabledCount = computed(() => accountList.value.filter(a => a.status !== 1).length)
 const loading = ref(false)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
@@ -218,4 +238,14 @@ const formatTime = (t) => formatDate(t, { showSeconds: true })
 .empty-state { padding: 40px 0; display: flex; justify-content: center; }
 
 
+</style>
+<style scoped>
+.stats-row { display: flex; gap: 16px; margin-bottom: 20px; }
+.stat-box { background: white; border-radius: 12px; padding: 18px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+.stat-num { font-size: 26px; font-weight: 700; color: #1D2129; }
+.stat-num--ok { color: #10B981; }
+.stat-num--off { color: #F53F3F; }
+.stat-label { font-size: 13px; color: #86909C; }
+.stat-box--tip { flex: 1; justify-content: center; background: #F7F8FA; box-shadow: none; }
+.stat-tip { font-size: 13px; color: #86909C; line-height: 1.6; }
 </style>

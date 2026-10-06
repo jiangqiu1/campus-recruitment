@@ -21,7 +21,7 @@
       </div>
       <div class="stat-card" style="border-left-color:#7F77DD">
         <h3>平均匹配度</h3>
-        <div class="num">{{ matchStats.avgScore }}%</div>
+        <div class="num">{{ matchStats.avgScore ? matchStats.avgScore + '%' : '--' }}</div>
       </div>
     </div>
 
@@ -353,7 +353,8 @@ const loadClasses = async () => {
 
 const loadStudents = async () => {
   try {
-    const res = await userAPI.getUsersByRole(0)
+    // 教师只加载自己班级的学生（/admin/users 已收紧为管理员专用）
+    const res = await classAPI.getAllStudents()
     if (res.code === 200) {
       studentList.value = res.data || []
     }

@@ -43,13 +43,17 @@
       <el-table v-loading="loading" :data="jobList" style="width:100%" stripe>
         <el-table-column type="index" label="#" width="50" />
         <el-table-column prop="title" label="岗位名称" min-width="170" show-overflow-tooltip />
-        <el-table-column prop="type" label="岗位类型" width="100" />
+        <el-table-column prop="education" label="学历要求" width="100" />
         <el-table-column label="薪资" width="150">
           <template #default="{ row }">
-            {{ row.salaryMin && row.salaryMax ? `${row.salaryMin}k-${row.salaryMax}k` : (row.salary || '面议') }}
+            {{ row.salaryRange || '面议' }}
           </template>
         </el-table-column>
-        <el-table-column prop="deliveryCount" label="投递数" width="80" align="center" />
+        <el-table-column prop="deliveryCount" label="投递数" width="80" align="center">
+          <template #default="{ row }">
+            <span :class="['delivery-num', { 'delivery-num--hot': row.deliveryCount > 0 }]">{{ row.deliveryCount ?? 0 }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="100" align="center">
           <template #default="{ row }">
             <el-tag :type="statusTag(row.status)" size="small">{{ statusLabel(row.status) }}</el-tag>
@@ -86,22 +90,9 @@
         <el-form-item label="岗位名称" prop="title">
           <el-input v-model="form.title" placeholder="请输入岗位名称" maxlength="100" />
         </el-form-item>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="岗位类型" prop="type">
-              <el-select v-model="form.type" placeholder="请选择" style="width:100%">
-                <el-option label="全职" value="全职" />
-                <el-option label="实习" value="实习" />
-                <el-option label="兼职" value="兼职" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="招聘人数" prop="headcount">
-              <el-input-number v-model="form.headcount" :min="1" :max="99" style="width:100%" />
-            </el-form-item>
-          </el-col>
-        </el-row>
+        <el-form-item label="所在城市" prop="location">
+          <el-input v-model="form.location" placeholder="如：广州市天河区" maxlength="100" />
+        </el-form-item>
         <el-form-item label="薪资范围" prop="salary">
           <el-row :gutter="10">
             <el-col :span="10">
@@ -112,12 +103,6 @@
               <el-input-number v-model="form.salaryMax" :min="0" :max="200" placeholder="最高" style="width:100%" />
             </el-col>
           </el-row>
-        </el-form-item>
-        <el-form-item label="工作城市">
-          <el-input v-model="form.city" placeholder="如：广州" />
-        </el-form-item>
-        <el-form-item label="工作地址">
-          <el-input v-model="form.address" placeholder="详细工作地址" />
         </el-form-item>
         <el-form-item label="学历要求" prop="education">
           <el-select v-model="form.education" placeholder="请选择" style="width:100%" :teleported="false">
@@ -163,16 +148,22 @@ const keyword = ref('')
 const currentCompanyId = ref(null)
 
 const form = ref({
-  title: '', type: '全职', headcount: 1,
+  title: '', location: '',
   salaryMin: 5, salaryMax: 10,
-  city: '', address: '',
   education: '不限', description: '',
   deadline: '', companyId: null
 })
 
+// "10k-20k"/"8K-15K"/"6K~8K" → { min, max }
+const parseSalaryRange = (range) => {
+  const nums = (range || '').match(/(\d+)\s*[kK]??/g) || []
+  const [min, max] = nums.map(Number)
+  return { salaryMin: min || 0, salaryMax: max || min || 0 }
+}
+
 const rules = {
   title: [{ required: true, message: '请输入岗位名称', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择岗位类型', trigger: 'change' }],
+  location: [{ required: true, message: '请输入工作地点', trigger: 'blur' }],
   education: [{ required: true, message: '请选择学历要求', trigger: 'change' }],
   description: [{ required: true, message: '请输入岗位描述', trigger: 'blur' }]
 }
@@ -218,9 +209,8 @@ const resetFilters = () => {
 const showCreateDialog = () => {
   isEdit.value = false
   form.value = {
-    title: '', type: '全职', headcount: 1,
+    title: '', location: '',
     salaryMin: 5, salaryMax: 10,
-    city: '', address: '',
     education: '不限', description: '',
     deadline: '', companyId: currentCompanyId.value
   }
@@ -231,12 +221,8 @@ const showEditDialog = (row) => {
   isEdit.value = true
   form.value = {
     title: row.title,
-    type: row.type || '全职',
-    headcount: row.headcount || 1,
-    salaryMin: row.salaryMin || 0,
-    salaryMax: row.salaryMax || 0,
-    city: row.city || '',
-    address: row.address || '',
+    location: row.location || '',
+    ...parseSalaryRange(row.salaryRange),
     education: row.education || '不限',
     description: row.description || '',
     deadline: row.deadline || '',
@@ -252,7 +238,10 @@ const saveJob = async () => {
   saving.value = true
   try {
     const data = { ...form.value }
+    data.salaryRange = `${data.salaryMin}k-${data.salaryMax}k`
     delete data._id
+    delete data.salaryMin
+    delete data.salaryMax
     if (isEdit.value) {
       const res = await jobAPI.updateJob(form.value._id, data)
       if (res.code === 200) {
@@ -347,4 +336,8 @@ const formatTime = (t) => formatDate(t)
   background: rgba(0, 0, 0, 0.45) !important;
   z-index: 9999 !important;
 }
+</style>
+<style scoped>
+.delivery-num { font-weight: 600; color: #86909C; }
+.delivery-num--hot { color: #165DFF; font-weight: 700; }
 </style>

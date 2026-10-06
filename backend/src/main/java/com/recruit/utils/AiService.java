@@ -267,6 +267,8 @@ public class AiService {
         // 智谱 GLM 是思考模型：不关思考链的话 max_tokens 会被 reasoning 耗尽，content 返回空
         if (provider.getUrl() != null && provider.getUrl().contains("bigmodel.cn")) {
             requestBody.put("thinking", Map.of("type", "disabled"));
+            // JSON 模式保证输出严格合法 JSON（实测支持），根治字符串内未转义引号问题
+            requestBody.put("response_format", Map.of("type", "json_object"));
         }
 
         List<Map<String, String>> messages = new ArrayList<>();

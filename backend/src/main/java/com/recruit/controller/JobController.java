@@ -148,6 +148,21 @@ public class JobController extends BaseController {
     @GetMapping("/by-company/{companyId}")
     public Result<List<Job>> getJobsByCompanyId(@PathVariable Long companyId) {
         List<Job> jobs = jobService.selectByCompanyId(companyId);
+        // 批量填充投递数（一次 group by）
+        if (!jobs.isEmpty()) {
+            List<Long> jobIds = jobs.stream().map(Job::getId).collect(Collectors.toList());
+            Map<Long, Integer> deliveryCntMap = new HashMap<>();
+            for (Map<String, Object> row : deliveryService.getBaseMapper().selectMaps(
+                    new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                            .select("job_id, COUNT(*) AS cnt")
+                            .in("job_id", jobIds)
+                            .groupBy("job_id"))) {
+                if (row.get("job_id") != null) {
+                    deliveryCntMap.put(Long.valueOf(row.get("job_id").toString()), Integer.valueOf(row.get("cnt").toString()));
+                }
+            }
+            jobs.forEach(job -> job.setDeliveryCount(deliveryCntMap.getOrDefault(job.getId(), 0)));
+        }
         return Result.success(jobs);
     }
     

@@ -57,7 +57,11 @@
             {{ row.salaryRange || '面议' }}
           </template>
         </el-table-column>
-        <el-table-column prop="deliveryCount" label="投递" width="60" align="center" />
+        <el-table-column prop="deliveryCount" label="投递" width="60" align="center">
+          <template #default="{ row }">
+            <span :class="['delivery-num', { 'delivery-num--hot': row.deliveryCount > 0 }]">{{ row.deliveryCount ?? 0 }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="90" align="center">
           <template #default="{ row }">
             <el-tag :type="statusTag(row.status)" size="small">{{ statusLabel(row.status) }}</el-tag>
@@ -88,7 +92,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { jobAPI, companyAPI, userAPI } from '@/api'
 import { formatDate } from '@/utils/formatDate'
 
@@ -184,6 +188,12 @@ const onPageChange = (page) => {
 }
 
 const closeJob = async (row) => {
+  const ok = await ElMessageBox.confirm(
+    `确定下架岗位「${row.title}」？下架后学生将无法查看和投递`,
+    '下架确认',
+    { type: 'warning', confirmButtonText: '确认下架', cancelButtonText: '取消' }
+  ).then(() => true).catch(() => false)
+  if (!ok) return
   try {
     const res = await jobAPI.closeJob(row.id)
     if (res.code === 200) {
@@ -228,4 +238,8 @@ const formatTime = (t) => formatDate(t)
 
 <style scoped>
 .search-form { padding: 12px 0; }
+</style>
+<style scoped>
+.delivery-num { font-weight: 600; color: #86909C; }
+.delivery-num--hot { color: #165DFF; font-weight: 700; }
 </style>

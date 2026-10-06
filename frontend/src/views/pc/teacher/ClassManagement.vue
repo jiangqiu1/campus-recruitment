@@ -260,7 +260,7 @@ const showAddStudentDialog = async () => {
   addDialogVisible.value = true
   // 加载全校学生列表
   try {
-    const res = await userAPI.getUsersByRole(0)
+    const res = await classAPI.getStudentDirectory()
     allStudents.value = (res.data || []).sort((a, b) => (a.username || '').localeCompare(b.username || ''))
   } catch (e) {
     ElMessage.error('加载学生列表失败')

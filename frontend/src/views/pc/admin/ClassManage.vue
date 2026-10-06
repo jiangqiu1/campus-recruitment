@@ -4,6 +4,24 @@
       <h2>班级管理</h2>
       <p>管理班级信息 · 管理学生关联</p>
     </div>
+
+    <div class="stats-row">
+      <div class="stat-box">
+        <span class="stat-num">{{ classList.length }}</span>
+        <span class="stat-label">班级总数</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-num stat-num--blue">{{ totalStudents }}</span>
+        <span class="stat-label">学生总数</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-num stat-num--green">{{ avgSize }}</span>
+        <span class="stat-label">平均班额</span>
+      </div>
+      <div class="stat-box stat-box--tip">
+        <span class="stat-tip">点击「管理学生」可查看班级名单、添加或移除学生</span>
+      </div>
+    </div>
     
     <!-- 操作栏 -->
     <el-row class="operation-row">
@@ -156,6 +174,9 @@ import { classAPI, userAPI } from '@/api'
 import ResumeDetailDialog from '@/components/ResumeDetailDialog.vue'
 
 const classList = ref([])
+// 学生数优先取后端返回的 studentCount，取不到按列表渲染（分页时仅当前页）
+const totalStudents = computed(() => classList.value.reduce((sum, c) => sum + (Number(c.studentCount) || 0), 0))
+const avgSize = computed(() => classList.value.length ? Math.round(totalStudents.value / classList.value.length) : 0)
 const selectedIds = ref([])
 const searchKeyword = ref('')
 const currentPage = ref(1)
@@ -413,4 +434,14 @@ const viewResume = (student) => {
 }
 .student-count { font-size: 14px; color: #86909C; }
 .student-dialog-actions { display: flex; align-items: center; }
+</style>
+<style scoped>
+.stats-row { display: flex; gap: 16px; margin-bottom: 20px; }
+.stat-box { background: white; border-radius: 12px; padding: 18px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+.stat-num { font-size: 26px; font-weight: 700; color: #1D2129; }
+.stat-num--blue { color: #165DFF; }
+.stat-num--green { color: #10B981; }
+.stat-label { font-size: 13px; color: #86909C; }
+.stat-box--tip { flex: 1; justify-content: center; background: #F7F8FA; box-shadow: none; }
+.stat-tip { font-size: 13px; color: #86909C; line-height: 1.6; }
 </style>

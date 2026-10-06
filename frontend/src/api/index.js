@@ -36,7 +36,10 @@ request.interceptors.response.use(
         // 退出登录时，不弹窗不跳转（由 logout 流程处理）
         if (window.__isLoggingOut) return Promise.reject(error)
         ElMessage.error('登录已过期，请重新登录')
-        localStorage.clear()
+        // 只清鉴权信息，保留 lastLoginRole 等用户偏好
+        localStorage.removeItem('token')
+        localStorage.removeItem('userInfo')
+        localStorage.removeItem('role')
         window.location.href = '/login'
       } else if (error.response.status === 403) {
         ElMessage.error('没有权限访问')
@@ -148,6 +151,8 @@ export const classAPI = {
   deleteClass: (id) => request.delete('/classes/' + id),
   batchDeleteClasses: (ids) => request.post('/classes/batch-delete', ids),
   getClassStudents: (classId) => request.get('/classes/' + classId + '/students'),
+  getAllStudents: () => request.get('/classes/students'),
+  getStudentDirectory: () => request.get('/classes/student-directory'),
   getClassesByTeacher: (teacherId) => request.get('/classes/by-teacher/' + teacherId),
   getAllClasses: (params) => request.get('/classes', { params }),
   // 学生关联管理
