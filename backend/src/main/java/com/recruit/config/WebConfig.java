@@ -33,6 +33,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
             "/auth/login",
             "/auth/register",
+            "/statistics/public-summary",
                         "/doc.html",
                         "/webjars/**",
                         "/swagger-resources/**",

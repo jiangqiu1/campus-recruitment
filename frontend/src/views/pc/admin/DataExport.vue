@@ -9,12 +9,12 @@
       <el-form :model="exportForm" label-width="120px">
         <el-form-item label="导出类型">
           <el-select v-model="exportForm.type" placeholder="请选择导出类型">
-            <el-option label="学生信息" value="student" />
-            <el-option label="简历信息" value="resume" />
-            <el-option label="投递记录" value="delivery" />
-            <el-option label="企业信息" value="company" />
-            <el-option label="岗位信息" value="job" />
-            <el-option label="AI调用记录（多模型对比）" value="ai" />
+            <el-option label="学生信息 — 注册学生名单与基本信息" value="student" />
+            <el-option label="简历信息 — 学生简历明细（含完整度）" value="resume" />
+            <el-option label="投递记录 — 投递流水与当前状态" value="delivery" />
+            <el-option label="企业信息 — 入驻企业与资质概要" value="company" />
+            <el-option label="岗位信息 — 全部岗位及在招状态" value="job" />
+            <el-option label="AI调用记录（多模型对比）— 供方/任务/耗时/降级明细" value="ai" />
           </el-select>
         </el-form-item>
         

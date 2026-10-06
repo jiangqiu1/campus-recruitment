@@ -611,6 +611,18 @@ public class StatisticsController extends BaseController {
      * AI 多模型对比统计（毕设对比实验数据看板）
      * 按 provider 汇总调用量/平均耗时/降级次数，按任务汇总调用量
      */
+    /**
+     * 公开平台概览（登录页宣传数字，真实可查，免鉴权）
+     */
+    @GetMapping("/public-summary")
+    public Result<Map<String, Object>> getPublicSummary() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("studentCount", userService.lambdaQuery().eq(SysUser::getRole, 0).count());
+        data.put("companyCount", companyService.count());
+        data.put("jobCount", jobService.lambdaQuery().eq(Job::getStatus, 1).count());
+        return Result.success(data);
+    }
+
     @GetMapping("/ai/model-comparison")
     public Result<Map<String, Object>> getAiModelComparison() {
         requireAdmin();

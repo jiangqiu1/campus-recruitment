@@ -51,10 +51,10 @@
         <el-table-column prop="title" label="岗位名称" min-width="160" />
         <el-table-column prop="companyName" label="所属企业" width="160" />
         <el-table-column prop="createdByName" label="发布者" width="100" />
-        <el-table-column prop="type" label="类型" width="70" />
+        <el-table-column prop="education" label="学历" width="90" />
         <el-table-column label="薪资" width="120">
           <template #default="{ row }">
-            {{ row.salaryMin && row.salaryMax ? `${row.salaryMin}k-${row.salaryMax}k` : (row.salary || '面议') }}
+            {{ row.salaryRange || '面议' }}
           </template>
         </el-table-column>
         <el-table-column prop="deliveryCount" label="投递" width="60" align="center" />

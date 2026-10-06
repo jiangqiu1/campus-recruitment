@@ -1,6 +1,7 @@
 package com.recruit.controller;
 
 import com.recruit.entity.Company;
+import com.recruit.entity.Delivery;
 import com.recruit.entity.Job;
 import com.recruit.service.CompanyService;
 import com.recruit.service.DeliveryService;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -93,6 +95,20 @@ public class JobController extends BaseController {
             Map<Long, String> companyNameMap = companyService.listByIds(new ArrayList<>(companyIds))
                     .stream().collect(Collectors.toMap(Company::getId, c -> c.getName() != null ? c.getName() : ""));
             records.forEach(job -> job.setCompanyName(companyNameMap.getOrDefault(job.getCompanyId(), "")));
+
+            // 批量填充投递数（一次 group by）
+            List<Long> jobIds = records.stream().map(Job::getId).collect(Collectors.toList());
+            Map<Long, Integer> deliveryCntMap = new HashMap<>();
+            for (Map<String, Object> row : deliveryService.getBaseMapper().selectMaps(
+                    new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                            .select("job_id, COUNT(*) AS cnt")
+                            .in("job_id", jobIds)
+                            .groupBy("job_id"))) {
+                if (row.get("job_id") != null) {
+                    deliveryCntMap.put(Long.valueOf(row.get("job_id").toString()), Integer.valueOf(row.get("cnt").toString()));
+                }
+            }
+            records.forEach(job -> job.setDeliveryCount(deliveryCntMap.getOrDefault(job.getId(), 0)));
         }
 
         return Result.success(PageResult.of(pageResult));

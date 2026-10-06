@@ -50,9 +50,9 @@
         </h1>
         <p>全校就业数据一张图 · 校企协同数字化</p>
         <div class="stats">
-          <span class="stats-item"><strong>98%</strong> 就业率</span>
-          <span class="stats-item"><strong>500+</strong> 合作企业</span>
-          <span class="stats-item"><strong>10k</strong> 应届生</span>
+          <span class="stats-item"><strong>{{ publicSummary.studentCount }}</strong> 注册学生</span>
+          <span class="stats-item"><strong>{{ publicSummary.companyCount }}</strong> 合作企业</span>
+          <span class="stats-item"><strong>{{ publicSummary.jobCount }}</strong> 在招岗位</span>
         </div>
       </div>
     </div>
@@ -144,7 +144,7 @@
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { authAPI } from '@/api'
+import { authAPI, statisticsAPI } from '@/api'
 
 // ----- 常量定义 -----
 const STORAGE_KEYS = {
@@ -177,8 +177,11 @@ const networkBg = ref(null)
 const loginForm = reactive({
   username: '',
   password: '',
-  role: '', // 默认为空
+  role: localStorage.getItem('lastLoginRole') || '', // 记住上次成功登录的身份
 })
+
+// 登录页数字：真实平台概览（免鉴权接口），加载失败显示 —
+const publicSummary = ref({ studentCount: '—', companyCount: '—', jobCount: '—' })
 
 // 表单校验规则
 const rules = {
@@ -273,6 +276,7 @@ const handleLogin = async () => {
           )
 
           ElMessage.success('登录成功')
+          localStorage.setItem('lastLoginRole', loginForm.role)
 
           // 路由跳转
           if (data.role === 3) {
@@ -320,6 +324,17 @@ const handleMouseMove = (e) => {
 
 // ----- 生命周期 -----
 onMounted(() => {
+  // 平台概览数字（真实可查）
+  statisticsAPI.getPublicSummary().then(res => {
+    if (res.code === 200 && res.data) {
+      publicSummary.value = {
+        studentCount: res.data.studentCount ?? '—',
+        companyCount: res.data.companyCount ?? '—',
+        jobCount: res.data.jobCount ?? '—'
+      }
+    }
+  }).catch(() => {})
+
   // 生成背景节点
   nextTick(() => {
     const container = networkBg.value
