@@ -31,6 +31,12 @@ public class Class {
      * 班主任/教师ID - 外键(sys_user.id)
      */
     private Long teacherId;
+
+    /**
+     * 班主任姓名（列表展示用，非表字段）
+     */
+    @TableField(exist = false)
+    private String teacherName;
     
     /**
      * 专业名称

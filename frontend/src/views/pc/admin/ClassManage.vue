@@ -45,7 +45,9 @@
       <el-table-column prop="name" label="班级名称" />
       <el-table-column prop="major" label="专业" />
       <el-table-column prop="grade" label="年级" width="100" />
-      <el-table-column prop="teacherId" label="班主任ID" width="120" />
+      <el-table-column label="班主任" width="120">
+        <template #default="{ row }">{{ row.teacherName || ('ID ' + row.teacherId) }}</template>
+      </el-table-column>
       <el-table-column prop="studentCount" label="学生数" width="80" />
       <el-table-column label="操作" width="280">
         <template #default="{ row }">

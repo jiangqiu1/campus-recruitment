@@ -35,8 +35,8 @@
       <el-table-column prop="contactPhone" label="联系电话" />
       <el-table-column prop="status" label="状态">
         <template #default="{ row }">
-          <el-tag :type="row.status === 1 ? 'success' : 'danger'">
-            {{ row.status === 1 ? '启用' : '禁用' }}
+          <el-tag :type="row.status === 1 ? 'success' : row.status === 0 ? 'warning' : 'danger'">
+            {{ row.status === 1 ? '启用' : row.status === 0 ? '待审核' : '已拒绝' }}
           </el-tag>
         </template>
       </el-table-column>

@@ -71,6 +71,16 @@ public class ClassController extends BaseController {
             classes = classService.list();
         }
         fillClassStatistics(classes);
+        // 批量填充班主任姓名
+        if (!classes.isEmpty()) {
+            List<Long> teacherIds = classes.stream().map(Class::getTeacherId)
+                    .filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
+            Map<Long, String> nameMap = teacherIds.isEmpty() ? new HashMap<>()
+                    : userService.listByIds(teacherIds).stream()
+                        .collect(Collectors.toMap(SysUser::getId,
+                            u -> u.getRealName() != null && !u.getRealName().isEmpty() ? u.getRealName() : u.getUsername()));
+            classes.forEach(c -> c.setTeacherName(nameMap.getOrDefault(c.getTeacherId(), "未分配")));
+        }
         return Result.success(classes);
     }
 
@@ -169,6 +179,16 @@ public class ClassController extends BaseController {
         }
         List<Class> classes = classService.selectByTeacherId(teacherId);
         fillClassStatistics(classes);
+        // 批量填充班主任姓名
+        if (!classes.isEmpty()) {
+            List<Long> teacherIds = classes.stream().map(Class::getTeacherId)
+                    .filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
+            Map<Long, String> nameMap = teacherIds.isEmpty() ? new HashMap<>()
+                    : userService.listByIds(teacherIds).stream()
+                        .collect(Collectors.toMap(SysUser::getId,
+                            u -> u.getRealName() != null && !u.getRealName().isEmpty() ? u.getRealName() : u.getUsername()));
+            classes.forEach(c -> c.setTeacherName(nameMap.getOrDefault(c.getTeacherId(), "未分配")));
+        }
         return Result.success(classes);
     }
     

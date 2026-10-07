@@ -100,7 +100,7 @@ const form = reactive({
 })
 
 const roleLabel = computed(() => {
-  const map = { 0: '学生', 1: '教师', 2: '企业 HR', 3: '管理员' }
+  const map = { student: '学生', teacher: '教师', hr: '企业 HR', admin: '管理员' }
   return map[userStore.userRole] || '未知'
 })
 
@@ -210,6 +210,12 @@ onMounted(loadProfile)
   position: relative;
   display: inline-block;
   margin-bottom: 16px;
+}
+.avatar-wrap :deep(.el-avatar) {
+  background: #E8F3FF;
+  color: #165DFF;
+  font-size: 40px;
+  font-weight: 600;
 }
 
 .avatar-overlay {
