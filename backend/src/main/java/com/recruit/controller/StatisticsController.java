@@ -9,6 +9,7 @@ import com.recruit.entity.ResumeScoreLog;
 import com.recruit.entity.StudentClass;
 import com.recruit.entity.SysUser;
 import com.recruit.service.*;
+import com.recruit.utils.AiService;
 import com.recruit.utils.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +35,12 @@ public class StatisticsController extends BaseController {
 
     @Autowired
     private CompanyService companyService;
+
+    @Autowired
+    private AiService aiService;
+
+    @Autowired
+    private com.recruit.config.AiProperties aiProperties;
 
     @Autowired
     private JobService jobService;
@@ -622,6 +629,95 @@ public class StatisticsController extends BaseController {
         data.put("jobCount", jobService.lambdaQuery().eq(Job::getStatus, 1).count());
         return Result.success(data);
     }
+
+    /**
+     * AI 就业洞察（管理员/教师）：把真实统计数据交给 LLM 解读
+     * provider 可选 deepseek/glm，便于双模型文字质量对比实验
+     */
+    @GetMapping("/ai/insight")
+    public Result<Map<String, Object>> getAiInsight(HttpServletRequest request,
+            @RequestParam(required = false) String provider) {
+        Integer role = getCurrentRole();
+        if (!Objects.equals(role, 1) && !Objects.equals(role, 3)) {
+            return Result.error(403, "仅教师或管理员可使用");
+        }
+        if (provider != null && !"deepseek".equals(provider) && !"glm".equals(provider)) {
+            return Result.error("不支持的模型");
+        }
+
+        // ---- 汇总真实数据 ----
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("注册用户", userService.count());
+        stats.put("入驻企业", companyService.count());
+        stats.put("在招岗位", jobService.lambdaQuery().eq(Job::getStatus, 1).count());
+        stats.put("投递总数", deliveryService.count());
+
+        // 状态分布
+        Map<Long, Integer> statusMap = new java.util.LinkedHashMap<>();
+        for (Map<String, Object> row : deliveryService.getBaseMapper().selectMaps(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                        .select("CAST(status AS SIGNED) AS status, COUNT(*) AS cnt").groupBy("status"))) {
+            if (row.get("status") != null) {
+                statusMap.put(Long.valueOf(row.get("status").toString()), Integer.valueOf(row.get("cnt").toString()));
+            }
+        }
+        Map<String, Integer> statusDist = new java.util.LinkedHashMap<>();
+        String[] statusNames = {"待查看", "已查看", "面试中", "已录用", "不合适"};
+        for (int i = 0; i < statusNames.length; i++) {
+            statusDist.put(statusNames[i], statusMap.getOrDefault((long) i, 0));
+        }
+        stats.put("投递状态分布", statusDist);
+
+        // 近7天投递 vs 前7天
+        LocalDateTime now = LocalDateTime.now();
+        long last7 = deliveryService.count(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                .ge("create_time", now.minusDays(7)));
+        long prev7 = deliveryService.count(new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                .ge("create_time", now.minusDays(14)).lt("create_time", now.minusDays(7)));
+        stats.put("近7天新增投递", last7);
+        stats.put("前7天新增投递", prev7);
+
+        // 热门岗位 Top3
+        List<Map<String, Object>> hotJobs = new ArrayList<>();
+        for (Map<String, Object> row : deliveryService.getBaseMapper().selectMaps(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<Delivery>()
+                        .select("job_id, COUNT(*) AS cnt")
+                        .groupBy("job_id").orderByDesc("cnt").last("LIMIT 3"))) {
+            if (row.get("job_id") == null) continue;
+            Job job = jobService.getById(Long.valueOf(row.get("job_id").toString()));
+            if (job != null) {
+                Map<String, Object> hj = new HashMap<>();
+                hj.put("岗位", job.getTitle());
+                hj.put("投递数", Integer.valueOf(row.get("cnt").toString()));
+                hotJobs.add(hj);
+            }
+        }
+        stats.put("投递最多岗位", hotJobs);
+
+        // ---- 构造 prompt（单行，数字全部来自真实统计） ----
+        StringBuilder sb = new StringBuilder();
+        sb.append("你是高校就业指导平台的资深数据分析专家。基于以下本校真实统计数据，只输出 JSON，格式：")
+          .append("{\"insights\":[\"4到5条洞察，每条必须引用至少一个具体数字，禁止编造数据\"],\"suggestion\":\"给就业办老师的1条具体可执行建议\"}。")
+          .append("统计数据：");
+        for (Map.Entry<String, Object> e : stats.entrySet()) {
+            sb.append(e.getKey()).append("=").append(e.getValue()).append("；");
+        }
+        String prompt = sb.toString();
+
+        Map<String, Object> result = aiService.generateInsight(prompt, provider);
+        // 附带调用信息便于对比实验展示
+        com.recruit.config.AiProperties.Provider usedProvider = provider != null
+                ? aiProperties.getProviders().get(provider)
+                : aiProperties.getProviders().get(aiProperties.getDefaultProvider());
+        result.put("providerName", provider != null ? provider : aiProperties.getDefaultProvider());
+        if (usedProvider != null) result.put("model", usedProvider.getModel());
+        return Result.success(result);
+    }
+
+    /**
+     * AI 就业洞察（管理员/教师）：把真实统计数据交给 LLM 解读
+     * provider 可选 deepseek/glm，便于双模型文字质量对比实验
+     */
 
     @GetMapping("/ai/model-comparison")
     public Result<Map<String, Object>> getAiModelComparison() {

@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,6 +32,12 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/resumes")
 public class ResumeController extends BaseController {
+
+    @org.springframework.beans.factory.annotation.Value("${file.upload-path:uploads/}")
+    private String uploadPath;
+
+    @org.springframework.beans.factory.annotation.Value("${file.access-url:/uploads/}")
+    private String accessUrl;
     
     @Autowired
     private ResumeService resumeService;
@@ -180,9 +188,13 @@ public class ResumeController extends BaseController {
             @RequestParam Long studentId,
             @RequestParam("file") MultipartFile file) {
         
-        // TODO：实际项目中需要调用OSS上传
-        // 这里先返回模拟路径
-        String pdfUrl = "/uploads/resume/resume_" + studentId + ".pdf";
+        // 真实落盘：resume/yyyy-MM-dd/UUID.pdf
+        String pdfUrl;
+        try {
+            pdfUrl = saveResumeFile(file);
+        } catch (Exception e) {
+            return Result.error("PDF 保存失败: " + e.getMessage());
+        }
         
         // 更新简历的PDF路径
         Resume resume = resumeService.selectByStudentId(studentId);
@@ -231,8 +243,13 @@ public class ResumeController extends BaseController {
             return Result.error("AI解析失败，请稍后重试或手动填写");
         }
 
-        // 3. 保存PDF路径
-        String pdfUrl = "/uploads/resume/resume_" + studentId + ".pdf";
+        // 3. 真实落盘并保存路径
+        String pdfUrl;
+        try {
+            pdfUrl = saveResumeFile(file);
+        } catch (Exception e) {
+            return Result.error("PDF 保存失败: " + e.getMessage());
+        }
         Resume resume = resumeService.selectByStudentId(studentId);
         if (resume == null) {
             resume = new Resume();
@@ -396,5 +413,19 @@ public class ResumeController extends BaseController {
         }
         
         return Result.success(resume);
+    }
+
+    /**
+     * 简历 PDF 落盘：resume/yyyy-MM-dd/UUID.pdf，返回可访问 URL
+     */
+    private String saveResumeFile(org.springframework.web.multipart.MultipartFile file) throws Exception {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String relativePath = "resume/" + sdf.format(new java.util.Date()) + "/";
+        File destDir = new File(uploadPath, relativePath);
+        if (!destDir.exists()) destDir.mkdirs();
+        String fileName = java.util.UUID.randomUUID() + ".pdf";
+        File dest = new File(destDir, fileName);
+        file.transferTo(dest);
+        return accessUrl + relativePath + fileName;
     }
 }

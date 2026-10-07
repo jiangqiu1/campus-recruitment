@@ -229,7 +229,8 @@ export const statisticsAPI = {
   getEmploymentDistribution: () => request.get('/statistics/teacher/employment-distribution'),
   getHrDashboard: () => request.get('/statistics/hr/dashboard'),
   getScoreDistribution: (params) => request.get('/statistics/hr/score-distribution', { params }),
-  getPublicSummary: () => request.get('/statistics/public-summary')
+  getPublicSummary: () => request.get('/statistics/public-summary'),
+  getAIInsight: (provider) => request.get('/statistics/ai/insight', { params: { provider } })
 }
 
 // ==================== 岗位变更申请模块 ====================

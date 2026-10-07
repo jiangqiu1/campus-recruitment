@@ -157,6 +157,13 @@ public class AiService {
      * 简历分析：分析学生简历的不足并给出改进建议
      * 输入简历的教育、技能、实习等结构化数据，AI 给出评分和改进方向
      */
+    /**
+     * 就业数据洞察（基于真实统计数据的文字解读，返回 JSON：insights/suggestion）
+     */
+    public Map<String, Object> generateInsight(String prompt, String providerName) {
+        return callAI(prompt, "insight", providerName, 1024);
+    }
+
     public Map<String, Object> analyzeResume(String resumeJson) {
         String prompt = "你是一个简历优化专家。请分析以下简历数据，找出不足并给出改进建议。\n\n"
                 + "## 简历数据\n" + truncate(resumeJson, 3000) + "\n\n"
@@ -399,6 +406,11 @@ public class AiService {
                 break;
             case "genQuestions":
                 mock.put("questions", buildMockQuestions());
+                break;
+            case "insight":
+                mock.put("mock", true);
+                mock.put("insights", new ArrayList<>() {{ add("AI 服务暂不可用，以下为示例格式"); }});
+                mock.put("suggestion", "请稍后重试");
                 break;
             case "evalAnswer":
                 mock.put("score", 75);

@@ -24,6 +24,8 @@
       </div>
     </div>
 
+    <AIInsightCard />
+
     <div class="chart-grid">
       <div class="chart-box">
         <div class="chart-title">岗位投递趋势（近7日）</div>
@@ -62,6 +64,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { statisticsAPI } from '@/api'
 import echarts from '@/utils/echarts'
+import AIInsightCard from '@/components/AIInsightCard.vue'
 
 const loading = ref(false)
 const overview = ref({})

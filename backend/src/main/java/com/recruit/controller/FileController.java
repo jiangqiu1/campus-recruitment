@@ -4,6 +4,8 @@ import com.recruit.utils.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -103,6 +105,44 @@ public class FileController {
         } catch (IOException e) {
             log.error("文件上传失败: {}", e.getMessage(), e);
             return Result.error(500, "文件上传失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 查看文件（简历 PDF 预览等）
+     *
+     * @param fileUrl 访问路径（access-url 开头）
+     * @return 文件字节流
+     */
+    @GetMapping("/view")
+    public ResponseEntity<byte[]> view(@RequestParam String fileUrl) {
+        // 校验与删除接口同一套：前缀白名单 + 防路径穿越
+        if (fileUrl == null || !fileUrl.startsWith(accessUrl)
+                || fileUrl.contains("..") || fileUrl.contains("\\")) {
+            return ResponseEntity.badRequest().build();
+        }
+        try {
+            String relativePath = fileUrl.substring(accessUrl.length());
+            File file = new File(uploadPath, relativePath);
+            String canonicalUploadPath = new File(uploadPath).getCanonicalPath();
+            if (!file.getCanonicalPath().startsWith(canonicalUploadPath + File.separator) || !file.isFile()) {
+                return ResponseEntity.notFound().build();
+            }
+            String name = file.getName().toLowerCase();
+            MediaType mediaType = name.endsWith(".pdf") ? MediaType.APPLICATION_PDF
+                    : name.endsWith(".png") ? MediaType.IMAGE_PNG
+                    : name.endsWith(".jpg") || name.endsWith(".jpeg") ? MediaType.IMAGE_JPEG
+                    : MediaType.APPLICATION_OCTET_STREAM;
+            ResponseEntity.BodyBuilder resp = ResponseEntity.ok()
+                    .contentType(mediaType)
+                    .cacheControl(org.springframework.http.CacheControl.maxAge(java.time.Duration.ofHours(1)));
+            if (mediaType == MediaType.APPLICATION_OCTET_STREAM) {
+                resp.header("Content-Disposition", "attachment; filename=\"" + name + "\"");
+            }
+            return resp.body(java.nio.file.Files.readAllBytes(file.toPath()));
+        } catch (Exception e) {
+            log.error("查看文件失败: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
         }
     }
 
