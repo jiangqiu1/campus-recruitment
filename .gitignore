@@ -78,3 +78,7 @@ scripts/seed_*.sql
 docs/小程序界面文档.docx
 docs/thesis/04-毕业论文初稿.md
 docs/thesis/05-开题报告.md
+
+# 其他项目的文档（与本项目无关，仅本地保留）
+docs/保利威视频云运营看板-详细设计方案.md
+docs/出海SEO内容系统-开题技术方案.md
